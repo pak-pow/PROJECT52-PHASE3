@@ -1,0 +1,8 @@
+Flask==3.0.3
+Flask-Cors==4.0.1
+pytest==8.2.2
+coverage==7.6.0
+flake8==7.1.0
+black==24.4.2
+isort==5.13.2
+bandit==1.7.9
