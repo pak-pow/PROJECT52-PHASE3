@@ -1,0 +1,27 @@
+[tool.black]
+line-length = 88
+target-version = ['py310', 'py311', 'py312']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.venv
+  | venv
+  | build
+  | dist
+  | \.pytest_cache
+  | data
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 88
+multi_line_output = 3
+include_trailing_comma = true
+skip = [".venv", "venv", ".git", "build", "dist"]
+
+[tool.bandit]
+exclude_dirs = [".venv", "venv", "tests", "data"]
+skips = ["B101", "B104"]
+targets = ["app"]
