@@ -1,4 +1,10 @@
-from app.config.settings import get_config, DevelopmentConfig, StagingConfig, ProductionConfig, TestingConfig
+from app.config.settings import (
+    get_config,
+    DevelopmentConfig,
+    StagingConfig,
+    ProductionConfig,
+    TestingConfig,
+)
 
 
 def test_health_check_endpoint(client):
