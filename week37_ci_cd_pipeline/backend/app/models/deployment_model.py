@@ -36,9 +36,7 @@ class DeploymentModel:
         )
         conn.commit()
         deployment_id = cursor.lastrowid
-        cursor.execute(
-            "SELECT * FROM deployments WHERE id = ?", (deployment_id,)
-        )
+        cursor.execute("SELECT * FROM deployments WHERE id = ?", (deployment_id,))
         row = cursor.fetchone()
         conn.close()
         return dict(row) if row else None
