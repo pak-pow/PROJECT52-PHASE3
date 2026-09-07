@@ -14,18 +14,25 @@ import sys
 import time
 from pathlib import Path
 
+# Ensure UTF-8 output on Windows consoles if supported
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
 BACKEND_DIR = Path(__file__).resolve().parent.parent
 
 
 def print_banner(stage_num, stage_name):
-    print("\n" + "═" * 65)
+    print("\n" + "=" * 65)
     print(f"  [STAGE {stage_num}] {stage_name}")
-    print("═" * 65)
+    print("=" * 65)
 
 
 def run_command(cmd, desc):
     start_time = time.time()
-    print(f"▶ Running: {' '.join(cmd)}")
+    print(f">> Running: {' '.join(cmd)}")
     result = subprocess.run(
         cmd,
         cwd=BACKEND_DIR,
@@ -35,12 +42,12 @@ def run_command(cmd, desc):
     duration = round(time.time() - start_time, 2)
 
     if result.returncode == 0:
-        print(f"✅ {desc} passed in {duration}s")
+        print(f"[OK] {desc} passed in {duration}s")
         if result.stdout.strip():
             print(result.stdout.strip())
         return True, duration, result.stdout
     else:
-        print(f"❌ {desc} FAILED in {duration}s")
+        print(f"[FAILED] {desc} FAILED in {duration}s")
         if result.stdout.strip():
             print("STDOUT:\n", result.stdout.strip())
         if result.stderr.strip():
@@ -49,9 +56,9 @@ def run_command(cmd, desc):
 
 
 def main():
-    print("\n" + "█" * 65)
-    print("  🚀 CI/CD LOCAL QUALITY GATES RUNNER")
-    print("█" * 65)
+    print("\n" + "#" * 65)
+    print("  CI/CD LOCAL QUALITY GATES RUNNER")
+    print("#" * 65)
 
     all_passed = True
     results = {}
@@ -104,19 +111,19 @@ def main():
         all_passed = False
 
     # Summary
-    print("\n" + "═" * 65)
-    print("  📊 QUALITY GATES SUMMARY REPORT")
-    print("═" * 65)
+    print("\n" + "=" * 65)
+    print("  QUALITY GATES SUMMARY REPORT")
+    print("=" * 65)
     for gate, (p, d) in results.items():
-        status = "✅ PASSED" if p else "❌ FAILED"
-        print(f"  • {gate.upper():<12} : {status} ({d}s)")
+        status = "[OK] PASSED" if p else "[X] FAILED"
+        print(f"  * {gate.upper():<12} : {status} ({d}s)")
 
-    print("═" * 65)
+    print("=" * 65)
     if all_passed:
-        print("🎉 ALL QUALITY GATES PASSED! Safe to commit and push.")
+        print(">> ALL QUALITY GATES PASSED! Safe to commit and push.")
         sys.exit(0)
     else:
-        print("🚨 ONE OR MORE QUALITY GATES FAILED. Review errors above.")
+        print(">> ONE OR MORE QUALITY GATES FAILED. Review errors above.")
         sys.exit(1)
 
 
