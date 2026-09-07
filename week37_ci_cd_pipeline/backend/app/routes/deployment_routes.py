@@ -11,16 +11,17 @@ def list_deployments():
     limit = request.args.get("limit", default=50, type=int)
     limit = min(max(limit, 1), 100)
 
-    deployments = DeploymentModel.get_deployments(
-        environment=environment, limit=limit
+    deployments = DeploymentModel.get_deployments(environment=environment, limit=limit)
+    return (
+        jsonify(
+            {
+                "count": len(deployments),
+                "environment_filter": environment or "all",
+                "deployments": deployments,
+            }
+        ),
+        200,
     )
-    return jsonify(
-        {
-            "count": len(deployments),
-            "environment_filter": environment or "all",
-            "deployments": deployments,
-        }
-    ), 200
 
 
 @deployment_bp.route("/api/v1/deployments", methods=["POST"])
@@ -34,18 +35,18 @@ def record_deployment():
     commit_hash = data.get("commit_hash")
 
     if not environment or not version or not commit_hash:
-        return jsonify(
-            {
-                "error": "Missing required fields: 'environment', 'version', and 'commit_hash' are required."
-            }
-        ), 400
+        err_msg = (
+            "Missing required fields: 'environment', "
+            "'version', and 'commit_hash' are required."
+        )
+        return jsonify({"error": err_msg}), 400
 
     if environment not in ["development", "staging", "production"]:
-        return jsonify(
-            {
-                "error": f"Invalid environment '{environment}'. Must be 'development', 'staging', or 'production'."
-            }
-        ), 400
+        err_msg = (
+            f"Invalid environment '{environment}'. "
+            "Must be 'development', 'staging', or 'production'."
+        )
+        return jsonify({"error": err_msg}), 400
 
     triggered_by = data.get("triggered_by", "pipeline-runner")
     status = data.get("status", "success")
@@ -61,12 +62,15 @@ def record_deployment():
         notes=notes,
     )
 
-    return jsonify(
-        {
-            "message": "Deployment recorded successfully.",
-            "deployment": deployment,
-        }
-    ), 201
+    return (
+        jsonify(
+            {
+                "message": "Deployment recorded successfully.",
+                "deployment": deployment,
+            }
+        ),
+        201,
+    )
 
 
 @deployment_bp.route("/api/v1/pipeline-runs", methods=["GET"])
@@ -76,12 +80,15 @@ def list_pipeline_runs():
     limit = min(max(limit, 1), 100)
 
     runs = PipelineRunModel.get_recent_runs(limit=limit)
-    return jsonify(
-        {
-            "count": len(runs),
-            "runs": runs,
-        }
-    ), 200
+    return (
+        jsonify(
+            {
+                "count": len(runs),
+                "runs": runs,
+            }
+        ),
+        200,
+    )
 
 
 @deployment_bp.route("/api/v1/pipeline-runs", methods=["POST"])
@@ -113,9 +120,12 @@ def record_pipeline_run():
         duration_seconds=duration_seconds,
     )
 
-    return jsonify(
-        {
-            "message": "Pipeline run recorded successfully.",
-            "run": run,
-        }
-    ), 201
+    return (
+        jsonify(
+            {
+                "message": "Pipeline run recorded successfully.",
+                "run": run,
+            }
+        ),
+        201,
+    )
