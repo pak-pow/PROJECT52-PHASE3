@@ -14,7 +14,9 @@ class BaseConfig:
     SECRET_KEY = os.getenv("SECRET_KEY", "ci-cd-dev-insecure-secret-key")
     DEBUG = False
     TESTING = False
-    DATABASE_PATH = os.getenv("DATABASE_PATH", str(BASE_DIR / "data" / "deployments.db"))
+    DATABASE_PATH = os.getenv(
+        "DATABASE_PATH", str(BASE_DIR / "data" / "deployments.db")
+    )
     AUTO_SEEDED = True
 
 
