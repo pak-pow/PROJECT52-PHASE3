@@ -13,6 +13,7 @@ def get_db_connection(database_path=None):
             database_path = current_app.config["DATABASE_PATH"]
         except RuntimeError:
             from app.config.settings import get_config
+
             database_path = get_config().DATABASE_PATH
 
     db_dir = os.path.dirname(database_path)
