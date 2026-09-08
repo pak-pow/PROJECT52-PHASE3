@@ -30,7 +30,12 @@ def test_ci_workflow_jobs_and_dependencies():
         ci = yaml.safe_load(f)
 
     jobs = ci.get("jobs", {})
-    required_jobs = ["lint-and-format", "security-scan", "test-matrix", "build-artifact"]
+    required_jobs = [
+        "lint-and-format",
+        "security-scan",
+        "test-matrix",
+        "build-artifact",
+    ]
     for rj in required_jobs:
         assert rj in jobs, f"Job '{rj}' missing from ci.yml"
 
@@ -54,7 +59,8 @@ def test_ci_workflow_jobs_and_dependencies():
 
 
 def test_cd_workflow_yaml_syntax_and_stages():
-    """Verify cd.yml triggers on main branch and tags, and gates production deployment."""
+    """Verify cd.yml triggers on main branch and tags,
+    and gates production deployment."""
     assert CD_WORKFLOW_PATH.exists(), f"cd.yml not found at {CD_WORKFLOW_PATH}"
 
     with open(CD_WORKFLOW_PATH, "r", encoding="utf-8") as f:
