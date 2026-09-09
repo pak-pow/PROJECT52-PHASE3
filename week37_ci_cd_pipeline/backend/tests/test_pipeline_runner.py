@@ -43,14 +43,15 @@ def test_pipeline_runner_stage_build(tmp_path, monkeypatch):
     assert bundle_path.stat().st_size > 500
 
 
-def test_pipeline_runner_stage_deploy(client):
+def test_pipeline_runner_stage_deploy(app):
     """Verify stage_deploy records deployment in database."""
-    runner = PipelineRunner(target_stage="deploy", env_name="staging")
-    passed = runner.stage_deploy()
-    assert passed is True
-    assert "deploy" in runner.results
-    assert runner.results["deploy"]["status"] == "passed"
-    assert runner.results["deploy"]["environment"] == "staging"
+    with app.app_context():
+        runner = PipelineRunner(target_stage="deploy", env_name="staging")
+        passed = runner.stage_deploy()
+        assert passed is True
+        assert "deploy" in runner.results
+        assert runner.results["deploy"]["status"] == "passed"
+        assert runner.results["deploy"]["environment"] == "staging"
 
 
 def test_pipeline_runner_write_report_and_badges(tmp_path):
