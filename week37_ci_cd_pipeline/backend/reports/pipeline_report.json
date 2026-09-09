@@ -1,0 +1,35 @@
+{
+  "pipeline": "Local CI/CD Orchestrator",
+  "target_stage": "all",
+  "environment": "staging",
+  "overall_status": "success",
+  "total_duration_seconds": 6.83,
+  "coverage_pct": 95.0,
+  "stages": {
+    "lint": {
+      "status": "passed",
+      "duration": 1.1
+    },
+    "security": {
+      "status": "passed",
+      "duration": 0.31
+    },
+    "test": {
+      "status": "passed",
+      "duration": 5.22,
+      "coverage": 95.0
+    },
+    "build": {
+      "status": "passed",
+      "duration": 0.01,
+      "artifact": "C:\\Users\\User\\Documents\\Github\\Personal\\VSCODE_PROJECT52\\PROJECT52-PHASE3\\week37_ci_cd_pipeline\\backend\\dist\\app-release-bundle.tar.gz"
+    },
+    "deploy": {
+      "status": "passed",
+      "duration": 0.01,
+      "deployment_id": 1,
+      "environment": "staging"
+    }
+  },
+  "timestamp": "2026-09-09 19:52:02"
+}
