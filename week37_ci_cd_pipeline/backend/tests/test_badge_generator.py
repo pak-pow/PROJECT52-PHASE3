@@ -44,6 +44,7 @@ def test_save_badge_to_disk(tmp_path):
     """Verify save_badge writes SVG file to disk with proper content."""
     badge_file = tmp_path / "test_badge.svg"
     out_path = save_badge("tests", "19 passed", str(badge_file))
+    assert out_path == str(badge_file)
     assert badge_file.exists()
     assert badge_file.stat().st_size > 100
     content = badge_file.read_text(encoding="utf-8")
