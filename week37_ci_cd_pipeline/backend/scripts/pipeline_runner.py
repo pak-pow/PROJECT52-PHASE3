@@ -175,10 +175,16 @@ class PipelineRunner:
 
     def stage_deploy(self):
         print_banner(5, f"Deployment & Smoke Test ({self.env_name.upper()})")
+        from app.config.settings import get_config
+        from app.db import init_db
         from app.models.deployment_model import DeploymentModel
 
         start = time.time()
         try:
+            # Ensure target database and tables exist
+            config = get_config(self.env_name)
+            init_db(config.DATABASE_PATH)
+
             deployment = DeploymentModel.create_deployment(
                 service_name="deployment-monitor",
                 environment=self.env_name,
