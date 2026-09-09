@@ -3,20 +3,20 @@
   "target_stage": "all",
   "environment": "staging",
   "overall_status": "success",
-  "total_duration_seconds": 6.83,
+  "total_duration_seconds": 6.84,
   "coverage_pct": 95.0,
   "stages": {
     "lint": {
       "status": "passed",
-      "duration": 1.1
+      "duration": 0.94
     },
     "security": {
       "status": "passed",
-      "duration": 0.31
+      "duration": 0.3
     },
     "test": {
       "status": "passed",
-      "duration": 5.22,
+      "duration": 5.38,
       "coverage": 95.0
     },
     "build": {
@@ -27,9 +27,9 @@
     "deploy": {
       "status": "passed",
       "duration": 0.01,
-      "deployment_id": 1,
+      "deployment_id": 2,
       "environment": "staging"
     }
   },
-  "timestamp": "2026-09-09 19:52:02"
+  "timestamp": "2026-09-09 20:01:48"
 }
