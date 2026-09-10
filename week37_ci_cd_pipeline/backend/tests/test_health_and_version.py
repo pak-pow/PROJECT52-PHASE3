@@ -1,9 +1,9 @@
 from app.config.settings import (
-    get_config,
     DevelopmentConfig,
-    StagingConfig,
     ProductionConfig,
+    StagingConfig,
     TestingConfig,
+    get_config,
 )
 
 
