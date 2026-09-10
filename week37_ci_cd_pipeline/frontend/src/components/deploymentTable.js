@@ -53,6 +53,8 @@ export function renderDeploymentTable(container, props = {}) {
 
         const commitShort = (d.commit_hash || 'HEAD').slice(0, 7);
 
+        const timestamp = d.deployed_at || d.created_at;
+
         return `
           <tr>
             <td><strong>#${escapeHtml(d.id)}</strong></td>
@@ -70,7 +72,7 @@ export function renderDeploymentTable(container, props = {}) {
             </td>
             <td><span class="badge badge-subtle">${escapeHtml(d.triggered_by || 'pipeline')}</span></td>
             <td>${getStatusBadgeHtml(d.status)}</td>
-            <td title="${escapeHtml(formatTimestamp(d.deployed_at))}">${escapeHtml(formatRelativeTime(d.deployed_at))}</td>
+            <td title="${escapeHtml(formatTimestamp(timestamp))}">${escapeHtml(formatRelativeTime(timestamp))}</td>
           </tr>
         `;
       }).join('');
