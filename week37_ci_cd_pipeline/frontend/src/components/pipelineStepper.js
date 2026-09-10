@@ -68,8 +68,14 @@ export function renderPipelineStepper(container, props = {}) {
     }
   });
 
-  const activeProgressIdx = runningIndex >= 0 ? runningIndex + 0.5 : passedCount;
-  const progressPercent = Math.min(Math.max((activeProgressIdx / (STAGES_CONFIG.length - 1)) * 100, 0), 100);
+  let progressPercent = 0;
+  if (runningIndex >= 0) {
+    progressPercent = Math.min((runningIndex / (STAGES_CONFIG.length - 1)) * 100, 100);
+  } else if (passedCount === STAGES_CONFIG.length) {
+    progressPercent = 100;
+  } else if (passedCount > 0) {
+    progressPercent = Math.min(((passedCount - 1) / (STAGES_CONFIG.length - 1)) * 100, 100);
+  }
 
   let stagesHtml = '';
 
@@ -129,7 +135,9 @@ export function renderPipelineStepper(container, props = {}) {
   container.innerHTML = `
     <div class="pipeline-stepper-container">
       <div class="pipeline-track">
-        <div class="pipeline-progress-bar" style="width: ${progressPercent}%;"></div>
+        <div class="pipeline-track-line">
+          <div class="pipeline-progress-bar" style="width: ${progressPercent}%;"></div>
+        </div>
         ${stagesHtml}
       </div>
     </div>
