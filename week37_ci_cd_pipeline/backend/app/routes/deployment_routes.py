@@ -1,7 +1,13 @@
-from flask import Blueprint, jsonify, request
+import json
+import re
+from pathlib import Path
+from flask import Blueprint, Response, jsonify, request
 from app.models.deployment_model import DeploymentModel, PipelineRunModel
 
 deployment_bp = Blueprint("deployment_bp", __name__)
+BACKEND_DIR = Path(__file__).resolve().parent.parent.parent
+REPORTS_DIR = BACKEND_DIR / "reports"
+BADGES_DIR = BACKEND_DIR / "badges"
 
 
 @deployment_bp.route("/api/v1/deployments", methods=["GET"])
@@ -129,3 +135,68 @@ def record_pipeline_run():
         ),
         201,
     )
+
+
+@deployment_bp.route("/api/v1/pipeline-report", methods=["GET"])
+def get_pipeline_report():
+    """Retrieve the latest pipeline execution report."""
+    report_file = REPORTS_DIR / "pipeline_report.json"
+    if not report_file.exists():
+        return jsonify({"message": "No report available.", "stages": {}}), 200
+
+    try:
+        with open(report_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return jsonify(data), 200
+    except Exception as e:
+        return jsonify({"error": f"Failed to read pipeline report: {str(e)}"}), 500
+
+
+@deployment_bp.route("/api/v1/badges/<badge_name>", methods=["GET"])
+def get_badge(badge_name):
+    """Serve generated SVG status badges."""
+    if not re.match(r"^[a-zA-Z0-9_\-]+\.svg$", badge_name):
+        return jsonify({"error": "Invalid badge filename."}), 400
+
+    badge_file = BADGES_DIR / badge_name
+    if not badge_file.exists():
+        return jsonify({"error": f"Badge '{badge_name}' not found."}), 404
+
+    try:
+        with open(badge_file, "r", encoding="utf-8") as f:
+            svg_content = f.read()
+        return Response(svg_content, mimetype="image/svg+xml")
+    except Exception as e:
+        return jsonify({"error": f"Failed to read badge: {str(e)}"}), 500
+
+
+@deployment_bp.route("/api/v1/pipeline/trigger", methods=["POST"])
+def trigger_pipeline():
+    """Trigger execution of the local pipeline runner stages."""
+    data = request.get_json(silent=True) or {}
+    stage = data.get("stage", "all")
+    environment = data.get("environment", "staging")
+
+    valid_stages = ["lint", "security", "test", "build", "deploy", "all"]
+    if stage not in valid_stages:
+        err_msg = f"Invalid stage '{stage}'. Must be one of {valid_stages}."
+        return jsonify({"error": err_msg}), 400
+
+    try:
+        from scripts.pipeline_runner import PipelineRunner
+
+        runner = PipelineRunner(
+            target_stage=stage, env_name=environment, generate_badges=True
+        )
+        exit_code = runner.run()
+        success = exit_code == 0
+
+        report_file = REPORTS_DIR / "pipeline_report.json"
+        report_data = {}
+        if report_file.exists():
+            with open(report_file, "r", encoding="utf-8") as f:
+                report_data = json.load(f)
+
+        return jsonify({"success": success, "report": report_data}), 200
+    except Exception as e:
+        return jsonify({"error": f"Failed to execute pipeline: {str(e)}"}), 500
