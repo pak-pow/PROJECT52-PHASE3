@@ -650,6 +650,12 @@
   object-fit: contain;
 }
 
+.badge-render svg {
+  height: 20px;
+  width: auto;
+  display: block;
+}
+
 .badge-meta {
   display: flex;
   flex-direction: column;
