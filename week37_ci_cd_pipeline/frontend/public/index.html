@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CI/CD Pipeline Dashboard | Week 37 · Project 52</title>
+  
+  <!-- Synchronous theme initializer to prevent flash of wrong theme -->
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem('p52_w37_theme');
+        if (stored === 'light' || stored === 'dark') {
+          document.documentElement.setAttribute('data-theme', stored);
+        } else {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+      } catch (e) {}
+    })();
+  </script>
+
+  <!-- External Stylesheets (Zero inline styles) -->
+  <link rel="stylesheet" href="../src/assets/base.css">
+  <link rel="stylesheet" href="../src/assets/pipeline.css">
+</head>
+<body>
+  <!-- Main Application Mount Point -->
+  <div id="app"></div>
+
+  <!-- Toast Notifications Container -->
+  <div id="toast-container"></div>
+
+  <!-- Frontend Application Module Script (Zero inline script in body) -->
+  <script type="module" src="../src/main.js"></script>
+</body>
+</html>
