@@ -1,5 +1,7 @@
 import os
+
 import pytest
+
 from app import create_app
 from app.config.settings import TestingConfig
 from app.db import init_db
