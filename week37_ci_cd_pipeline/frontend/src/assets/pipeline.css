@@ -289,44 +289,44 @@
 .pipeline-track {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
   position: relative;
   padding: 1rem 0;
-  overflow: visible;
+  width: 100%;
+  overflow: hidden;
 }
 
-/* Background Connector Line */
-.pipeline-track::before {
-  content: "";
+/* Background Connector Line Track (spans exactly from center of Node 1 to Node 5) */
+.pipeline-track-line {
   position: absolute;
-  top: 2.25rem;
-  left: 3rem;
-  right: 3rem;
+  top: calc(2.375rem - 1.5px);
+  left: 10%;
+  right: 10%;
   height: 3px;
   background: var(--border-color);
   z-index: 1;
+  border-radius: 2px;
+  overflow: hidden;
 }
 
-/* Dynamic Active Progress Fill */
+/* Dynamic Active Progress Fill (contained strictly within track line) */
 .pipeline-progress-bar {
-  position: absolute;
-  top: 2.25rem;
-  left: 3rem;
-  height: 3px;
-  background: linear-gradient(90deg, var(--color-primary), var(--color-success));
-  z-index: 2;
-  transition: width 0.4s ease;
+  height: 100%;
   width: 0%;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-success));
+  border-radius: 2px;
+  transition: width 0.4s ease;
 }
 
 .stage-node {
+  flex: 1 1 0px;
+  max-width: 20%;
+  min-width: 0;
   position: relative;
   z-index: 3;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  min-width: 140px;
   cursor: pointer;
   transition: var(--transition);
 }
@@ -788,18 +788,19 @@
 
 @media (max-width: 768px) {
   .pipeline-track {
+    overflow-x: auto;
     justify-content: flex-start;
     gap: 1.5rem;
     padding-bottom: 1.5rem;
   }
 
-  .pipeline-track::before,
-  .pipeline-progress-bar {
+  .pipeline-track-line {
     display: none;
   }
 
   .stage-node {
-    min-width: 110px;
+    flex: 0 0 110px;
+    max-width: 110px;
   }
 
   .metrics-grid {
