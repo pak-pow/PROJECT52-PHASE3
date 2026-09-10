@@ -1,4 +1,5 @@
 import time
+
 from flask import Blueprint, current_app, jsonify
 
 health_bp = Blueprint("health_bp", __name__)
