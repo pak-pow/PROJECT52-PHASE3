@@ -83,8 +83,18 @@ def main():
     if not passed:
         all_passed = False
 
-    # Stage 3: Bandit Security Audit
-    print_banner(3, "Bandit Static Security Audit")
+    # Stage 3: isort Import Ordering Check
+    print_banner(3, "isort Import Ordering Check")
+    passed, dur, out = run_command(
+        [sys.executable, "-m", "isort", "--check-only", "app", "tests"],
+        "isort Import Ordering",
+    )
+    results["isort"] = (passed, dur)
+    if not passed:
+        all_passed = False
+
+    # Stage 4: Bandit Security Audit
+    print_banner(4, "Bandit Static Security Audit")
     passed, dur, out = run_command(
         [sys.executable, "-m", "bandit", "-r", "app", "-ll"],
         "Bandit Security Audit",
@@ -93,8 +103,8 @@ def main():
     if not passed:
         all_passed = False
 
-    # Stage 4: Pytest Suite with Coverage
-    print_banner(4, "Pytest Test Suite with Coverage")
+    # Stage 5: Pytest Suite with Coverage
+    print_banner(5, "Pytest Test Suite with Coverage")
     passed, dur, out = run_command(
         [
             sys.executable,
