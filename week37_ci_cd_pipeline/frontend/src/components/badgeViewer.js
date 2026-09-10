@@ -101,9 +101,7 @@ export function renderBadgeViewer(container, props = {}) {
           <div class="badge-desc">${escapeHtml(b.desc)}</div>
         </div>
         <div class="badge-render">
-          ${isOnline
-            ? `<img src="${b.url}?t=${Date.now()}" alt="${escapeHtml(b.name)}" class="badge-img" onerror="this.outerHTML = \`${b.fallbackSvg.replace(/`/g, '\\`')}\`" />`
-            : b.fallbackSvg}
+          ${b.fallbackSvg}
         </div>
       </div>
 
