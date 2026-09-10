@@ -292,7 +292,7 @@
   justify-content: space-between;
   position: relative;
   padding: 1rem 0;
-  overflow-x: auto;
+  overflow: visible;
 }
 
 /* Background Connector Line */
@@ -676,7 +676,23 @@
   color: var(--text-secondary);
   overflow-x: auto;
   white-space: nowrap;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-hover) transparent;
 }
+
+.badge-code-box::-webkit-scrollbar {
+  height: 4px;
+}
+
+.badge-code-box::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.badge-code-box::-webkit-scrollbar-thumb {
+  background: var(--border-hover);
+  border-radius: 4px;
+}
+
 
 .badge-action-btns {
   display: flex;
@@ -794,3 +810,39 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Offline Mode Notice Banner */
+.offline-banner {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+}
+
+.offline-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.offline-banner-left svg {
+  color: var(--color-warning);
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.offline-banner code {
+  background: var(--bg-card);
+  padding: 0.125rem 0.375rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  font-family: var(--font-mono);
+}
+
