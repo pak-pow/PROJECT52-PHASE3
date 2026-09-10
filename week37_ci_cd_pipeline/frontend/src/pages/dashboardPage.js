@@ -55,6 +55,9 @@ export class DashboardPage {
       <div id="navbar-mount"></div>
 
       <main class="app-container dashboard-main">
+        <!-- Offline Demo Mode Banner (shown when backend is not running) -->
+        <div id="offline-banner-mount"></div>
+
         <!-- 1. Overview Metrics Cards -->
         <section class="metrics-grid" id="metrics-mount">
           <div class="metric-card">
@@ -208,6 +211,7 @@ export class DashboardPage {
     }
 
     this.updateNavbar();
+    this.updateOfflineBanner();
   }
 
   updateNavbar() {
@@ -292,8 +296,45 @@ export class DashboardPage {
       }
     }
 
-    if (coverageEl) coverageEl.textContent = `${this.state.coveragePct}%`;
+    if (coverageEl) {
+      coverageEl.textContent = `${Number(this.state.coveragePct).toFixed(1)}%`;
+    }
     if (deployStatusEl) deployStatusEl.textContent = this.state.targetEnv.toUpperCase();
+  }
+
+  updateOfflineBanner() {
+    const mount = this.root.querySelector('#offline-banner-mount');
+    if (!mount) return;
+
+    if (!this.state.isOnline) {
+      mount.innerHTML = `
+        <div class="offline-banner">
+          <div class="offline-banner-left">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+            <div>
+              <strong>Backend Offline (Demo Simulator Mode):</strong> The Flask API is not running. Displaying simulated sample pipeline data. Run <code>python run.py</code> in the backend folder to connect to live API on port 5000.
+            </div>
+          </div>
+          <button class="btn btn-secondary btn-sm" id="retry-backend-btn">
+            Connect
+          </button>
+        </div>
+      `;
+
+      const retryBtn = mount.querySelector('#retry-backend-btn');
+      if (retryBtn) {
+        retryBtn.addEventListener('click', () => {
+          showToast('Checking connection to http://127.0.0.1:5000...', 'info');
+          this.checkHealth(true);
+        });
+      }
+    } else {
+      mount.innerHTML = '';
+    }
   }
 
   async checkHealth(notify = false) {
@@ -312,7 +353,9 @@ export class DashboardPage {
 
     this.updateNavbar();
     this.updateBadges();
+    this.updateOfflineBanner();
   }
+
 
   async refreshAllData() {
     await this.checkHealth();
