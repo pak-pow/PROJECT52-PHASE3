@@ -90,8 +90,12 @@ class PipelineRunner:
             [sys.executable, "-m", "black", "--check", "app", "tests"],
             "Black Formatter Check",
         )
-        passed = flake_ok and black_ok
-        duration = round(flake_dur + black_dur, 2)
+        isort_ok, isort_dur, _ = run_command(
+            [sys.executable, "-m", "isort", "--check-only", "app", "tests"],
+            "isort Import Ordering",
+        )
+        passed = flake_ok and black_ok and isort_ok
+        duration = round(flake_dur + black_dur + isort_dur, 2)
         self.results["lint"] = {
             "status": "passed" if passed else "failed",
             "duration": duration,
