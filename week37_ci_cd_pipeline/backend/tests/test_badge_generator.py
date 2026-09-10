@@ -1,4 +1,5 @@
 import xml.etree.ElementTree as ET
+
 from scripts.badge_generator import (
     COLOR_MAP,
     generate_svg_badge,
