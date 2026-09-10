@@ -18,6 +18,18 @@ export function escapeHtml(str) {
     .replace(/'/g, '&#039;');
 }
 
+function parseDate(dateVal) {
+  if (!dateVal) return null;
+  if (dateVal instanceof Date) return dateVal;
+  if (typeof dateVal === 'string') {
+    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(dateVal)) {
+      return new Date(dateVal.replace(' ', 'T') + 'Z');
+    }
+  }
+  const d = new Date(dateVal);
+  return isNaN(d.getTime()) ? null : d;
+}
+
 /**
  * Formats an ISO string or timestamp to a friendly readable format.
  * @param {string|number|Date} dateVal
@@ -26,8 +38,8 @@ export function escapeHtml(str) {
 export function formatTimestamp(dateVal) {
   if (!dateVal) return '—';
   try {
-    const d = new Date(dateVal);
-    if (isNaN(d.getTime())) return String(dateVal);
+    const d = parseDate(dateVal);
+    if (!d) return String(dateVal);
     return d.toLocaleString(undefined, {
       month: 'short',
       day: 'numeric',
@@ -62,8 +74,9 @@ export function formatDuration(seconds) {
  */
 export function formatRelativeTime(dateVal) {
   if (!dateVal) return '—';
+  const past = parseDate(dateVal);
+  if (!past) return '—';
   const now = new Date();
-  const past = new Date(dateVal);
   const diffSec = Math.floor((now - past) / 1000);
 
   if (diffSec < 5) return 'Just now';
