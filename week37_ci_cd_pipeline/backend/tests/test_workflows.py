@@ -1,5 +1,7 @@
 from pathlib import Path
+
 import yaml
+
 from scripts.smoke_test import run_smoke_tests
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
