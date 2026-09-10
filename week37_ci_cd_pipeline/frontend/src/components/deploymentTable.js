@@ -25,6 +25,10 @@ export function renderDeploymentTable(container, props = {}) {
     return (d.environment || '').toLowerCase() === currentFilter.toLowerCase();
   });
 
+  const emptyMessage = currentFilter === 'all'
+    ? 'No deployments recorded yet. Trigger a pipeline run to record your first deployment.'
+    : `No deployments recorded for environment: <strong>${escapeHtml(currentFilter)}</strong>`;
+
   const rowsHtml = filtered.length === 0
     ? `
       <tr>
@@ -35,7 +39,7 @@ export function renderDeploymentTable(container, props = {}) {
               <line x1="12" y1="8" x2="12" y2="12"></line>
               <line x1="12" y1="16" x2="12.01" y2="16"></line>
             </svg>
-            <p>No deployments recorded for environment: <strong>${escapeHtml(currentFilter)}</strong></p>
+            <p>${emptyMessage}</p>
           </div>
         </td>
       </tr>
