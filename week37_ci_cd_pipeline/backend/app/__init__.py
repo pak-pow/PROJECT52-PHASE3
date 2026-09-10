@@ -1,9 +1,10 @@
 from flask import Flask
 from flask_cors import CORS
+
 from app.config.settings import get_config
 from app.db import init_db
-from app.routes.health_routes import health_bp
 from app.routes.deployment_routes import deployment_bp
+from app.routes.health_routes import health_bp
 
 
 def create_app(config_class=None):
