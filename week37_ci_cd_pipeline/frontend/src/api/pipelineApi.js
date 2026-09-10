@@ -121,32 +121,30 @@ export function getMockReport() {
   };
 }
 
+const SIMULATED_DEPLOYMENTS_KEY = 'project52_simulated_deployments';
+
 /**
  * Returns mock deployments list.
  */
 export function getMockDeployments() {
-  return [
-    {
-      id: 1,
-      service_name: 'deployment-monitor',
-      environment: 'staging',
-      version: '1.0.0',
-      commit_hash: 'da13f34',
-      triggered_by: 'pipeline-runner',
-      status: 'success',
-      notes: 'Local CI/CD pipeline deployment to staging',
-      deployed_at: new Date(Date.now() - 3600000).toISOString(),
-    },
-    {
-      id: 2,
-      service_name: 'deployment-monitor',
-      environment: 'production',
-      version: '1.0.0',
-      commit_hash: '682e2a2',
-      triggered_by: 'github-actions',
-      status: 'success',
-      notes: 'Promoted from staging after smoke probe success',
-      deployed_at: new Date(Date.now() - 86400000).toISOString(),
-    },
-  ];
+  try {
+    const raw = sessionStorage.getItem(SIMULATED_DEPLOYMENTS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Saves a simulated deployment to session storage.
+ */
+export function saveMockDeployment(deployment) {
+  try {
+    const list = getMockDeployments();
+    list.unshift(deployment);
+    sessionStorage.setItem(SIMULATED_DEPLOYMENTS_KEY, JSON.stringify(list));
+    return list;
+  } catch {
+    return [deployment];
+  }
 }
