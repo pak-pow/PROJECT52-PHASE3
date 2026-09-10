@@ -91,3 +91,54 @@ def test_record_and_list_pipeline_runs(client):
     get_res = client.get("/api/v1/pipeline-runs")
     assert get_res.status_code == 200
     assert get_res.get_json()["count"] >= 1
+
+
+def test_get_pipeline_report(client):
+    """Test retrieving pipeline report returns 200 with report data."""
+    res = client.get("/api/v1/pipeline-report")
+    assert res.status_code == 200
+    data = res.get_json()
+    assert "stages" in data or "pipeline" in data
+
+
+def test_get_badge_success_and_errors(client):
+    """Test serving SVG status badges and error handling."""
+    # Invalid filename
+    res_invalid = client.get("/api/v1/badges/evil_badge.php")
+    assert res_invalid.status_code == 400
+
+    # Non-existent SVG badge
+    res_404 = client.get("/api/v1/badges/nonexistent.svg")
+    assert res_404.status_code == 404
+
+    # Existing badge (build.svg or coverage.svg)
+    res_build = client.get("/api/v1/badges/build.svg")
+    if res_build.status_code == 200:
+        assert "image/svg+xml" in res_build.content_type
+        assert b"<svg" in res_build.data
+
+
+def test_trigger_pipeline_invalid_stage(client):
+    """Test triggering pipeline with invalid stage returns 400."""
+    res = client.post(
+        "/api/v1/pipeline/trigger",
+        json={"stage": "invalid_stage", "environment": "staging"},
+    )
+    assert res.status_code == 400
+    assert "error" in res.get_json()
+
+
+def test_trigger_pipeline_mock_execution(client, monkeypatch):
+    """Test triggering pipeline with mocked runner execution."""
+    from scripts.pipeline_runner import PipelineRunner
+
+    monkeypatch.setattr(PipelineRunner, "run", lambda self: 0)
+
+    res = client.post(
+        "/api/v1/pipeline/trigger",
+        json={"stage": "lint", "environment": "staging"},
+    )
+    assert res.status_code == 200
+    data = res.get_json()
+    assert data["success"] is True
+    assert "report" in data
