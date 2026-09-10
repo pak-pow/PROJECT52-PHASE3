@@ -11,6 +11,7 @@ import {
   getPipelineReport,
   getPipelineRuns,
   getVersion,
+  saveMockDeployment,
   triggerPipeline,
 } from '../api/pipelineApi.js';
 import { renderBadgeViewer } from '../components/badgeViewer.js';
@@ -508,18 +509,21 @@ export class DashboardPage {
           this.terminal.appendLog('deploy', `[OK] Deployment registered in database with status 'success'`, 'ok');
           this.state.stageResults.deploy = { status: 'passed', duration: 0.02, environment: targetEnv };
 
-          // Add a mock deployment entry
-          this.state.deployments.unshift({
-            id: this.state.deployments.length + 1,
+          // Add a mock deployment entry with sequential ID
+          const nextId = (this.state.deployments[0]?.id || 0) + 1;
+          const newDeployment = {
+            id: nextId,
             service_name: 'deployment-monitor',
             environment: targetEnv,
             version: this.state.version,
             commit_hash: this.state.commitHash,
             triggered_by: 'pipeline-runner',
             status: 'success',
-            notes: `Pipeline run to ${targetEnv}`,
+            notes: `Simulated pipeline run on ${targetEnv}`,
             deployed_at: new Date().toISOString(),
-          });
+          };
+          saveMockDeployment(newDeployment);
+          this.state.deployments.unshift(newDeployment);
         }
 
         this.updateStepper();
