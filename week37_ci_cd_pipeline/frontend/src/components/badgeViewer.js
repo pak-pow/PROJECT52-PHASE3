@@ -6,6 +6,44 @@
 import { copyToClipboard, escapeHtml } from '../utils/helpers.js';
 import { API_BASE_URL } from '../api/pipelineApi.js';
 
+/**
+ * Generates dynamic Shields.io-style SVG string with accurate proportional dimensions.
+ */
+function generateSvgBadge(label, message, color) {
+  const labelStr = String(label);
+  const msgStr = String(message);
+  const labelWidth = Math.max(labelStr.length * 7 + 14, 42);
+  const msgWidth = Math.max(msgStr.length * 7.5 + 18, 44);
+  const totalWidth = labelWidth + msgWidth;
+  const labelX = (labelWidth / 2.0) * 10;
+  const msgX = (labelWidth + msgWidth / 2.0) * 10;
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${totalWidth}" height="20" role="img" aria-label="${escapeHtml(labelStr)}: ${escapeHtml(msgStr)}">
+    <title>${escapeHtml(labelStr)}: ${escapeHtml(msgStr)}</title>
+    <linearGradient id="s" x2="0" y2="100%"><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient>
+    <clipPath id="r"><rect width="${totalWidth}" height="20" rx="3" fill="#fff"/></clipPath>
+    <g clip-path="url(#r)">
+      <rect width="${labelWidth}" height="20" fill="#555"/>
+      <rect x="${labelWidth}" width="${msgWidth}" height="20" fill="${color}"/>
+      <rect width="${totalWidth}" height="20" fill="url(#s)"/>
+    </g>
+    <g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="110">
+      <text aria-hidden="true" x="${labelX}" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)">${escapeHtml(labelStr)}</text>
+      <text x="${labelX}" y="140" transform="scale(.1)" fill="#fff">${escapeHtml(labelStr)}</text>
+      <text aria-hidden="true" x="${msgX}" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)">${escapeHtml(msgStr)}</text>
+      <text x="${msgX}" y="140" transform="scale(.1)" fill="#fff">${escapeHtml(msgStr)}</text>
+    </g>
+  </svg>`;
+}
+
+function getCoverageColor(pct) {
+  const n = parseFloat(pct);
+  if (isNaN(n) || n >= 90.0) return '#4c1';
+  if (n >= 80.0) return '#dfb317';
+  if (n >= 70.0) return '#fe7d37';
+  return '#e05d44';
+}
+
 export function renderBadgeViewer(container, props = {}) {
   const {
     buildStatus = 'passing',
@@ -14,48 +52,13 @@ export function renderBadgeViewer(container, props = {}) {
     isOnline = false,
   } = props;
 
-  // Build SVG inline fallbacks if running in standalone preview
-  const buildSvgFallback = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="94" height="20" role="img" aria-label="build: ${escapeHtml(buildStatus)}">
-      <linearGradient id="s" x2="0" y2="100%"><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient>
-      <clipPath id="r"><rect width="94" height="20" rx="3" fill="#fff"/></clipPath>
-      <g clip-path="url(#r)"><rect width="37" height="20" fill="#555"/><rect x="37" width="57" height="20" fill="${buildStatus === 'passing' ? '#4c1' : '#e05d44'}"/><rect width="94" height="20" fill="url(#s)"/></g>
-      <g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="110">
-        <text aria-hidden="true" x="195" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)">build</text>
-        <text x="195" y="140" transform="scale(.1)" fill="#fff">build</text>
-        <text aria-hidden="true" x="645" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)">${escapeHtml(buildStatus)}</text>
-        <text x="645" y="140" transform="scale(.1)" fill="#fff">${escapeHtml(buildStatus)}</text>
-      </g>
-    </svg>
-  `;
+  const formattedCoverage = typeof coveragePct === 'number'
+    ? `${coveragePct.toFixed(1)}%`
+    : String(coveragePct).endsWith('%') ? coveragePct : `${coveragePct}%`;
 
-  const coverageSvgFallback = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="108" height="20" role="img" aria-label="coverage: ${coveragePct}%">
-      <linearGradient id="s" x2="0" y2="100%"><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient>
-      <clipPath id="r"><rect width="108" height="20" rx="3" fill="#fff"/></clipPath>
-      <g clip-path="url(#r)"><rect width="61" height="20" fill="#555"/><rect x="61" width="47" height="20" fill="#4c1"/><rect width="108" height="20" fill="url(#s)"/></g>
-      <g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="110">
-        <text aria-hidden="true" x="315" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)">coverage</text>
-        <text x="315" y="140" transform="scale(.1)" fill="#fff">coverage</text>
-        <text aria-hidden="true" x="835" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)">${coveragePct}%</text>
-        <text x="835" y="140" transform="scale(.1)" fill="#fff">${coveragePct}%</text>
-      </g>
-    </svg>
-  `;
-
-  const deploySvgFallback = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="98" height="20" role="img" aria-label="deploy: ${escapeHtml(deployEnv)}">
-      <linearGradient id="s" x2="0" y2="100%"><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient>
-      <clipPath id="r"><rect width="98" height="20" rx="3" fill="#fff"/></clipPath>
-      <g clip-path="url(#r)"><rect width="47" height="20" fill="#555"/><rect x="47" width="51" height="20" fill="#007ec6"/><rect width="98" height="20" fill="url(#s)"/></g>
-      <g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="110">
-        <text aria-hidden="true" x="245" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)">deploy</text>
-        <text x="245" y="140" transform="scale(.1)" fill="#fff">deploy</text>
-        <text aria-hidden="true" x="715" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)">${escapeHtml(deployEnv)}</text>
-        <text x="715" y="140" transform="scale(.1)" fill="#fff">${escapeHtml(deployEnv)}</text>
-      </g>
-    </svg>
-  `;
+  const buildColor = buildStatus === 'passing' ? '#4c1' : '#e05d44';
+  const covColor = getCoverageColor(coveragePct);
+  const deployColor = deployEnv === 'production' ? '#4c1' : '#007ec6';
 
   const badges = [
     {
@@ -63,7 +66,7 @@ export function renderBadgeViewer(container, props = {}) {
       name: 'CI Build Status',
       desc: 'Reflects the latest CI/CD test and linting status',
       filename: 'build.svg',
-      fallbackSvg: buildSvgFallback,
+      fallbackSvg: generateSvgBadge('build', buildStatus, buildColor),
       markdown: `![build](${API_BASE_URL}/api/v1/badges/build.svg)`,
       html: `<img src="${API_BASE_URL}/api/v1/badges/build.svg" alt="build" />`,
       url: `${API_BASE_URL}/api/v1/badges/build.svg`,
@@ -73,7 +76,7 @@ export function renderBadgeViewer(container, props = {}) {
       name: 'Branch Code Coverage',
       desc: 'Enforces strict 90%+ branch and statement testing',
       filename: 'coverage.svg',
-      fallbackSvg: coverageSvgFallback,
+      fallbackSvg: generateSvgBadge('coverage', formattedCoverage, covColor),
       markdown: `![coverage](${API_BASE_URL}/api/v1/badges/coverage.svg)`,
       html: `<img src="${API_BASE_URL}/api/v1/badges/coverage.svg" alt="coverage" />`,
       url: `${API_BASE_URL}/api/v1/badges/coverage.svg`,
@@ -83,7 +86,7 @@ export function renderBadgeViewer(container, props = {}) {
       name: 'Deployment Target',
       desc: 'Active environment verified by smoke probe',
       filename: 'deploy.svg',
-      fallbackSvg: deploySvgFallback,
+      fallbackSvg: generateSvgBadge('deploy', deployEnv, deployColor),
       markdown: `![deploy](${API_BASE_URL}/api/v1/badges/deploy.svg)`,
       html: `<img src="${API_BASE_URL}/api/v1/badges/deploy.svg" alt="deploy" />`,
       url: `${API_BASE_URL}/api/v1/badges/deploy.svg`,
