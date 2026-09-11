@@ -1,21 +1,21 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="115" height="20" role="img" aria-label="deploy: staging">
-  <title>deploy: staging</title>
+<svg xmlns="http://www.w3.org/2000/svg" width="136" height="20" role="img" aria-label="deploy: production">
+  <title>deploy: production</title>
   <linearGradient id="s" x2="0" y2="100%">
     <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
     <stop offset="1" stop-opacity=".1"/>
   </linearGradient>
   <clipPath id="r">
-    <rect width="115" height="20" rx="3" fill="#fff"/>
+    <rect width="136" height="20" rx="3" fill="#fff"/>
   </clipPath>
   <g clip-path="url(#r)">
     <rect width="54" height="20" fill="#555"/>
-    <rect x="54" width="61" height="20" fill="#fe7d37"/>
-    <rect width="115" height="20" fill="url(#s)"/>
+    <rect x="54" width="82" height="20" fill="#007ec6"/>
+    <rect width="136" height="20" fill="url(#s)"/>
   </g>
   <g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="110">
     <text aria-hidden="true" x="270.0" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="420">deploy</text>
     <text x="270.0" y="140" transform="scale(.1)" fill="#fff" textLength="420">deploy</text>
-    <text aria-hidden="true" x="845.0" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="490">staging</text>
-    <text x="845.0" y="140" transform="scale(.1)" fill="#fff" textLength="490">staging</text>
+    <text aria-hidden="true" x="950.0" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="700">production</text>
+    <text x="950.0" y="140" transform="scale(.1)" fill="#fff" textLength="700">production</text>
   </g>
 </svg>
