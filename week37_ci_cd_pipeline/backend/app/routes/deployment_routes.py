@@ -202,7 +202,10 @@ def trigger_pipeline():
         return (
             jsonify(
                 {
-                    "error": "Pipeline execution is already in progress. Please wait for it to finish."
+                    "error": (
+                        "Pipeline execution is already in progress. "
+                        "Please wait for it to finish."
+                    )
                 }
             ),
             409,
