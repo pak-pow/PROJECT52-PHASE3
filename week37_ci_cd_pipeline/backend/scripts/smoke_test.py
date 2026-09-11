@@ -30,15 +30,24 @@ def make_request(url, timeout=5):
         headers={"User-Agent": "CI-CD-Smoke-Tester/1.0", "Accept": "application/json"},
     )
     start = time.time()
-    with urllib.request.urlopen(req, timeout=timeout) as response:
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as response:
+            duration_ms = round((time.time() - start) * 1000, 2)
+            body = response.read().decode("utf-8")
+            status_code = response.status
+            try:
+                data = json.loads(body)
+            except json.JSONDecodeError:
+                data = None
+            return status_code, data, duration_ms
+    except urllib.error.HTTPError as e:
         duration_ms = round((time.time() - start) * 1000, 2)
-        body = response.read().decode("utf-8")
-        status_code = response.status
         try:
+            body = e.read().decode("utf-8")
             data = json.loads(body)
-        except json.JSONDecodeError:
+        except Exception:
             data = None
-        return status_code, data, duration_ms
+        return e.code, data, duration_ms
 
 
 def run_smoke_tests(base_url, max_retries=5, retry_delay=2):
