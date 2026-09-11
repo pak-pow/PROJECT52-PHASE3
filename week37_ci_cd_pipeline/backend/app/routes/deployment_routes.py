@@ -1,5 +1,6 @@
 import json
 import re
+import threading
 from pathlib import Path
 
 from flask import Blueprint, Response, jsonify, request
@@ -10,6 +11,7 @@ deployment_bp = Blueprint("deployment_bp", __name__)
 BACKEND_DIR = Path(__file__).resolve().parent.parent.parent
 REPORTS_DIR = BACKEND_DIR / "reports"
 BADGES_DIR = BACKEND_DIR / "badges"
+_pipeline_lock = threading.Lock()
 
 
 @deployment_bp.route("/api/v1/deployments", methods=["GET"])
@@ -160,7 +162,12 @@ def get_badge(badge_name):
     if not re.match(r"^[a-zA-Z0-9_\-]+\.svg$", badge_name):
         return jsonify({"error": "Invalid badge filename."}), 400
 
-    badge_file = BADGES_DIR / badge_name
+    try:
+        badge_file = (BADGES_DIR / badge_name).resolve()
+        badge_file.relative_to(BADGES_DIR.resolve())
+    except (ValueError, RuntimeError):
+        return jsonify({"error": "Access denied: Path traversal detected."}), 400
+
     if not badge_file.exists():
         return jsonify({"error": f"Badge '{badge_name}' not found."}), 404
 
@@ -184,6 +191,23 @@ def trigger_pipeline():
         err_msg = f"Invalid stage '{stage}'. Must be one of {valid_stages}."
         return jsonify({"error": err_msg}), 400
 
+    valid_environments = ["staging", "production", "development"]
+    if environment not in valid_environments:
+        err_msg = (
+            f"Invalid environment '{environment}'. Must be one of {valid_environments}."
+        )
+        return jsonify({"error": err_msg}), 400
+
+    if not _pipeline_lock.acquire(blocking=False):
+        return (
+            jsonify(
+                {
+                    "error": "Pipeline execution is already in progress. Please wait for it to finish."
+                }
+            ),
+            409,
+        )
+
     try:
         from scripts.pipeline_runner import PipelineRunner
 
@@ -202,3 +226,5 @@ def trigger_pipeline():
         return jsonify({"success": success, "report": report_data}), 200
     except Exception as e:
         return jsonify({"error": f"Failed to execute pipeline: {str(e)}"}), 500
+    finally:
+        _pipeline_lock.release()
