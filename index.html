@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Project 52 Phase 3 | Production Hub</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        background: #090d16;
+        color: #e2e8f0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, monospace;
+        text-align: center;
+        padding: 80px 20px 100px;
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 960px;
+        margin: 0 auto;
+      }
+
+      .badge-row {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 25px;
+        flex-wrap: wrap;
+      }
+
+      .badge-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 12px;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        background: rgba(99, 102, 241, 0.15);
+        color: #818cf8;
+        border: 1px solid rgba(99, 102, 241, 0.3);
+      }
+
+      .badge-pill.status-live {
+        background: rgba(16, 185, 129, 0.15);
+        color: #34d399;
+        border-color: rgba(16, 185, 129, 0.35);
+      }
+
+      h1 {
+        font-size: 2.75rem;
+        font-weight: 900;
+        letter-spacing: 4px;
+        margin-bottom: 8px;
+        background: linear-gradient(135deg, #6366f1 0%, #06b6d4 50%, #10b981 100%);
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .subtitle {
+        color: #94a3b8;
+        margin-bottom: 50px;
+        letter-spacing: 3px;
+        font-size: 0.9375rem;
+        text-transform: uppercase;
+      }
+
+      .project-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 20px;
+        text-align: left;
+      }
+
+      .project-card {
+        background: rgba(15, 23, 42, 0.65);
+        border: 1px solid rgba(148, 163, 184, 0.12);
+        border-radius: 12px;
+        padding: 24px;
+        text-decoration: none;
+        color: #e2e8f0;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .project-card.active {
+        border-color: rgba(99, 102, 241, 0.45);
+        background: linear-gradient(180deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.8) 100%);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+      }
+
+      .project-card.active::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #6366f1, #10b981);
+      }
+
+      .project-card.active:hover {
+        transform: translateY(-4px);
+        border-color: #6366f1;
+        box-shadow: 0 12px 30px rgba(99, 102, 241, 0.25);
+      }
+
+      .project-card.upcoming {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+
+      .card-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+
+      .week-tag {
+        font-size: 0.75rem;
+        font-weight: 800;
+        letter-spacing: 1.5px;
+        color: #38bdf8;
+        text-transform: uppercase;
+      }
+
+      .status-chip {
+        font-size: 0.6875rem;
+        font-weight: 700;
+        padding: 3px 8px;
+        border-radius: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .status-chip.completed {
+        background: rgba(16, 185, 129, 0.2);
+        color: #34d399;
+        border: 1px solid rgba(16, 185, 129, 0.4);
+      }
+
+      .status-chip.pending {
+        background: rgba(148, 163, 184, 0.1);
+        color: #94a3b8;
+        border: 1px solid rgba(148, 163, 184, 0.2);
+      }
+
+      .card-title {
+        font-size: 1.125rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+        color: #ffffff;
+      }
+
+      .card-desc {
+        font-size: 0.8125rem;
+        color: #94a3b8;
+        line-height: 1.5;
+        margin-bottom: 20px;
+      }
+
+      .card-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-top: 14px;
+        border-top: 1px solid rgba(148, 163, 184, 0.1);
+        font-size: 0.75rem;
+      }
+
+      .tech-tags {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+
+      .tech-pill {
+        background: rgba(255, 255, 255, 0.05);
+        padding: 2px 8px;
+        border-radius: 4px;
+        color: #cbd5e1;
+        font-family: monospace;
+      }
+
+      .launch-link {
+        color: #6366f1;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .project-card.active:hover .launch-link {
+        color: #a5b4fc;
+      }
+
+      footer {
+        margin-top: 60px;
+        color: #64748b;
+        font-size: 0.8125rem;
+        letter-spacing: 1px;
+      }
+
+      footer a {
+        color: #818cf8;
+        text-decoration: none;
+      }
+
+      footer a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="badge-row">
+        <span class="badge-pill">Project 52</span>
+        <span class="badge-pill status-live">Phase 3: Production</span>
+        <span class="badge-pill">DevOps & Cloud Scale</span>
+      </div>
+
+      <h1>PROJECT 52</h1>
+      <p class="subtitle">Phase 3: Production-Grade Applications & Cloud Deployment</p>
+
+      <div class="project-list">
+        <!-- Week 37 (Active Completed) -->
+        <a href="./week37_ci_cd_pipeline/frontend/public/index.html" class="project-card active" target="_blank">
+          <div>
+            <div class="card-top">
+              <span class="week-tag">Week 37</span>
+              <span class="status-chip completed">Live & Certified</span>
+            </div>
+            <div class="card-title">Automated CI/CD Pipeline & Operations Mission Control</div>
+            <div class="card-desc">
+              Multi-stage automated quality gates (Flake8, Black, isort, Bandit, Pytest 97.5% coverage), GitHub Actions dual-environment deployment, zero-dependency SVG badges, and real-time streaming telemetry dashboard.
+            </div>
+          </div>
+          <div class="card-footer">
+            <div class="tech-tags">
+              <span class="tech-pill">GitHub Actions</span>
+              <span class="tech-pill">Python</span>
+              <span class="tech-pill">Flask</span>
+              <span class="tech-pill">Pytest</span>
+            </div>
+            <span class="launch-link">Launch Dashboard &rarr;</span>
+          </div>
+        </a>
+
+        <!-- Week 38 (Upcoming) -->
+        <div class="project-card upcoming">
+          <div>
+            <div class="card-top">
+              <span class="week-tag">Week 38</span>
+              <span class="status-chip pending">Roadmap</span>
+            </div>
+            <div class="card-title">Containerized Application with Docker</div>
+            <div class="card-desc">Multi-container orchestration, microservice networking, persistent Docker volumes, and container health probe automation.</div>
+          </div>
+          <div class="card-footer">
+            <div class="tech-tags">
+              <span class="tech-pill">Docker</span>
+              <span class="tech-pill">Compose</span>
+              <span class="tech-pill">Linux</span>
+            </div>
+            <span class="launch-link">Upcoming</span>
+          </div>
+        </div>
+
+        <!-- Week 39 (Upcoming) -->
+        <div class="project-card upcoming">
+          <div>
+            <div class="card-top">
+              <span class="week-tag">Week 39</span>
+              <span class="status-chip pending">Roadmap</span>
+            </div>
+            <div class="card-title">Production E-Commerce Platform v1</div>
+            <div class="card-desc">Real-time payment gateway integration with Stripe, transactional cart state management, webhook idempotency, and automated invoicing.</div>
+          </div>
+          <div class="card-footer">
+            <div class="tech-tags">
+              <span class="tech-pill">Stripe API</span>
+              <span class="tech-pill">Webhooks</span>
+              <span class="tech-pill">SQL</span>
+            </div>
+            <span class="launch-link">Upcoming</span>
+          </div>
+        </div>
+
+        <!-- Week 40 (Upcoming) -->
+        <div class="project-card upcoming">
+          <div>
+            <div class="card-top">
+              <span class="week-tag">Week 40</span>
+              <span class="status-chip pending">Roadmap</span>
+            </div>
+            <div class="card-title">Progressive Web App (PWA)</div>
+            <div class="card-desc">Offline-first caching architecture via Service Workers, web app manifests, background synchronization, and push notifications.</div>
+          </div>
+          <div class="card-footer">
+            <div class="tech-tags">
+              <span class="tech-pill">Service Worker</span>
+              <span class="tech-pill">IndexedDB</span>
+              <span class="tech-pill">PWA</span>
+            </div>
+            <span class="launch-link">Upcoming</span>
+          </div>
+        </div>
+
+        <!-- Week 41 (Upcoming) -->
+        <div class="project-card upcoming">
+          <div>
+            <div class="card-top">
+              <span class="week-tag">Week 41</span>
+              <span class="status-chip pending">Roadmap</span>
+            </div>
+            <div class="card-title">Enterprise GraphQL API Service</div>
+            <div class="card-desc">Schema design, query resolvers, mutations, DataLoader batching to eliminate N+1 queries, and GraphQL subscriptions.</div>
+          </div>
+          <div class="card-footer">
+            <div class="tech-tags">
+              <span class="tech-pill">GraphQL</span>
+              <span class="tech-pill">DataLoader</span>
+              <span class="tech-pill">Node/Py</span>
+            </div>
+            <span class="launch-link">Upcoming</span>
+          </div>
+        </div>
+
+        <!-- Week 42 (Upcoming) -->
+        <div class="project-card upcoming">
+          <div>
+            <div class="card-top">
+              <span class="week-tag">Week 42</span>
+              <span class="status-chip pending">Roadmap</span>
+            </div>
+            <div class="card-title">Real-Time Collaborative Document Editor</div>
+            <div class="card-desc">Operational transformation, conflict-free replicated data types (CRDT), WebRTC mesh networking, and live cursor awareness.</div>
+          </div>
+          <div class="card-footer">
+            <div class="tech-tags">
+              <span class="tech-pill">CRDT</span>
+              <span class="tech-pill">WebRTC</span>
+              <span class="tech-pill">WebSockets</span>
+            </div>
+            <span class="launch-link">Upcoming</span>
+          </div>
+        </div>
+      </div>
+
+      <footer>
+        Project 52 &middot; Phase 3: Production &middot; Built by <a href="https://github.com/pak-pow" target="_blank">pak-pow</a> &middot;
+        <a href="https://github.com/pak-pow/PROJECT52-PHASE2" target="_blank">&larr; Back to Phase 2 Hub</a>
+      </footer>
+    </div>
+  </body>
+</html>
