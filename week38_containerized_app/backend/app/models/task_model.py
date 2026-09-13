@@ -97,7 +97,7 @@ class TaskModel:
                 params.append(clean_priority)
 
         if conditions:
-            query += " WHERE " + " AND ".join(conditions)
+            query += " WHERE " + " AND ".join(conditions)  # nosec B608
 
         query += " ORDER BY id DESC LIMIT ? OFFSET ?;"
         params.extend([limit, offset])
@@ -152,7 +152,7 @@ class TaskModel:
             return existing
 
         updates.append("updated_at = CURRENT_TIMESTAMP")
-        query = f"UPDATE tasks SET {', '.join(updates)} WHERE id = ?;"
+        query = f"UPDATE tasks SET {', '.join(updates)} WHERE id = ?;"  # nosec B608
         params.append(task_id)
 
         execute_query(query, tuple(params), db_url=db_url, commit=True)

@@ -1,11 +1,12 @@
 """Application factory module for Docker Pulse Task & Ops Hub."""
 
+from flask import Flask, jsonify
+from flask_cors import CORS
+
 from app.config.settings import get_config
 from app.db import init_db
 from app.routes.health_routes import health_bp
 from app.routes.task_routes import task_bp
-from flask import Flask, jsonify
-from flask_cors import CORS
 
 
 def create_app(config_name: str = None, init_database: bool = True) -> Flask:

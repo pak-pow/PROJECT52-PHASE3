@@ -3,9 +3,10 @@
 import time
 from datetime import datetime, timezone
 
+from flask import Blueprint, current_app, jsonify
+
 from app.cache import cache
 from app.db import check_db_health
-from flask import Blueprint, current_app, jsonify
 
 health_bp = Blueprint("health", __name__)
 _START_TIME = time.time()

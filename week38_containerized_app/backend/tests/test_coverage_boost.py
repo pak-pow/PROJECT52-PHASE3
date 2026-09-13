@@ -7,8 +7,13 @@ import pytest
 
 from app import create_app
 from app.cache import CacheClient
-from app.config.settings import (DevelopmentConfig, ProductionConfig,
-                                 TestingConfig, _get_git_commit, get_config)
+from app.config.settings import (
+    DevelopmentConfig,
+    ProductionConfig,
+    TestingConfig,
+    _get_git_commit,
+    get_config,
+)
 from app.db import check_db_health, execute_query, get_db_connection, init_db
 from app.models.task_model import TaskModel
 
