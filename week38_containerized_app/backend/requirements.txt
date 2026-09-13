@@ -1,0 +1,11 @@
+flask>=3.0.0
+flask-cors>=4.0.0
+gunicorn>=21.2.0
+psycopg2-binary>=2.9.9
+redis>=5.0.0
+pytest>=8.0.0
+pytest-cov>=4.1.0
+flake8>=7.0.0
+black>=24.0.0
+isort>=5.13.0
+bandit>=1.7.5
