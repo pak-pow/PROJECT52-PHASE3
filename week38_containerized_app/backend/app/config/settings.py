@@ -82,7 +82,7 @@ CONFIG_MAP: Dict[str, Type[BaseConfig]] = {
 }
 
 
-def get_config(env_name: str = None) -> Type[BaseConfig]:
+def get_config(env_name: str = None) -> Type[BaseConfig]:  # type: ignore
     """Resolve the configuration class based on environment name or FLASK_ENV."""
     if not env_name:
         env_name = os.getenv("FLASK_ENV", "development").lower()
