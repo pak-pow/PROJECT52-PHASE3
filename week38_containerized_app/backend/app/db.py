@@ -107,8 +107,8 @@ def execute_query(
         return result
 
 
-def init_db(db_url: Optional[str] = None) -> bool:
-    """Initialize database tables and indexes from schema.sql."""
+def init_db(db_url: Optional[str] = None, retries: int = 5, delay: float = 1.0) -> bool:
+    """Initialize database tables and indexes from schema.sql with retry support."""
     if db_url is None:
         db_url = os.getenv("DATABASE_URL", "sqlite:///data/tasks.db")
 
@@ -125,14 +125,24 @@ def init_db(db_url: Optional[str] = None) -> bool:
         )
         schema_sql = schema_sql.replace("REAL NOT NULL", "DOUBLE PRECISION NOT NULL")
 
-    with get_db_connection(db_url) as conn:
-        cursor = conn.cursor()
-        if postgres_mode:
-            cursor.execute(schema_sql)
-        else:
-            cursor.executescript(schema_sql)
-        conn.commit()
-        cursor.close()
+    last_error: Optional[Exception] = None
+    for attempt in range(1, retries + 1):
+        try:
+            with get_db_connection(db_url) as conn:
+                cursor = conn.cursor()
+                if postgres_mode:
+                    cursor.execute(schema_sql)
+                else:
+                    cursor.executescript(schema_sql)
+                conn.commit()
+                cursor.close()
+            return True
+        except Exception as err:
+            last_error = err
+            if attempt < retries:
+                time.sleep(delay)
+            else:
+                raise last_error
 
     return True
 
