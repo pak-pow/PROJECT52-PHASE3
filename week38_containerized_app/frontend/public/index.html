@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Docker Pulse — Multi-Service Operations Hub</title>
+  <style>
+    :root {
+      --bg-primary: #0a0e17;
+      --bg-secondary: #111827;
+      --bg-card: #162032;
+      --border-color: #1e293b;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --accent-cyan: #06b6d4;
+      --accent-green: #10b981;
+      --accent-blue: #3b82f6;
+      --accent-amber: #f59e0b;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+    }
+
+    .container {
+      max-width: 960px;
+      width: 100%;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(6, 182, 212, 0.1);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      color: var(--accent-cyan);
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 1rem;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      box-shadow: 0 0 8px var(--accent-green);
+      display: inline-block;
+    }
+
+    h1 {
+      font-size: 2.25rem;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      margin-bottom: 0.75rem;
+      background: linear-gradient(135deg, #38bdf8, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    p.subtitle {
+      color: var(--text-secondary);
+      font-size: 1.05rem;
+      max-width: 600px;
+      margin: 0 auto;
+      line-height: 1.5;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(56, 189, 248, 0.4);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+
+    .card-title {
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--text-primary);
+    }
+
+    .card-icon {
+      font-size: 1.5rem;
+    }
+
+    .card-desc {
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      line-height: 1.4;
+      margin-bottom: 1rem;
+    }
+
+    .card-meta {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent-cyan);
+      background: rgba(6, 182, 212, 0.08);
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      display: inline-block;
+      align-self: flex-start;
+    }
+
+    .section-box {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .section-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .endpoint-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .endpoint-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+    }
+
+    .endpoint-left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .method {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+    }
+
+    .method-get {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--accent-green);
+    }
+
+    .method-post {
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--accent-blue);
+    }
+
+    .endpoint-path {
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      color: var(--text-primary);
+    }
+
+    .btn-link {
+      color: var(--accent-cyan);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      padding: 0.35rem 0.75rem;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-link:hover {
+      background: var(--accent-cyan);
+      color: #000;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="badge-pill">
+        <span class="status-dot"></span> Multi-Container Topology Active
+      </div>
+      <h1>Docker Pulse Operations Hub</h1>
+      <p class="subtitle">Orchestrated 4-tier production environment running Nginx Gateway, Flask API, PostgreSQL 16, and Redis 7 Cache.</p>
+    </header>
+
+    <div class="grid">
+      <div class="card">
+        <div>
+          <div class="card-header">
+            <span class="card-title">Nginx Gateway</span>
+            <span class="card-icon">🌐</span>
+          </div>
+          <p class="card-desc">Reverse proxy ingress on port 8080 handling gzip compression and API routing.</p>
+        </div>
+        <span class="card-meta">web:8080 ➔ 80</span>
+      </div>
+
+      <div class="card">
+        <div>
+          <div class="card-header">
+            <span class="card-title">Flask Service</span>
+            <span class="card-icon">🐍</span>
+          </div>
+          <p class="card-desc">Gunicorn WSGI backend running inside a non-root unprivileged container.</p>
+        </div>
+        <span class="card-meta">api:5000 (Internal)</span>
+      </div>
+
+      <div class="card">
+        <div>
+          <div class="card-header">
+            <span class="card-title">PostgreSQL 16</span>
+            <span class="card-icon">🐘</span>
+          </div>
+          <p class="card-desc">Persistent relational database mounted to named volume postgres_data.</p>
+        </div>
+        <span class="card-meta">db:5432 (Volume)</span>
+      </div>
+
+      <div class="card">
+        <div>
+          <div class="card-header">
+            <span class="card-title">Redis 7 Cache</span>
+            <span class="card-icon">⚡</span>
+          </div>
+          <p class="card-desc">In-memory key-value cache and benchmark probe with AOF persistence.</p>
+        </div>
+        <span class="card-meta">cache:6379 (Volume)</span>
+      </div>
+    </div>
+
+    <div class="section-box">
+      <div class="section-title">
+        <span>🔗</span> Verified Live Endpoints (Routed through Nginx on Port 8080)
+      </div>
+      <div class="endpoint-list">
+        <div class="endpoint-item">
+          <div class="endpoint-left">
+            <span class="method method-get">GET</span>
+            <span class="endpoint-path">/healthz</span>
+          </div>
+          <a class="btn-link" href="/healthz" target="_blank">Test Nginx Gateway</a>
+        </div>
+
+        <div class="endpoint-item">
+          <div class="endpoint-left">
+            <span class="method method-get">GET</span>
+            <span class="endpoint-path">/api/v1/health</span>
+          </div>
+          <a class="btn-link" href="/api/v1/health" target="_blank">Test Flask Liveness</a>
+        </div>
+
+        <div class="endpoint-item">
+          <div class="endpoint-left">
+            <span class="method method-get">GET</span>
+            <span class="endpoint-path">/api/v1/ready</span>
+          </div>
+          <a class="btn-link" href="/api/v1/ready" target="_blank">Test DB & Cache Readiness</a>
+        </div>
+
+        <div class="endpoint-item">
+          <div class="endpoint-left">
+            <span class="method method-get">GET</span>
+            <span class="endpoint-path">/api/v1/benchmark</span>
+          </div>
+          <a class="btn-link" href="/api/v1/benchmark" target="_blank">Run Speed Benchmark</a>
+        </div>
+
+        <div class="endpoint-item">
+          <div class="endpoint-left">
+            <span class="method method-get">GET</span>
+            <span class="endpoint-path">/api/v1/tasks</span>
+          </div>
+          <a class="btn-link" href="/api/v1/tasks" target="_blank">View Stored Tasks</a>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Project 52 — Phase 3 (Production) &nbsp;|&nbsp; Week 38: Containerized App with Docker
+    </footer>
+  </div>
+</body>
+</html>
