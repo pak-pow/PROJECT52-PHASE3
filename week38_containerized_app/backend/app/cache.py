@@ -191,3 +191,10 @@ class CacheClient:
 
 # Global singleton client
 cache = CacheClient()
+
+
+def get_cache(redis_url: Optional[str] = None) -> CacheClient:
+    """Return cache client instance (singleton if default, or custom instance)."""
+    if redis_url is None:
+        return cache
+    return CacheClient(redis_url)
