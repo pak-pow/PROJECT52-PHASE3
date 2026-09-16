@@ -7,7 +7,29 @@ with dual PostgreSQL / SQLite database URLs and Redis caching.
 import os
 import socket
 import subprocess
+from pathlib import Path
 from typing import Dict, Type
+
+
+def get_secret(key: str, default: str = "") -> str:
+    """Retrieve secret from file (_FILE suffix or /run/secrets) or env fallback."""
+    file_path = os.getenv(f"{key}_FILE")
+    if file_path:
+        path_obj = Path(file_path)
+        if path_obj.exists() and path_obj.is_file():
+            try:
+                return path_obj.read_text(encoding="utf-8").strip()
+            except OSError:
+                pass
+
+    docker_secret_path = Path(f"/run/secrets/{key.lower()}")
+    if docker_secret_path.exists() and docker_secret_path.is_file():
+        try:
+            return docker_secret_path.read_text(encoding="utf-8").strip()
+        except OSError:
+            pass
+
+    return os.getenv(key, default)
 
 
 def _get_git_commit() -> str:
@@ -34,7 +56,7 @@ class BaseConfig:
     BUILD_NUMBER: str = os.getenv("BUILD_NUMBER", "local-dev")
     HOSTNAME: str = os.getenv("HOSTNAME", socket.gethostname())
 
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "dev-secret-key-change-in-production")
+    SECRET_KEY: str = get_secret("SECRET_KEY", "dev-secret-key-change-in-production")
     JSON_SORT_KEYS: bool = False
     DEBUG: bool = False
     TESTING: bool = False
@@ -72,7 +94,7 @@ class ProductionConfig(BaseConfig):
     DEBUG: bool = False
     TESTING: bool = False
     ENVIRONMENT: str = "production"
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "default-prod-change-me")
+    SECRET_KEY: str = get_secret("SECRET_KEY", "default-prod-change-me")
 
 
 CONFIG_MAP: Dict[str, Type[BaseConfig]] = {
