@@ -38,7 +38,7 @@ def record_migration(version: str, description: str, db_url: str = None) -> bool
     if db_url is None:
         db_url = os.getenv("DATABASE_URL", "sqlite:///data/tasks.db")
 
-    # Check if migration already recorded
+    # The runner checks if the migration has already been applied
     existing = execute_query(
         "SELECT version FROM schema_migrations WHERE version = ?",
         params=(version,),
@@ -118,18 +118,18 @@ def run_migrations(db_url: str = None, seed: bool = True) -> dict:
     if db_url is None:
         db_url = os.getenv("DATABASE_URL", "sqlite:///data/tasks.db")
 
-    # Step 1: Initialize base schema
+    # Step 1: The script initializes the base database schema
     init_db(db_url)
 
-    # Step 2: Ensure migrations tracking table exists
+    # Step 2: The runner ensures the schema_migrations tracking table exists
     setup_migrations_table(db_url)
 
-    # Step 3: Record baseline migration
+    # Step 3: The runner records the baseline migration
     recorded = record_migration(
         "v1.0.0_baseline", "Initial tables for tasks and metrics", db_url=db_url
     )
 
-    # Step 4: Optional seeding
+    # Step 4: The script seeds default operational tasks if the table is fresh
     seeded_count = 0
     if seed:
         seeded_count = seed_demo_tasks(db_url)
