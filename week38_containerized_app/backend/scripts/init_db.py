@@ -98,13 +98,13 @@ def seed_demo_tasks(db_url: str = None) -> int:
 
     inserted = 0
     insert_task_sql = (
-        "INSERT INTO tasks (title, description, priority, status, "
-        "created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)"
+        "INSERT INTO tasks (title, description, priority, status) "
+        "VALUES (?, ?, ?, ?)"
     )
     for title, desc, priority, status in demo_tasks:
         execute_query(
             insert_task_sql,
-            params=(title, desc, priority, status, time.time(), time.time()),
+            params=(title, desc, priority, status),
             db_url=db_url,
             commit=True,
         )
