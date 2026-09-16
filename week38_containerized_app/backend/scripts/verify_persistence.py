@@ -27,8 +27,8 @@ def write_canary(db_url: str = None, canary_id: str = None) -> dict:
 
     # 1. The script persists the canary record into the database
     insert_sql = (
-        "INSERT INTO tasks (title, description, priority, status, "
-        "created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)"
+        "INSERT INTO tasks (title, description, priority, status) "
+        "VALUES (?, ?, ?, ?)"
     )
     execute_query(
         insert_sql,
@@ -37,8 +37,6 @@ def write_canary(db_url: str = None, canary_id: str = None) -> dict:
             f"Durability verification record for {canary_id}",
             "low",
             "pending",
-            timestamp,
-            timestamp,
         ),
         db_url=db_url,
         commit=True,
