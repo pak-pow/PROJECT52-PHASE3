@@ -42,18 +42,29 @@ def test_nginx_configuration_file():
 
 
 def test_frontend_public_landing_page():
-    """Verify frontend/public/index.html adheres to standalone CSS rules."""
+    """Verify frontend adheres to vanilla standalone CSS and JS rules."""
     html_path = WEEK38_DIR / "frontend" / "public" / "index.html"
     assert html_path.exists(), "frontend/public/index.html must exist."
 
     content = html_path.read_text(encoding="utf-8")
     assert "<!DOCTYPE html>" in content
     assert "Docker Pulse" in content
-    assert "<style>" in content
+    assert '<link rel="stylesheet"' in content
+    assert "base.css" in content
+    assert "pulse.css" in content
+    assert "main.js" in content
     # Verify no external CSS or script CDN tags are loaded
     assert "cdn." not in content
     assert "unpkg.com" not in content
     assert "cdnjs." not in content
+
+    # Verify modular stylesheet and script files exist
+    base_css = WEEK38_DIR / "frontend" / "src" / "assets" / "base.css"
+    assert base_css.exists(), "frontend/src/assets/base.css must exist."
+    pulse_css = WEEK38_DIR / "frontend" / "src" / "assets" / "pulse.css"
+    assert pulse_css.exists(), "frontend/src/assets/pulse.css must exist."
+    main_js = WEEK38_DIR / "frontend" / "src" / "main.js"
+    assert main_js.exists(), "frontend/src/main.js must exist."
 
 
 def test_init_db_retry_resilience():
