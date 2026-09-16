@@ -25,7 +25,7 @@ def write_canary(db_url: str = None, canary_id: str = None) -> dict:
     timestamp = time.time()
     task_title = f"Persistence Canary [{canary_id}]"
 
-    # 1. Write to Database
+    # 1. The script persists the canary record into the database
     insert_sql = (
         "INSERT INTO tasks (title, description, priority, status, "
         "created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)"
@@ -44,7 +44,7 @@ def write_canary(db_url: str = None, canary_id: str = None) -> dict:
         commit=True,
     )
 
-    # 2. Write to Cache
+    # 2. The script stores the verification payload inside the cache
     cache = get_cache()
     cache_key = f"persistence:{canary_id}"
     cache.set(cache_key, {"canary_id": canary_id, "timestamp": timestamp}, ttl=3600)
@@ -64,7 +64,7 @@ def verify_canary(canary_id: str, db_url: str = None) -> dict:
 
     task_title = f"Persistence Canary [{canary_id}]"
 
-    # 1. Query Database
+    # 1. The verifier queries the database for the canary record
     row = execute_query(
         "SELECT id, title, status FROM tasks WHERE title = ?",
         params=(task_title,),
@@ -72,7 +72,7 @@ def verify_canary(canary_id: str, db_url: str = None) -> dict:
         fetch_one=True,
     )
 
-    # 2. Query Cache
+    # 2. The verifier queries the cache for the active key
     cache = get_cache()
     cache_key = f"persistence:{canary_id}"
     cache_data = cache.get(cache_key)
@@ -111,7 +111,7 @@ def main():
         print(f"   * Database Durability: {db_status}")
         print(f"   * Cache Durability: {cache_status}")
     else:
-        # Full write and read cycle
+        # The verifier conducts a full write-and-read persistence cycle
         write_res = write_canary()
         canary_id = write_res["canary_id"]
         verify_res = verify_canary(canary_id)
