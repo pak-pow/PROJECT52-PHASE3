@@ -6,7 +6,7 @@ services:
       FLASK_ENV: development
       DEBUG: "true"
     volumes:
-      # Live-mount host backend directory for instant hot-reloading
+      # The engine mounts the local backend directory into the container for instant hot-reloading
       - ./backend:/app
     ports:
       - "5000:5000"
