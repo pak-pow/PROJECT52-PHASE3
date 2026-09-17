@@ -97,19 +97,19 @@ export class ServiceGrid {
     }
 
     // 3. PostgreSQL
-    const dbPing = document.getElementById('ping-db');
-    if (dbPing && readyData?.database) {
+    const dbBadge = document.getElementById('status-db');
+    if (dbBadge && readyData?.database) {
       const dbInfo = readyData.database;
       const badge = getLatencyBadge(dbInfo.latency_ms);
-      dbPing.innerHTML = `${badge.text}`;
+      dbBadge.innerHTML = `<span class="status-dot dot-green"></span> <span id="ping-db" class="${badge.colorClass}">${badge.text}</span>`;
     }
 
     // 4. Redis Cache
-    const cachePing = document.getElementById('ping-cache');
-    if (cachePing && readyData?.cache) {
+    const cacheBadge = document.getElementById('status-cache');
+    if (cacheBadge && readyData?.cache) {
       const cacheInfo = readyData.cache;
       const badge = getLatencyBadge(cacheInfo.latency_ms);
-      cachePing.innerHTML = `${badge.text}`;
+      cacheBadge.innerHTML = `<span class="status-dot dot-green"></span> <span id="ping-cache" class="${badge.colorClass}">${badge.text}</span>`;
     }
   }
 }
