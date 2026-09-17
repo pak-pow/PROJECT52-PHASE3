@@ -350,17 +350,24 @@
 }
 
 .form-select {
-  background: var(--bg-primary);
+  background-color: var(--bg-primary);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.85rem center;
   border: 1px solid var(--border-color);
   color: var(--text-primary);
-  padding: 0.7rem 1.25rem 0.7rem 1rem;
+  padding: 0.7rem 2.25rem 0.7rem 1rem;
   border-radius: 8px;
   font-size: 0.875rem;
   font-family: inherit;
   outline: none;
   cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
   transition: all 0.2s ease;
-  min-width: 160px;
+  width: auto;
+  min-width: 145px;
 }
 
 .form-select:focus {
@@ -480,15 +487,21 @@
 }
 
 .status-select {
-  background: var(--bg-primary);
+  background-color: var(--bg-primary);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.65rem center;
   border: 1px solid var(--border-color);
   color: var(--text-primary);
   font-size: 0.8rem;
   font-weight: 500;
-  padding: 0.4rem 0.75rem;
+  padding: 0.4rem 1.85rem 0.4rem 0.75rem;
   border-radius: 6px;
   outline: none;
   cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
   transition: all 0.2s ease;
 }
 
