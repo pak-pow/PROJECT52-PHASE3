@@ -44,7 +44,7 @@ export class TaskManager {
           </div>
           <div class="form-row">
             <input type="text" id="task-desc" class="form-input" placeholder="Optional description or operational note...">
-            <button type="submit" class="btn btn-primary" id="btn-submit-task">Create Task</button>
+            <button type="submit" class="btn btn-primary" id="btn-submit-task"><span>+</span> Create Task</button>
           </div>
         </form>
 
@@ -56,7 +56,7 @@ export class TaskManager {
             <button class="filter-btn" data-filter="in_progress">In Progress</button>
             <button class="filter-btn" data-filter="completed">Completed</button>
           </div>
-          <button class="btn btn-secondary btn-sm" id="btn-refresh-tasks">⟳ Refresh</button>
+          <button class="btn btn-secondary btn-sm" id="btn-refresh-tasks"><span>⟳</span> Refresh</button>
         </div>
 
         <!-- Task Table / List -->
