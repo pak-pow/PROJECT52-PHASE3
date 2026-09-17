@@ -21,7 +21,7 @@ export class ServiceGrid {
               <span class="card-title">Nginx Gateway</span>
               <span class="card-icon">🌐</span>
             </div>
-            <p class="card-desc">Reverse proxy ingress on port 8080 handling gzip compression and static UI assets.</p>
+            <p class="card-desc">The Front Door. Welcomes visitors, serves the web pages fast, and keeps traffic secure.</p>
           </div>
           <div class="card-footer">
             <span class="card-meta">web:8080</span>
@@ -33,10 +33,10 @@ export class ServiceGrid {
         <div class="card" id="card-api">
           <div>
             <div class="card-header">
-              <span class="card-title">Flask Service</span>
+              <span class="card-title">Flask Backend</span>
               <span class="card-icon">🐍</span>
             </div>
-            <p class="card-desc">Gunicorn WSGI backend running inside a non-root unprivileged container.</p>
+            <p class="card-desc">The Brain. Runs the Python code securely to process your tasks and verify inputs.</p>
           </div>
           <div class="card-footer">
             <span class="card-meta">api:5000</span>
@@ -48,10 +48,10 @@ export class ServiceGrid {
         <div class="card" id="card-db">
           <div>
             <div class="card-header">
-              <span class="card-title">PostgreSQL 16</span>
+              <span class="card-title">PostgreSQL Database</span>
               <span class="card-icon">🐘</span>
             </div>
-            <p class="card-desc">Persistent relational database mounted to named volume postgres_data.</p>
+            <p class="card-desc">The Filing Cabinet. Safely saves data to permanent disk storage so nothing is lost.</p>
           </div>
           <div class="card-footer">
             <span class="card-meta">db:5432</span>
@@ -63,10 +63,10 @@ export class ServiceGrid {
         <div class="card" id="card-cache">
           <div>
             <div class="card-header">
-              <span class="card-title">Redis 7 Cache</span>
+              <span class="card-title">Redis Fast Cache</span>
               <span class="card-icon">⚡</span>
             </div>
-            <p class="card-desc">In-memory key-value cache and benchmark probe with AOF persistence.</p>
+            <p class="card-desc">The Quick Whiteboard. Holds instant memory copies so frequent reads load in under 1ms.</p>
           </div>
           <div class="card-footer">
             <span class="card-meta">cache:6379</span>
