@@ -22,19 +22,19 @@ export class TaskManager {
         <div class="task-manager-header">
           <div>
             <div class="section-title">
-              <span>📋</span> Containerized Task & Operations Hub
+              <span>📋</span> Live Task Board
             </div>
-            <p class="benchmark-subtitle">Real-time CRUD verifying PostgreSQL persistence and automated Redis cache invalidation.</p>
+            <p class="benchmark-subtitle">Add, start, and complete tasks to see your database and memory update in real time.</p>
           </div>
           <div class="cache-badge" id="cache-indicator">
-            <span class="status-dot dot-cyan"></span> <span id="cache-text">Checking Cache...</span>
+            <span class="status-dot dot-cyan"></span> <span id="cache-text">Checking memory...</span>
           </div>
         </div>
 
         <!-- Task Creation Form -->
         <form id="form-create-task" class="task-form">
           <div class="form-row">
-            <input type="text" id="task-title" class="form-input" placeholder="Enter task title (e.g., Verify Docker Volume Persistence)..." required>
+            <input type="text" id="task-title" class="form-input" placeholder="What needs to be done? (e.g., Deploy new update)..." required>
             <select id="task-priority" class="form-select">
               <option value="low">Low Priority</option>
               <option value="medium" selected>Medium Priority</option>
@@ -43,8 +43,8 @@ export class TaskManager {
             </select>
           </div>
           <div class="form-row">
-            <input type="text" id="task-desc" class="form-input" placeholder="Optional description or operational note...">
-            <button type="submit" class="btn btn-primary" id="btn-submit-task"><span>+</span> Create Task</button>
+            <input type="text" id="task-desc" class="form-input" placeholder="Add extra details or notes (optional)...">
+            <button type="submit" class="btn btn-primary" id="btn-submit-task"><span>+</span> Add Task</button>
           </div>
         </form>
 
@@ -61,7 +61,7 @@ export class TaskManager {
 
         <!-- Task Table / List -->
         <div id="task-table-container">
-          <div class="task-loading">Loading tasks from containerized database...</div>
+          <div class="task-loading">Loading tasks...</div>
         </div>
       </div>
     `;
@@ -115,7 +115,7 @@ export class TaskManager {
 
       this.tasks = data.tasks || [];
       if (cacheIndicator) {
-        cacheIndicator.textContent = data.xCache === 'HIT' ? 'Redis Cache: HIT' : 'PostgreSQL: MISS';
+        cacheIndicator.textContent = data.xCache === 'HIT' ? '⚡ Loaded from Fast Memory (Redis)' : '💾 Loaded from Hard Drive (PostgreSQL)';
         const parent = cacheIndicator.parentElement;
         parent.className = data.xCache === 'HIT' ? 'cache-badge badge-hit' : 'cache-badge badge-miss';
       }
@@ -135,7 +135,7 @@ export class TaskManager {
       tableContainer.innerHTML = `
         <div class="empty-state">
           <span class="empty-icon">📂</span>
-          <p>No tasks found for this filter. Create a new task above!</p>
+          <p>No tasks found in this view. Add a new task above!</p>
         </div>
       `;
       return;
@@ -206,10 +206,10 @@ export class TaskManager {
       // Delete task confirmation
       if (e.target.getAttribute('data-action') === 'delete') {
         const taskId = e.target.getAttribute('data-id');
-        if (confirm('Delete this task from PostgreSQL?')) {
+        if (confirm('Are you sure you want to delete this task?')) {
           try {
             await opsApi.deleteTask(taskId);
-            Toast.success('Task deleted successfully');
+            Toast.success('Task deleted');
             this.loadTasks(true);
           } catch (err) {
             Toast.error(err.message);
@@ -232,7 +232,7 @@ export class TaskManager {
 
     try {
       await opsApi.createTask({ title, priority, description, status: 'pending' });
-      Toast.success(`Created task: ${title}`);
+      Toast.success(`Task added: ${title}`);
       titleInput.value = '';
       descInput.value = '';
       this.loadTasks(true);
