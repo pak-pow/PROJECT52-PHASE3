@@ -56,4 +56,4 @@ export function getLatencyBadge(latencyMs) {
     return { text: `${ms.toFixed(2)} ms`, colorClass: 'badge-normal' };
   }
   return { text: `${ms.toFixed(2)} ms`, colorClass: 'badge-slow' };
-}\n
+}
