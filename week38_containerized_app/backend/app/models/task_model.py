@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional
 
 from app.db import execute_query
 
-VALID_PRIORITIES = {"low", "medium", "high", "critical"}
+VALID_PRIORITIES = {"low", "medium", "high", "critical", "urgent"}
 VALID_STATUSES = {"pending", "in_progress", "completed"}
 
 
