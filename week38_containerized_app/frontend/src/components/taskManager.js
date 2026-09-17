@@ -143,7 +143,22 @@ export class TaskManager {
 
     let rowsHtml = this.tasks.map(task => {
       const priorityClass = `priority-${task.priority || 'medium'}`;
-      const statusClass = `status-${task.status || 'pending'}`;
+      const status = task.status || 'pending';
+
+      let statusBadge = '';
+      let quickActionBtn = '';
+
+      if (status === 'pending') {
+        statusBadge = '<span class="badge-status badge-status-pending">⏳ Pending</span>';
+        quickActionBtn = `<button class="btn-quick-action btn-action-start" data-action="quick-status" data-id="${task.id}" data-next-status="in_progress" title="Start Task">▶ Start</button>`;
+      } else if (status === 'in_progress') {
+        statusBadge = '<span class="badge-status badge-status-progress">⚙️ In Progress</span>';
+        quickActionBtn = `<button class="btn-quick-action btn-action-complete" data-action="quick-status" data-id="${task.id}" data-next-status="completed" title="Mark as Completed">✓ Done</button>`;
+      } else {
+        statusBadge = '<span class="badge-status badge-status-completed">✓ Completed</span>';
+        quickActionBtn = `<button class="btn-quick-action btn-action-reopen" data-action="quick-status" data-id="${task.id}" data-next-status="pending" title="Reset to Pending">↺ Reset</button>`;
+      }
+
       return `
         <div class="task-row" data-id="${task.id}">
           <div class="task-main">
@@ -156,11 +171,8 @@ export class TaskManager {
           </div>
 
           <div class="task-actions">
-            <select class="status-select ${statusClass}" data-action="change-status" data-id="${task.id}">
-              <option value="pending" ${task.status === 'pending' ? 'selected' : ''}>Pending</option>
-              <option value="in_progress" ${task.status === 'in_progress' ? 'selected' : ''}>In Progress</option>
-              <option value="completed" ${task.status === 'completed' ? 'selected' : ''}>Completed</option>
-            </select>
+            ${statusBadge}
+            ${quickActionBtn}
             <button class="btn-delete" data-action="delete" data-id="${task.id}" title="Delete Task">✕</button>
           </div>
         </div>
@@ -172,21 +184,26 @@ export class TaskManager {
   }
 
   attachTableEvents(container) {
-    container.addEventListener('change', async (e) => {
-      if (e.target.getAttribute('data-action') === 'change-status') {
-        const taskId = e.target.getAttribute('data-id');
-        const newStatus = e.target.value;
+    container.addEventListener('click', async (e) => {
+      // 1-click status stepper progression
+      const actionBtn = e.target.closest('[data-action="quick-status"]');
+      if (actionBtn) {
+        const taskId = actionBtn.getAttribute('data-id');
+        const nextStatus = actionBtn.getAttribute('data-next-status');
         try {
-          await opsApi.updateTaskStatus(taskId, newStatus);
-          Toast.success(`Task status updated to ${newStatus}`);
+          actionBtn.disabled = true;
+          actionBtn.textContent = '...';
+          await opsApi.updateTaskStatus(taskId, nextStatus);
+          const labels = { in_progress: 'In Progress', completed: 'Completed', pending: 'Pending' };
+          Toast.success(`Task moved to ${labels[nextStatus] || nextStatus}`);
           this.loadTasks(true);
         } catch (err) {
           Toast.error(err.message);
         }
+        return;
       }
-    });
 
-    container.addEventListener('click', async (e) => {
+      // Delete task confirmation
       if (e.target.getAttribute('data-action') === 'delete') {
         const taskId = e.target.getAttribute('data-id');
         if (confirm('Delete this task from PostgreSQL?')) {
