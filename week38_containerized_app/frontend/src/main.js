@@ -7,7 +7,7 @@
 
 import { DashboardPage } from './pages/dashboardPage.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+function initApp() {
   // The system logs initialization confirmation to the console
   console.log('[Docker Pulse] Operations Hub initialized in vanilla JS module mode.');
 
@@ -16,4 +16,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const dashboard = new DashboardPage(appContainer);
     dashboard.init();
   }
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
