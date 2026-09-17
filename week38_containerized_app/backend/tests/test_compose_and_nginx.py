@@ -67,6 +67,25 @@ def test_frontend_public_landing_page():
     assert main_js.exists(), "frontend/src/main.js must exist."
 
 
+def test_frontend_day5_modular_components():
+    """Verify Day 5 ES6 frontend modules exist and contain expected exports."""
+    frontend_src = WEEK38_DIR / "frontend" / "src"
+    expected_files = [
+        frontend_src / "utils" / "helpers.js",
+        frontend_src / "api" / "opsApi.js",
+        frontend_src / "components" / "toast.js",
+        frontend_src / "components" / "serviceGrid.js",
+        frontend_src / "components" / "benchmarkCard.js",
+        frontend_src / "components" / "taskManager.js",
+        frontend_src / "pages" / "dashboardPage.js",
+    ]
+
+    for file_path in expected_files:
+        assert file_path.exists(), f"Frontend file {file_path.name} must exist."
+        content = file_path.read_text(encoding="utf-8")
+        assert len(content) > 100, f"{file_path.name} should not be empty."
+
+
 def test_init_db_retry_resilience():
     """Verify init_db handles temporary operational errors and recovers."""
     mock_conn = MagicMock()
