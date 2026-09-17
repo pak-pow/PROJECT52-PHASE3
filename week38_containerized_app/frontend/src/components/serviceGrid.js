@@ -24,8 +24,8 @@ export class ServiceGrid {
             <p class="card-desc">Reverse proxy ingress on port 8080 handling gzip compression and static UI assets.</p>
           </div>
           <div class="card-footer">
-            <span class="card-meta">web:8080 ➔ 80</span>
-            <span class="status-badge" id="status-nginx"><span class="status-dot"></span> Active</span>
+            <span class="card-meta">web:8080</span>
+            <span class="status-badge" id="status-nginx"><span class="status-dot dot-green"></span> Online</span>
           </div>
         </div>
 
@@ -39,8 +39,8 @@ export class ServiceGrid {
             <p class="card-desc">Gunicorn WSGI backend running inside a non-root unprivileged container.</p>
           </div>
           <div class="card-footer">
-            <span class="card-meta">api:5000 (Internal)</span>
-            <span class="status-badge" id="status-api"><span class="status-dot"></span> Active</span>
+            <span class="card-meta">api:5000</span>
+            <span class="status-badge" id="status-api"><span class="status-dot dot-green"></span> Online</span>
           </div>
         </div>
 
@@ -92,8 +92,11 @@ export class ServiceGrid {
     // 2. Flask API
     const apiBadge = document.getElementById('status-api');
     if (apiBadge && livenessData) {
-      const uptimeStr = `${livenessData.uptime_seconds || 0}s`;
-      apiBadge.innerHTML = `<span class="status-dot dot-green"></span> Up ${uptimeStr}`;
+      const isHealthy = livenessData.status === 'healthy';
+      apiBadge.innerHTML = isHealthy
+        ? `<span class="status-dot dot-green"></span> Online`
+        : `<span class="status-dot dot-red"></span> Offline`;
+      apiBadge.title = `Service Uptime: ${livenessData.uptime_seconds || 0}s`;
     }
 
     // 3. PostgreSQL
