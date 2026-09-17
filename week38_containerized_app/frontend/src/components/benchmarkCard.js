@@ -23,7 +23,7 @@ export class BenchmarkCard {
             </div>
             <p class="benchmark-subtitle">Evaluate live latency differential between PostgreSQL 16 disk reads and Redis 7 memory hits.</p>
           </div>
-          <button class="btn btn-primary" id="btn-run-benchmark">Run Live Benchmark</button>
+          <button class="btn btn-primary" id="btn-run-benchmark"><span>⚡</span> Run Live Benchmark</button>
         </div>
 
         <div id="benchmark-results" class="benchmark-results-container">
@@ -51,7 +51,7 @@ export class BenchmarkCard {
     const btn = this.container.querySelector('#btn-run-benchmark');
     const resultsArea = this.container.querySelector('#benchmark-results');
     btn.disabled = true;
-    btn.textContent = 'Running Benchmark...';
+    btn.innerHTML = '<span>⏳</span> Running Benchmark...';
 
     resultsArea.innerHTML = `
       <div class="benchmark-loading">
@@ -75,7 +75,7 @@ export class BenchmarkCard {
     } finally {
       this.running = false;
       btn.disabled = false;
-      btn.textContent = 'Run Live Benchmark';
+      btn.innerHTML = '<span>⚡</span> Run Live Benchmark';
     }
   }
 
