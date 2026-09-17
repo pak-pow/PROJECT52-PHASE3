@@ -41,10 +41,10 @@ export class DashboardPage {
       <div class="container">
         <header>
           <div class="badge-pill">
-            <span class="status-dot"></span> Multi-Container Topology Active
+            <span class="status-dot"></span> All 4 Containers Running Smoothly
           </div>
-          <h1>Docker Pulse Operations Hub</h1>
-          <p class="subtitle">Real-time telemetry monitor and task orchestrator across Nginx, Flask API, PostgreSQL 16, and Redis 7 Cache.</p>
+          <h1>Docker Pulse Dashboard</h1>
+          <p class="subtitle">A live monitor showing your web server, backend app, database, and fast memory working together in real time.</p>
         </header>
 
         <!-- Service Topology Grid -->
