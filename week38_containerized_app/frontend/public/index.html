@@ -10,114 +10,13 @@
   <link rel="stylesheet" href="../src/assets/pulse.css">
 </head>
 <body>
-  <div class="container">
-    <header>
-      <div class="badge-pill">
-        <span class="status-dot"></span> Multi-Container Topology Active
-      </div>
-      <h1>Docker Pulse Operations Hub</h1>
-      <p class="subtitle">Orchestrated 4-tier production environment running Nginx Gateway, Flask API, PostgreSQL 16, and Redis 7 Cache.</p>
-    </header>
+  <!-- Toast Notification Container -->
+  <div id="toast-container"></div>
 
-    <div class="grid">
-      <div class="card">
-        <div>
-          <div class="card-header">
-            <span class="card-title">Nginx Gateway</span>
-            <span class="card-icon">🌐</span>
-          </div>
-          <p class="card-desc">Reverse proxy ingress on port 8080 handling gzip compression and API routing.</p>
-        </div>
-        <span class="card-meta">web:8080 ➔ 80</span>
-      </div>
-
-      <div class="card">
-        <div>
-          <div class="card-header">
-            <span class="card-title">Flask Service</span>
-            <span class="card-icon">🐍</span>
-          </div>
-          <p class="card-desc">Gunicorn WSGI backend running inside a non-root unprivileged container.</p>
-        </div>
-        <span class="card-meta">api:5000 (Internal)</span>
-      </div>
-
-      <div class="card">
-        <div>
-          <div class="card-header">
-            <span class="card-title">PostgreSQL 16</span>
-            <span class="card-icon">🐘</span>
-          </div>
-          <p class="card-desc">Persistent relational database mounted to named volume postgres_data.</p>
-        </div>
-        <span class="card-meta">db:5432 (Volume)</span>
-      </div>
-
-      <div class="card">
-        <div>
-          <div class="card-header">
-            <span class="card-title">Redis 7 Cache</span>
-            <span class="card-icon">⚡</span>
-          </div>
-          <p class="card-desc">In-memory key-value cache and benchmark probe with AOF persistence.</p>
-        </div>
-        <span class="card-meta">cache:6379 (Volume)</span>
-      </div>
-    </div>
-
-    <div class="section-box">
-      <div class="section-title">
-        <span>🔗</span> Verified Live Endpoints (Routed through Nginx on Port 8080)
-      </div>
-      <div class="endpoint-list">
-        <div class="endpoint-item">
-          <div class="endpoint-left">
-            <span class="method method-get">GET</span>
-            <span class="endpoint-path">/healthz</span>
-          </div>
-          <a class="btn-link" href="/healthz" target="_blank">Test Nginx Gateway</a>
-        </div>
-
-        <div class="endpoint-item">
-          <div class="endpoint-left">
-            <span class="method method-get">GET</span>
-            <span class="endpoint-path">/api/v1/health</span>
-          </div>
-          <a class="btn-link" href="/api/v1/health" target="_blank">Test Flask Liveness</a>
-        </div>
-
-        <div class="endpoint-item">
-          <div class="endpoint-left">
-            <span class="method method-get">GET</span>
-            <span class="endpoint-path">/api/v1/ready</span>
-          </div>
-          <a class="btn-link" href="/api/v1/ready" target="_blank">Test DB & Cache Readiness</a>
-        </div>
-
-        <div class="endpoint-item">
-          <div class="endpoint-left">
-            <span class="method method-get">GET</span>
-            <span class="endpoint-path">/api/v1/benchmark</span>
-          </div>
-          <a class="btn-link" href="/api/v1/benchmark" target="_blank">Run Speed Benchmark</a>
-        </div>
-
-        <div class="endpoint-item">
-          <div class="endpoint-left">
-            <span class="method method-get">GET</span>
-            <span class="endpoint-path">/api/v1/tasks</span>
-          </div>
-          <a class="btn-link" href="/api/v1/tasks" target="_blank">View Stored Tasks</a>
-        </div>
-      </div>
-    </div>
-
-    <footer>
-      Project 52 — Phase 3 (Production) &nbsp;|&nbsp; Week 38: Containerized App with Docker
-    </footer>
-  </div>
+  <!-- Main Application Mount Point -->
+  <div id="app"></div>
 
   <!-- Application Module Script -->
   <script type="module" src="../src/main.js"></script>
 </body>
-</html>
+</html>\n
