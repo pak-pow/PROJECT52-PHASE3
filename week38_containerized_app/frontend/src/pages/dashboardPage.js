@@ -85,4 +85,4 @@ export class DashboardPage {
       this.pollInterval = null;
     }
   }
-}\n
+}

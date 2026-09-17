@@ -16,4 +16,4 @@ document.addEventListener('DOMContentLoaded', () => {
     const dashboard = new DashboardPage(appContainer);
     dashboard.init();
   }
-});\n
+});

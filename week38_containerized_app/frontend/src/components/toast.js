@@ -41,4 +41,4 @@ export class Toast {
   static success(msg) { Toast.show(msg, 'success'); }
   static error(msg) { Toast.show(msg, 'error'); }
   static info(msg) { Toast.show(msg, 'info'); }
-}\n
+}

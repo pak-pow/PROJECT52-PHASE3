@@ -223,4 +223,4 @@ export class TaskManager {
       Toast.error(err.message);
     }
   }
-}\n
+}

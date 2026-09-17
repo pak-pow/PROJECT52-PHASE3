@@ -109,4 +109,4 @@ export const opsApi = {
     if (!res.ok) throw new Error(`Benchmark failed with status ${res.status}`);
     return res.json();
   },
-};\n
+};

@@ -112,4 +112,4 @@ export class ServiceGrid {
       cachePing.innerHTML = `${badge.text}`;
     }
   }
-}\n
+}
