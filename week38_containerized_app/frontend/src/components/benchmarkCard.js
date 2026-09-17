@@ -19,16 +19,16 @@ export class BenchmarkCard {
         <div class="benchmark-header">
           <div>
             <div class="section-title">
-              <span>⚡</span> In-Memory Cache vs. Relational Storage Benchmark
+              <span>⚡</span> Speed Test: Fast Memory vs. Hard Drive
             </div>
-            <p class="benchmark-subtitle">Evaluate live latency differential between PostgreSQL 16 disk reads and Redis 7 memory hits.</p>
+            <p class="benchmark-subtitle">See how much faster it is to fetch data from fast memory (Redis) compared to the hard drive (PostgreSQL).</p>
           </div>
-          <button class="btn btn-primary" id="btn-run-benchmark"><span>⚡</span> Run Live Benchmark</button>
+          <button class="btn btn-primary" id="btn-run-benchmark"><span>⚡</span> Run Speed Test</button>
         </div>
 
         <div id="benchmark-results" class="benchmark-results-container">
           <div class="benchmark-placeholder">
-            Click "Run Live Benchmark" to execute 100 concurrent test reads through the API pipeline.
+            Click "Run Speed Test" to compare how fast memory is compared to the database.
           </div>
         </div>
       </div>
@@ -51,12 +51,12 @@ export class BenchmarkCard {
     const btn = this.container.querySelector('#btn-run-benchmark');
     const resultsArea = this.container.querySelector('#benchmark-results');
     btn.disabled = true;
-    btn.innerHTML = '<span>⏳</span> Running Benchmark...';
+    btn.innerHTML = '<span>⏳</span> Testing Speed...';
 
     resultsArea.innerHTML = `
       <div class="benchmark-loading">
         <div class="spinner"></div>
-        <span>Executing benchmark workload across PostgreSQL and Redis...</span>
+        <span>Testing speed between the hard drive and fast memory...</span>
       </div>
     `;
 
@@ -64,18 +64,18 @@ export class BenchmarkCard {
       const data = await opsApi.runBenchmark();
       const report = data.benchmark || data;
       this.displayResults(report);
-      Toast.success('Benchmark completed successfully!');
+      Toast.success('Speed test complete!');
     } catch (err) {
       resultsArea.innerHTML = `
         <div class="benchmark-error">
-          <span>Failed to complete benchmark: ${err.message}</span>
+          <span>Speed test error: ${err.message}</span>
         </div>
       `;
-      Toast.error('Benchmark execution failed.');
+      Toast.error('Speed test failed.');
     } finally {
       this.running = false;
       btn.disabled = false;
-      btn.innerHTML = '<span>⚡</span> Run Live Benchmark';
+      btn.innerHTML = '<span>⚡</span> Run Speed Test';
     }
   }
 
@@ -88,7 +88,7 @@ export class BenchmarkCard {
     resultsArea.innerHTML = `
       <div class="benchmark-metrics-grid">
         <div class="metric-card">
-          <span class="metric-label">PostgreSQL Query</span>
+          <span class="metric-label">Hard Drive (PostgreSQL)</span>
           <span class="metric-value metric-db">${dbMs.toFixed(2)} ms</span>
           <div class="bar-track">
             <div class="bar-fill bar-db" style="width: 100%"></div>
@@ -96,7 +96,7 @@ export class BenchmarkCard {
         </div>
 
         <div class="metric-card">
-          <span class="metric-label">Redis In-Memory</span>
+          <span class="metric-label">Fast Memory (Redis)</span>
           <span class="metric-value metric-cache">${cacheMs.toFixed(2)} ms</span>
           <div class="bar-track">
             <div class="bar-fill bar-cache" style="width: ${Math.max(Math.min((cacheMs / dbMs) * 100, 100), 8)}%"></div>
@@ -104,9 +104,9 @@ export class BenchmarkCard {
         </div>
 
         <div class="metric-card metric-card-speedup">
-          <span class="metric-label">Performance Gain</span>
+          <span class="metric-label">Speed Boost</span>
           <span class="metric-value metric-speedup">${speedup}x Faster</span>
-          <span class="metric-note">Ultra-low latency in-memory access</span>
+          <span class="metric-note">Instant response directly from memory!</span>
         </div>
       </div>
     `;
