@@ -26,28 +26,38 @@ def list_tasks():
     cache_key = f"tasks:list:{limit}:{offset}:{status}:{priority}"
 
     if not no_cache:
-        cached_data = cache.get(cache_key)
-        if cached_data:
-            try:
+        try:
+            cached_data = cache.get(cache_key)
+            if cached_data:
                 tasks = json.loads(cached_data)
                 response = jsonify(
                     {"tasks": tasks, "count": len(tasks), "cached": True}
                 )
                 response.headers["X-Cache"] = "HIT"
                 return response, 200
-            except Exception:
-                pass
+        except Exception:
+            pass
 
-    tasks = TaskModel.get_all(
-        limit=limit,
-        offset=offset,
-        status=status,
-        priority=priority,
-        db_url=db_url,
-    )
+    try:
+        tasks = TaskModel.get_all(
+            limit=limit,
+            offset=offset,
+            status=status,
+            priority=priority,
+            db_url=db_url,
+        )
+    except Exception as err:
+        current_app.logger.error(f"Database error during list_tasks: {err}")
+        return (
+            jsonify({"error": "Database service is temporarily unavailable."}),
+            503,
+        )
 
     if not no_cache:
-        cache.set(cache_key, json.dumps(tasks, default=str), ttl=60)
+        try:
+            cache.set(cache_key, json.dumps(tasks, default=str), ttl=60)
+        except Exception:
+            pass
 
     response = jsonify({"tasks": tasks, "count": len(tasks), "cached": False})
     response.headers["X-Cache"] = "MISS"
@@ -57,12 +67,31 @@ def list_tasks():
 @task_bp.route("/tasks", methods=["POST"])
 def create_task():
     """Create a new task and invalidate cached collections."""
-    data = request.get_json(silent=True) or {}
+    if request.data and not request.is_json:
+        return (
+            jsonify(
+                {"error": "Payload must be JSON with Content-Type application/json."}
+            ),
+            415,
+        )
+
+    data = request.get_json(silent=True)
+    if data is None and request.data:
+        return jsonify({"error": "Malformed JSON payload."}), 400
+    if data is not None and not isinstance(data, dict):
+        return jsonify({"error": "Request body must be a JSON object."}), 400
+
+    data = data or {}
     title = data.get("title", "")
     description = data.get("description", "")
     priority = data.get("priority", "medium")
     status = data.get("status", "pending")
     source = data.get("source", "web")
+
+    if not isinstance(title, str):
+        return jsonify({"error": "Task title must be a string."}), 400
+    if description is not None and not isinstance(description, str):
+        return jsonify({"error": "Task description must be a string."}), 400
 
     db_url = current_app.config.get("DATABASE_URL")
 
@@ -77,10 +106,19 @@ def create_task():
         )
     except ValueError as err:
         return jsonify({"error": str(err)}), 400
+    except Exception as err:
+        current_app.logger.error(f"Database error during create_task: {err}")
+        return (
+            jsonify({"error": "Database service is temporarily unavailable."}),
+            503,
+        )
 
-    # Invalidate cache
-    cache.delete("tasks:summary")
-    cache.delete("tasks:list:50:0:None:None")
+    # Invalidate cache safely
+    try:
+        cache.delete("tasks:summary")
+        cache.delete("tasks:list:50:0:None:None")
+    except Exception:
+        pass
 
     return jsonify({"message": "Task created successfully.", "task": task}), 201
 
@@ -91,46 +129,89 @@ def get_task(task_id: int):
     db_url = current_app.config.get("DATABASE_URL")
     cache_key = f"task:{task_id}"
 
-    cached_data = cache.get(cache_key)
-    if cached_data:
-        try:
+    try:
+        cached_data = cache.get(cache_key)
+        if cached_data:
             task = json.loads(cached_data)
             return jsonify({"task": task, "cached": True}), 200
-        except Exception:
-            pass
+    except Exception:
+        pass
 
-    task = TaskModel.get_by_id(task_id, db_url=db_url)
+    try:
+        task = TaskModel.get_by_id(task_id, db_url=db_url)
+    except Exception as err:
+        current_app.logger.error(f"Database error during get_task: {err}")
+        return (
+            jsonify({"error": "Database service is temporarily unavailable."}),
+            503,
+        )
+
     if not task:
         return jsonify({"error": "Task not found."}), 404
 
-    cache.set(cache_key, json.dumps(task, default=str), ttl=120)
+    try:
+        cache.set(cache_key, json.dumps(task, default=str), ttl=120)
+    except Exception:
+        pass
+
     return jsonify({"task": task, "cached": False}), 200
 
 
 @task_bp.route("/tasks/<int:task_id>", methods=["PUT"])
 def update_task(task_id: int):
     """Update task attributes."""
-    data = request.get_json(silent=True) or {}
+    if request.data and not request.is_json:
+        return (
+            jsonify(
+                {"error": "Payload must be JSON with Content-Type application/json."}
+            ),
+            415,
+        )
+
+    data = request.get_json(silent=True)
+    if data is None and request.data:
+        return jsonify({"error": "Malformed JSON payload."}), 400
+    if data is not None and not isinstance(data, dict):
+        return jsonify({"error": "Request body must be a JSON object."}), 400
+
+    data = data or {}
+    title = data.get("title")
+    description = data.get("description")
+
+    if title is not None and not isinstance(title, str):
+        return jsonify({"error": "Task title must be a string."}), 400
+    if description is not None and not isinstance(description, str):
+        return jsonify({"error": "Task description must be a string."}), 400
+
     db_url = current_app.config.get("DATABASE_URL")
 
     try:
         updated = TaskModel.update(
             task_id=task_id,
-            title=data.get("title"),
-            description=data.get("description"),
+            title=title,
+            description=description,
             priority=data.get("priority"),
             status=data.get("status"),
             db_url=db_url,
         )
     except ValueError as err:
         return jsonify({"error": str(err)}), 400
+    except Exception as err:
+        current_app.logger.error(f"Database error during update_task: {err}")
+        return (
+            jsonify({"error": "Database service is temporarily unavailable."}),
+            503,
+        )
 
     if not updated:
         return jsonify({"error": "Task not found."}), 404
 
-    cache.delete(f"task:{task_id}")
-    cache.delete("tasks:summary")
-    cache.delete("tasks:list:50:0:None:None")
+    try:
+        cache.delete(f"task:{task_id}")
+        cache.delete("tasks:summary")
+        cache.delete("tasks:list:50:0:None:None")
+    except Exception:
+        pass
 
     return jsonify({"message": "Task updated successfully.", "task": updated}), 200
 
@@ -139,13 +220,24 @@ def update_task(task_id: int):
 def delete_task(task_id: int):
     """Remove a task by ID."""
     db_url = current_app.config.get("DATABASE_URL")
-    success = TaskModel.delete(task_id, db_url=db_url)
+    try:
+        success = TaskModel.delete(task_id, db_url=db_url)
+    except Exception as err:
+        current_app.logger.error(f"Database error during delete_task: {err}")
+        return (
+            jsonify({"error": "Database service is temporarily unavailable."}),
+            503,
+        )
+
     if not success:
         return jsonify({"error": "Task not found."}), 404
 
-    cache.delete(f"task:{task_id}")
-    cache.delete("tasks:summary")
-    cache.delete("tasks:list:50:0:None:None")
+    try:
+        cache.delete(f"task:{task_id}")
+        cache.delete("tasks:summary")
+        cache.delete("tasks:list:50:0:None:None")
+    except Exception:
+        pass
 
     return jsonify({"message": "Task deleted successfully.", "id": task_id}), 200
 
@@ -156,15 +248,26 @@ def tasks_summary():
     db_url = current_app.config.get("DATABASE_URL")
     cache_key = "tasks:summary"
 
-    cached = cache.get(cache_key)
-    if cached:
-        try:
+    try:
+        cached = cache.get(cache_key)
+        if cached:
             return jsonify({"summary": json.loads(cached), "cached": True}), 200
-        except Exception:
-            pass
+    except Exception:
+        pass
 
-    summary = TaskModel.get_summary(db_url=db_url)
-    cache.set(cache_key, json.dumps(summary), ttl=30)
+    try:
+        summary = TaskModel.get_summary(db_url=db_url)
+    except Exception as err:
+        current_app.logger.error(f"Database error during tasks_summary: {err}")
+        return (
+            jsonify({"error": "Database service is temporarily unavailable."}),
+            503,
+        )
+
+    try:
+        cache.set(cache_key, json.dumps(summary), ttl=30)
+    except Exception:
+        pass
     return jsonify({"summary": summary, "cached": False}), 200
 
 
