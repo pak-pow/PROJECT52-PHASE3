@@ -8,7 +8,9 @@ from app.config.settings import get_config
 from app.db import close_db, init_db
 from app.routes.cart_routes import cart_bp
 from app.routes.health_routes import health_bp
+from app.routes.order_routes import order_bp
 from app.routes.product_routes import product_bp
+from app.routes.webhook_routes import webhook_bp
 
 
 def create_app(config_class=None):
@@ -25,6 +27,8 @@ def create_app(config_class=None):
     app.register_blueprint(health_bp)
     app.register_blueprint(product_bp)
     app.register_blueprint(cart_bp)
+    app.register_blueprint(order_bp)
+    app.register_blueprint(webhook_bp)
 
     @app.errorhandler(400)
     def bad_request(error):
