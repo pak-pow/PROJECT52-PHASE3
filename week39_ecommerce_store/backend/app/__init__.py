@@ -5,7 +5,7 @@ from flask import Flask, jsonify
 from flask_cors import CORS
 
 from app.config.settings import get_config
-from app.db import close_db, init_db
+from app.db import close_db, get_db, init_db
 from app.routes.cart_routes import cart_bp
 from app.routes.health_routes import health_bp
 from app.routes.order_routes import order_bp
@@ -85,9 +85,17 @@ def create_app(config_class=None):
     db_path = app.config.get("DATABASE_PATH")
     if db_path and db_path != ":memory:":
         db_file = Path(db_path)
-        if not db_file.exists():
-            os.makedirs(db_file.parent, exist_ok=True)
-            with app.app_context():
+        db_file.parent.mkdir(parents=True, exist_ok=True)
+        with app.app_context():
+            conn = get_db()
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='products'"
+            )
+            if cur.fetchone() is None:
                 init_db()
+                from data.seed import seed_database
+
+                seed_database(db_path=str(db_file))
 
     return app
