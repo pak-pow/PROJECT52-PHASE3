@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ShopPulse - Developer Gear Store</title>
+  
+  <link rel="stylesheet" href="../src/assets/base.css">
+  <link rel="stylesheet" href="../src/assets/store.css">
+</head>
+<body>
+  <div id="toast-container" class="toast-container"></div>
+  <div id="cart-drawer-mount"></div>
+  <div id="modal-mount"></div>
+
+  <div id="app">
+    <!-- Navbar Component Mount -->
+    <header id="navbar-mount" class="navbar-wrapper"></header>
+
+    <!-- Main Content Area -->
+    <main class="store-container">
+      <!-- Announcement Banner -->
+      <section class="store-banner">
+        <div class="banner-content">
+          <span class="banner-tag">FREE SHIPPING</span>
+          <p class="banner-text">Complimentary standard shipping on all hardware orders over $50.00.</p>
+        </div>
+      </section>
+
+      <!-- Category Navigation Tabs -->
+      <nav id="category-tabs" class="category-tabs" aria-label="Product categories"></nav>
+
+      <!-- Store Controls: Search, Sort, Total Count -->
+      <section class="catalog-controls">
+        <div class="controls-left">
+          <h2 id="catalog-title" class="catalog-title">All Products</h2>
+          <span id="catalog-count" class="catalog-count">Loading items...</span>
+        </div>
+        <div class="controls-right">
+          <div class="search-box">
+            <span class="search-icon" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </span>
+            <input type="text" id="search-input" placeholder="Search keyboards, audio, accessories..." autocomplete="off">
+          </div>
+          <select id="sort-select" class="sort-select" aria-label="Sort products">
+            <option value="">Featured</option>
+            <option value="price_asc">Price: Low to High</option>
+            <option value="price_desc">Price: High to Low</option>
+            <option value="name_asc">Alphabetical</option>
+            <option value="newest">Newest Releases</option>
+          </select>
+        </div>
+      </section>
+
+      <!-- Product Catalog Grid Mount -->
+      <section id="product-grid" class="product-grid" aria-live="polite"></section>
+    </main>
+  </div>
+
+  <script type="module" src="../src/main.js"></script>
+</body>
+</html>
