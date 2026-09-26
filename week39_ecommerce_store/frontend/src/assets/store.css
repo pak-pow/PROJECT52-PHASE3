@@ -282,7 +282,24 @@
   justify-content: center;
 }
 
+.product-card-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at center, rgba(79, 70, 229, 0.15) 0%, rgba(15, 23, 42, 0.6) 100%);
+  color: var(--color-brand-primary);
+}
+
+.product-card-placeholder svg {
+  opacity: 0.85;
+}
+
 .product-card-image-wrap img {
+  position: relative;
+  z-index: 1;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -546,13 +563,36 @@
   border-radius: var(--radius-md);
 }
 
-.cart-item-image {
+.cart-item-image-wrap {
+  position: relative;
   width: 64px;
   height: 64px;
   border-radius: var(--radius-sm);
-  object-fit: cover;
   background-color: var(--color-bg-base);
   border: 1px solid var(--color-border);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cart-item-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  background-color: var(--color-bg-card);
+}
+
+.cart-item-image {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .cart-item-details {
@@ -1132,374 +1172,9 @@
   }
 }
 
-/* Pure CSS Icons (Zero SVG, Zero External CDN) */
-.css-icon {
+/* Inline SVG Icon Defaults */
+svg[aria-hidden="true"] {
   display: inline-block;
-  position: relative;
   vertical-align: middle;
-  box-sizing: border-box;
-  color: inherit;
   flex-shrink: 0;
 }
-
-.css-icon.icon-sm {
-  transform: scale(0.85);
-}
-
-.css-icon.icon-lg {
-  transform: scale(1.35);
-}
-
-/* Search */
-.css-icon.icon-search {
-  width: 14px;
-  height: 14px;
-  border: 2px solid currentColor;
-  border-radius: 50%;
-}
-
-.css-icon.icon-search::after {
-  content: "";
-  position: absolute;
-  top: 9px;
-  left: 9px;
-  width: 2px;
-  height: 6px;
-  background-color: currentColor;
-  transform: rotate(-45deg);
-  transform-origin: top center;
-  border-radius: 1px;
-}
-
-/* Cart */
-.css-icon.icon-cart {
-  width: 16px;
-  height: 11px;
-  border-left: 2px solid currentColor;
-  border-bottom: 2px solid currentColor;
-  border-right: 2px solid currentColor;
-  border-radius: 0 0 2px 2px;
-  margin-top: 3px;
-  margin-right: 2px;
-}
-
-.css-icon.icon-cart::before {
-  content: "";
-  position: absolute;
-  top: -4px;
-  left: -4px;
-  width: 4px;
-  height: 2px;
-  background-color: currentColor;
-}
-
-.css-icon.icon-cart::after {
-  content: "";
-  position: absolute;
-  bottom: -4px;
-  left: 1px;
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background-color: currentColor;
-  box-shadow: 7px 0 0 currentColor;
-}
-
-/* Close (X) */
-.css-icon.icon-close {
-  width: 14px;
-  height: 14px;
-}
-
-.css-icon.icon-close::before,
-.css-icon.icon-close::after {
-  content: "";
-  position: absolute;
-  top: 6px;
-  left: 0;
-  width: 14px;
-  height: 2px;
-  background-color: currentColor;
-  border-radius: 1px;
-}
-
-.css-icon.icon-close::before {
-  transform: rotate(45deg);
-}
-
-.css-icon.icon-close::after {
-  transform: rotate(-45deg);
-}
-
-/* Plus (+) */
-.css-icon.icon-plus {
-  width: 12px;
-  height: 12px;
-}
-
-.css-icon.icon-plus::before {
-  content: "";
-  position: absolute;
-  top: 5px;
-  left: 0;
-  width: 12px;
-  height: 2px;
-  background-color: currentColor;
-  border-radius: 1px;
-}
-
-.css-icon.icon-plus::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 5px;
-  width: 2px;
-  height: 12px;
-  background-color: currentColor;
-  border-radius: 1px;
-}
-
-/* Minus (-) */
-.css-icon.icon-minus {
-  width: 12px;
-  height: 2px;
-  background-color: currentColor;
-  border-radius: 1px;
-}
-
-/* Trash */
-.css-icon.icon-trash {
-  width: 12px;
-  height: 13px;
-  border-left: 2px solid currentColor;
-  border-bottom: 2px solid currentColor;
-  border-right: 2px solid currentColor;
-  border-radius: 0 0 2px 2px;
-  margin-top: 3px;
-}
-
-.css-icon.icon-trash::before {
-  content: "";
-  position: absolute;
-  top: -3px;
-  left: -2px;
-  width: 14px;
-  height: 2px;
-  background-color: currentColor;
-  border-radius: 1px;
-}
-
-.css-icon.icon-trash::after {
-  content: "";
-  position: absolute;
-  top: -5px;
-  left: 3px;
-  width: 4px;
-  height: 2px;
-  border: 1px solid currentColor;
-  border-bottom: none;
-  border-radius: 1px 1px 0 0;
-}
-
-/* Check */
-.css-icon.icon-check {
-  width: 5px;
-  height: 10px;
-  border-right: 2px solid currentColor;
-  border-bottom: 2px solid currentColor;
-  transform: rotate(45deg);
-  margin-bottom: 2px;
-}
-
-/* Alert */
-.css-icon.icon-alert {
-  width: 14px;
-  height: 14px;
-  border: 2px solid currentColor;
-  border-radius: 50%;
-}
-
-.css-icon.icon-alert::before {
-  content: "";
-  position: absolute;
-  top: 2px;
-  left: 4px;
-  width: 2px;
-  height: 4px;
-  background-color: currentColor;
-  border-radius: 1px;
-}
-
-.css-icon.icon-alert::after {
-  content: "";
-  position: absolute;
-  bottom: 2px;
-  left: 4px;
-  width: 2px;
-  height: 2px;
-  background-color: currentColor;
-  border-radius: 50%;
-}
-
-/* Info */
-.css-icon.icon-info {
-  width: 14px;
-  height: 14px;
-  border: 2px solid currentColor;
-  border-radius: 50%;
-}
-
-.css-icon.icon-info::before {
-  content: "";
-  position: absolute;
-  top: 2px;
-  left: 4px;
-  width: 2px;
-  height: 2px;
-  background-color: currentColor;
-  border-radius: 50%;
-}
-
-.css-icon.icon-info::after {
-  content: "";
-  position: absolute;
-  bottom: 2px;
-  left: 4px;
-  width: 2px;
-  height: 4px;
-  background-color: currentColor;
-  border-radius: 1px;
-}
-
-/* Delivery Truck */
-.css-icon.icon-truck {
-  width: 16px;
-  height: 10px;
-  border: 2px solid currentColor;
-  border-radius: 2px 0 0 2px;
-}
-
-.css-icon.icon-truck::before {
-  content: "";
-  position: absolute;
-  top: 1px;
-  right: -5px;
-  width: 5px;
-  height: 7px;
-  border: 2px solid currentColor;
-  border-left: none;
-  border-radius: 0 2px 2px 0;
-}
-
-.css-icon.icon-truck::after {
-  content: "";
-  position: absolute;
-  bottom: -4px;
-  left: 1px;
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background-color: currentColor;
-  box-shadow: 10px 0 0 currentColor;
-}
-
-/* Discount Tag */
-.css-icon.icon-tag {
-  width: 12px;
-  height: 12px;
-  border: 2px solid currentColor;
-  border-radius: 2px;
-  transform: rotate(45deg);
-}
-
-.css-icon.icon-tag::after {
-  content: "";
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 2px;
-  height: 2px;
-  background-color: currentColor;
-  border-radius: 50%;
-}
-
-/* Printer */
-.css-icon.icon-printer {
-  width: 16px;
-  height: 9px;
-  border: 2px solid currentColor;
-  border-radius: 2px;
-  margin-top: 4px;
-}
-
-.css-icon.icon-printer::before {
-  content: "";
-  position: absolute;
-  top: -4px;
-  left: 2px;
-  width: 8px;
-  height: 4px;
-  border: 2px solid currentColor;
-  border-bottom: none;
-  border-radius: 1px 1px 0 0;
-}
-
-.css-icon.icon-printer::after {
-  content: "";
-  position: absolute;
-  bottom: -4px;
-  left: 2px;
-  width: 8px;
-  height: 4px;
-  border: 2px solid currentColor;
-  border-top: none;
-  background-color: var(--color-bg-surface);
-}
-
-/* Credit Card */
-.css-icon.icon-card {
-  width: 18px;
-  height: 12px;
-  border: 2px solid currentColor;
-  border-radius: 2px;
-}
-
-.css-icon.icon-card::before {
-  content: "";
-  position: absolute;
-  top: 2px;
-  left: 0;
-  width: 14px;
-  height: 2px;
-  background-color: currentColor;
-}
-
-/* Arrow Right (Chevron) */
-.css-icon.icon-arrowRight {
-  width: 7px;
-  height: 7px;
-  border-top: 2px solid currentColor;
-  border-right: 2px solid currentColor;
-  transform: rotate(45deg);
-  margin-left: 2px;
-  margin-bottom: 2px;
-}
-
-/* Package */
-.css-icon.icon-package {
-  width: 14px;
-  height: 14px;
-  border: 2px solid currentColor;
-  border-radius: 2px;
-}
-
-.css-icon.icon-package::before {
-  content: "";
-  position: absolute;
-  top: 4px;
-  left: 0;
-  width: 10px;
-  height: 2px;
-  background-color: currentColor;
-}
-
