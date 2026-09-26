@@ -21,15 +21,17 @@ def get_db(db_path=None):
 
     if has_app_context():
         if "_database" not in g:
-            conn = sqlite3.connect(db_path or ":memory:")
+            conn = sqlite3.connect(db_path or ":memory:", timeout=30.0)
             conn.row_factory = sqlite3.Row
             conn.execute("PRAGMA foreign_keys = ON;")
+            conn.execute("PRAGMA busy_timeout = 30000;")
             g._database = conn
         return g._database
 
-    conn = sqlite3.connect(db_path or ":memory:")
+    conn = sqlite3.connect(db_path or ":memory:", timeout=30.0)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON;")
+    conn.execute("PRAGMA busy_timeout = 30000;")
     return conn
 
 
