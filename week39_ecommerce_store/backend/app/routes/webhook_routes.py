@@ -12,7 +12,7 @@ webhook_bp = Blueprint("webhooks", __name__, url_prefix="/api/v1/webhooks")
 
 @webhook_bp.route("/stripe", methods=["POST"])
 def stripe_webhook():
-    sig_header = request.headers.get("Stripe-Signature", "mock_signature_valid")
+    sig_header = request.headers.get("Stripe-Signature")
     webhook_secret = current_app.config.get("STRIPE_WEBHOOK_SECRET", "whsec_mock")
     payload = request.get_data()
 
