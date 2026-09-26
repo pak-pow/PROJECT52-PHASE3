@@ -1,4 +1,4 @@
-import { escapeHtml, formatCurrency, getIcon } from "../utils/helpers.js";
+import { escapeHtml, formatCurrency, getCategoryIcon, getIcon } from "../utils/helpers.js";
 
 /**
  * Product grid component rendering catalog items.
@@ -22,12 +22,17 @@ export function initProductGrid({ onAddToCart }) {
           <p>Try adjusting your category filter or search keywords.</p>
         </div>
       `;
-      // Note: replaced inline style above with a CSS class or clean structure!
-      // Let's make sure there are ZERO inline styles anywhere!
       return;
     }
 
     grid.innerHTML = products.map((product) => createProductCardHtml(product)).join("");
+
+    // Fallback gracefully on broken images by hiding the img tag so SVG placeholder shows
+    grid.querySelectorAll(".product-card-image-wrap img").forEach((img) => {
+      img.addEventListener("error", () => {
+        img.classList.add("hidden");
+      });
+    });
 
     // Attach click listeners to all Add to Cart buttons
     grid.querySelectorAll(".btn-add-cart").forEach((btn) => {
@@ -90,6 +95,9 @@ function createProductCardHtml(product) {
   return `
     <article class="product-card" data-product-id="${product.id}">
       <div class="product-card-image-wrap">
+        <div class="product-card-placeholder" aria-hidden="true">
+          ${getCategoryIcon(product.category_slug, 48)}
+        </div>
         <img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(product.title)}" loading="lazy">
         <div class="product-badge-group">
           <span class="category-tag">${escapeHtml(product.category_name)}</span>
