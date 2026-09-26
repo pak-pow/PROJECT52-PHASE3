@@ -121,13 +121,14 @@ export function initCartDrawer({
 
     // 1. Update Header count
     const countBadge = document.getElementById("cart-item-count-badge");
-    const count = cart.item_count || 0;
+    const count = (cart.items || []).reduce((sum, i) => sum + i.quantity, 0);
     countBadge.textContent = `${count} ${count === 1 ? "item" : "items"}`;
 
     // 2. Update Free Shipping Meter ($50.00 = 5000 cents threshold)
     const shippingText = document.getElementById("shipping-meter-text");
     const shippingFill = document.getElementById("shipping-progress-bar");
-    const subtotal = cart.subtotal_cents || 0;
+    const pricing = cart.pricing || {};
+    const subtotal = pricing.subtotal_cents || 0;
     const threshold = 5000;
 
     if (subtotal >= threshold) {
@@ -158,10 +159,10 @@ export function initCartDrawer({
         .map(
           (item) => `
         <div class="cart-item-row" data-id="${item.product_id}">
-          <img src="${escapeHtml(item.image_url)}" alt="${escapeHtml(item.product_name)}" class="cart-item-image">
+          <img src="${escapeHtml(item.image_url)}" alt="${escapeHtml(item.title)}" class="cart-item-image">
           <div class="cart-item-details">
             <div class="cart-item-title-row">
-              <span class="cart-item-title">${escapeHtml(item.product_name)}</span>
+              <span class="cart-item-title">${escapeHtml(item.title)}</span>
               <span class="cart-item-price">${formatCurrency(item.price_cents * item.quantity)}</span>
             </div>
             <div class="cart-item-bottom-row">
@@ -174,7 +175,7 @@ export function initCartDrawer({
                   ${getIcon("plus", 12)}
                 </button>
               </div>
-              <button type="button" class="cart-item-remove-btn" data-id="${item.product_id}" aria-label="Remove ${escapeHtml(item.product_name)} from cart">
+              <button type="button" class="cart-item-remove-btn" data-id="${item.product_id}" aria-label="Remove ${escapeHtml(item.title)} from cart">
                 ${getIcon("trash", 16)}
               </button>
             </div>
@@ -255,21 +256,21 @@ export function initCartDrawer({
     }
 
     // 5. Cost Breakdown
-    document.getElementById("cart-subtotal").textContent = formatCurrency(cart.subtotal_cents);
+    document.getElementById("cart-subtotal").textContent = formatCurrency(pricing.subtotal_cents);
 
     const discountRow = document.getElementById("cart-discount-row");
     const discountVal = document.getElementById("cart-discount");
-    if (cart.discount_cents && cart.discount_cents > 0) {
+    if (pricing.discount_cents && pricing.discount_cents > 0) {
       discountRow.classList.remove("hidden");
-      discountVal.textContent = `-${formatCurrency(cart.discount_cents)}`;
+      discountVal.textContent = `-${formatCurrency(pricing.discount_cents)}`;
     } else {
       discountRow.classList.add("hidden");
     }
 
-    document.getElementById("cart-tax").textContent = formatCurrency(cart.tax_cents);
+    document.getElementById("cart-tax").textContent = formatCurrency(pricing.tax_cents);
     document.getElementById("cart-shipping").textContent =
-      cart.shipping_cents === 0 ? "FREE" : formatCurrency(cart.shipping_cents);
-    document.getElementById("cart-total").textContent = formatCurrency(cart.total_cents);
+      pricing.shipping_cents === 0 ? "FREE" : formatCurrency(pricing.shipping_cents);
+    document.getElementById("cart-total").textContent = formatCurrency(pricing.total_cents);
   }
 
   return {

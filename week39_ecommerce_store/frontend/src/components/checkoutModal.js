@@ -112,7 +112,8 @@ export function initCheckoutModal({ onSubmitCheckout }) {
     currentCart = cart;
     const totalEl = document.getElementById("checkout-total-cents");
     if (totalEl && cart) {
-      totalEl.textContent = formatCurrency(cart.total_cents);
+      const pricing = cart.pricing || {};
+      totalEl.textContent = formatCurrency(pricing.total_cents);
     }
     overlay.classList.add("open");
     overlay.setAttribute("aria-hidden", "false");

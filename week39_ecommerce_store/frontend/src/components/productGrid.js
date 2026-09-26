@@ -90,14 +90,14 @@ function createProductCardHtml(product) {
   return `
     <article class="product-card" data-product-id="${product.id}">
       <div class="product-card-image-wrap">
-        <img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(product.name)}" loading="lazy">
+        <img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(product.title)}" loading="lazy">
         <div class="product-badge-group">
-          <span class="category-tag">${escapeHtml(product.category)}</span>
+          <span class="category-tag">${escapeHtml(product.category_name)}</span>
           <span class="stock-tag ${stockClass}">${stockText}</span>
         </div>
       </div>
       <div class="product-card-body">
-        <h3 class="product-title">${escapeHtml(product.name)}</h3>
+        <h3 class="product-title">${escapeHtml(product.title)}</h3>
         <p class="product-desc">${escapeHtml(product.description || "")}</p>
         <div class="product-card-footer">
           <div class="product-price-block">
@@ -108,7 +108,7 @@ function createProductCardHtml(product) {
             class="btn-add-cart" 
             data-id="${product.id}"
             ${isOutOfStock ? "disabled" : ""}
-            aria-label="Add ${escapeHtml(product.name)} to cart"
+            aria-label="Add ${escapeHtml(product.title)} to cart"
           >
             ${getIcon("cart", 16)}
             <span>${isOutOfStock ? "Sold Out" : "Add to Cart"}</span>

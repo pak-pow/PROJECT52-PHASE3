@@ -106,7 +106,7 @@ async function loadCategories() {
       `<button type="button" class="category-tab-btn ${state.activeCategory === "" ? "active" : ""}" data-category="">All Categories</button>`,
       ...categories.map(
         (cat) =>
-          `<button type="button" class="category-tab-btn ${state.activeCategory === cat ? "active" : ""}" data-category="${escapeHtml(cat)}">${escapeHtml(cat)}</button>`
+          `<button type="button" class="category-tab-btn ${state.activeCategory === cat.slug ? "active" : ""}" data-category="${escapeHtml(cat.slug)}">${escapeHtml(cat.name)}</button>`
       ),
     ].join("");
 
@@ -120,7 +120,7 @@ async function loadCategories() {
         state.activeCategory = btn.getAttribute("data-category") || "";
         const titleEl = document.getElementById("catalog-title");
         if (titleEl) {
-          titleEl.textContent = state.activeCategory ? `${state.activeCategory} Catalog` : "All Products";
+          titleEl.textContent = state.activeCategory ? `${btn.textContent.trim()} Catalog` : "All Products";
         }
         loadProducts();
       });
@@ -157,7 +157,8 @@ async function loadCart() {
     state.cart = res && res.data;
     if (state.cart) {
       cartDrawer.render(state.cart);
-      navbar.updateCartCount(state.cart.item_count || 0);
+      const itemCount = (state.cart.items || []).reduce((sum, i) => sum + i.quantity, 0);
+      navbar.updateCartCount(itemCount);
     }
   } catch (err) {
     // Cart will create on next add action
@@ -172,9 +173,10 @@ async function handleAddToCart(product) {
     const res = await StoreApi.addCartItem(product.id, 1);
     state.cart = res && res.data;
     cartDrawer.render(state.cart);
-    navbar.updateCartCount(state.cart.item_count || 0);
+    const itemCount = (state.cart.items || []).reduce((sum, i) => sum + i.quantity, 0);
+    navbar.updateCartCount(itemCount);
     cartDrawer.open();
-    showToast(`Added ${product.name} to cart`, "success");
+    showToast(`Added ${product.title} to cart`, "success");
   } catch (err) {
     const msg = err.message || "Failed to add item to cart.";
     showToast(msg, "error");
@@ -189,7 +191,8 @@ async function handleUpdateQuantity(productId, newQty) {
     const res = await StoreApi.updateCartItemQuantity(productId, newQty);
     state.cart = res && res.data;
     cartDrawer.render(state.cart);
-    navbar.updateCartCount(state.cart.item_count || 0);
+    const itemCount = (state.cart.items || []).reduce((sum, i) => sum + i.quantity, 0);
+    navbar.updateCartCount(itemCount);
   } catch (err) {
     showToast(err.message || "Could not update item quantity.", "error");
   }
@@ -203,7 +206,8 @@ async function handleRemoveItem(productId) {
     const res = await StoreApi.removeCartItem(productId);
     state.cart = res && res.data;
     cartDrawer.render(state.cart);
-    navbar.updateCartCount(state.cart.item_count || 0);
+    const itemCount = (state.cart.items || []).reduce((sum, i) => sum + i.quantity, 0);
+    navbar.updateCartCount(itemCount);
     showToast("Item removed from cart", "info");
   } catch (err) {
     showToast("Could not remove item.", "error");

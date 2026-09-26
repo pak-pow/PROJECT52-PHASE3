@@ -67,10 +67,10 @@ export function initOrderSuccess({ onDone }) {
                   .map(
                     (it) => `
                   <tr>
-                    <td>${escapeHtml(it.product_name)}</td>
+                    <td>${escapeHtml(it.product_title)}</td>
                     <td class="text-right">${it.quantity}</td>
-                    <td class="text-right">${formatCurrency(it.unit_price_cents)}</td>
-                    <td class="text-right">${formatCurrency(it.total_price_cents)}</td>
+                    <td class="text-right">${formatCurrency(it.price_cents)}</td>
+                    <td class="text-right">${formatCurrency(it.line_total_cents)}</td>
                   </tr>
                 `
                   )
