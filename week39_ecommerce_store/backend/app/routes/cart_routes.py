@@ -138,13 +138,20 @@ def apply_promo():
     data = request.get_json(silent=True) or {}
     promo_code = data.get("promo_code")
 
-    if not promo_code or not isinstance(promo_code, str):
+    if (
+        not promo_code
+        or not isinstance(promo_code, str)
+        or not promo_code.strip()
+        or len(promo_code.strip()) > 30
+    ):
         return (
             jsonify(
                 {
                     "status": "error",
                     "code": "INVALID_PROMO_CODE",
-                    "message": "promo_code string is required.",
+                    "message": (
+                        "promo_code string is required and must not exceed 30 chars."
+                    ),
                 }
             ),
             400,
