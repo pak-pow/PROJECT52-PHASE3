@@ -1,3 +1,4 @@
+import html
 import uuid
 from datetime import datetime, timezone
 
@@ -98,8 +99,8 @@ class OrderModel:
                     order_number,
                     cart_token,
                     customer_email.strip(),
-                    customer_name.strip(),
-                    shipping_address.strip(),
+                    html.escape(customer_name.strip()),
+                    html.escape(shipping_address.strip()),
                     pricing["subtotal_cents"],
                     pricing["discount_cents"],
                     pricing["promo_code"],
