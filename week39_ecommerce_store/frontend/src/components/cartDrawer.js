@@ -159,7 +159,12 @@ export function initCartDrawer({
         .map(
           (item) => `
         <div class="cart-item-row" data-id="${item.product_id}">
-          <img src="${escapeHtml(item.image_url)}" alt="${escapeHtml(item.title)}" class="cart-item-image">
+          <div class="cart-item-image-wrap">
+            <div class="cart-item-placeholder" aria-hidden="true">
+              ${getIcon("package", 20)}
+            </div>
+            <img src="${escapeHtml(item.image_url)}" alt="${escapeHtml(item.title)}" class="cart-item-image">
+          </div>
           <div class="cart-item-details">
             <div class="cart-item-title-row">
               <span class="cart-item-title">${escapeHtml(item.title)}</span>
@@ -184,6 +189,13 @@ export function initCartDrawer({
       `
         )
         .join("");
+
+      // Hide broken image elements so SVG placeholder displays cleanly
+      itemsList.querySelectorAll(".cart-item-image").forEach((img) => {
+        img.addEventListener("error", () => {
+          img.classList.add("hidden");
+        });
+      });
 
       // Quantity Minus Listeners
       itemsList.querySelectorAll(".btn-qty-minus").forEach((btn) => {
