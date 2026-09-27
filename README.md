@@ -31,7 +31,7 @@ Phase 3 is where developers become production-ready. This phase covers DevOps pr
 |:----:|:--------|:---------|:-------|:----:|:------:|
 | 37 | CI/CD Pipeline Setup | DevOps | GitHub Actions, Automated Testing | 6h | [✅ Completed](./week37_ci_cd_pipeline) |
 | 38 | Containerized App with Docker | DevOps | Docker, Docker Compose | 7h | [✅ Completed](./week38_containerized_app) |
-| 39 | E-commerce Store v1 | Full Stack | Payment Integration, Cart Logic | 10h | Not Started |
+| 39 | E-commerce Store v1 | Full Stack | Payment Integration, Cart Logic | 10h | [✅ Completed](./week39_ecommerce_store) |
 | 40 | Progressive Web App (PWA) | Frontend | Service Workers, Offline Mode | 8h | Not Started |
 | 41 | GraphQL API Server | Backend | GraphQL, Schema Design | 8h | Not Started |
 | 42 | Real-time Collaborative Editor | Full Stack | Operational Transform, WebRTC | 10h | Not Started |
