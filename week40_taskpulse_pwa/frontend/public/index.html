@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#4f46e5">
+  <meta name="description" content="Fast, offline-first task management progressive web app with automatic synchronization">
+  
+  <!-- iOS Safari PWA Metas -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TaskPulse">
+
+  <title>TaskPulse - Offline-First Task Manager</title>
+
+  <!-- PWA Manifest & Icons -->
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" type="image/svg+xml" href="./icon.svg">
+  <link rel="apple-touch-icon" href="./icon.svg">
+
+  <!-- Core Stylesheets -->
+  <link rel="stylesheet" href="../src/assets/base.css">
+  <link rel="stylesheet" href="../src/assets/app.css">
+</head>
+<body>
+  <div id="toast-container" class="toast-container"></div>
+  <div id="modal-mount"></div>
+
+  <div id="app" class="app-shell">
+    <!-- PWA Offline & Update Banners Mount -->
+    <div id="pwa-banner-mount" class="pwa-banner-stack"></div>
+
+    <!-- Header Component Mount -->
+    <header id="header-mount" class="app-header"></header>
+
+    <!-- Main Workspace Mount -->
+    <main id="main-mount" class="app-main"></main>
+  </div>
+
+  <!-- Application Bootstrap -->
+  <script type="module" src="../src/main.js"></script>
+</body>
+</html>
