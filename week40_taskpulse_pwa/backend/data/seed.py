@@ -1,4 +1,5 @@
 from datetime import datetime
+
 from app import create_app
 from app.db import get_db
 
@@ -34,9 +35,7 @@ SEED_TASKS = [
     {
         "id": "task_seed_4",
         "title": "Verify Service Worker Cache Lifecycle",
-        "description": (
-            "Inspect cache storage entries for app shell static assets."
-        ),
+        "description": ("Inspect cache storage entries for app shell static assets."),
         "category": "work",
         "priority": "low",
         "completed": 0,
