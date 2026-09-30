@@ -1,5 +1,6 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
+
 from app.config.settings import Config
 from app.db import init_app, init_db
 from app.routes.health_routes import health_bp
