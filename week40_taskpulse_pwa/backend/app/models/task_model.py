@@ -1,5 +1,6 @@
-from datetime import datetime
 import uuid
+from datetime import datetime
+
 from app.db import get_db
 
 
@@ -111,17 +112,9 @@ class TaskModel:
         description = data.get("description", existing["description"])
         category = data.get("category", existing["category"])
         priority = data.get("priority", existing["priority"])
-        completed = (
-            1
-            if data.get("completed", existing["completed"])
-            else 0
-        )
+        completed = 1 if data.get("completed", existing["completed"]) else 0
         updated_at = data.get("updated_at") or now
-        is_deleted = (
-            1
-            if data.get("is_deleted", existing["is_deleted"])
-            else 0
-        )
+        is_deleted = 1 if data.get("is_deleted", existing["is_deleted"]) else 0
 
         db.execute(
             """
@@ -183,9 +176,7 @@ class TaskModel:
             action = m.get("action", "").upper()
             entity_id = m.get("entity_id")
             payload = m.get("payload", {})
-            timestamp = m.get("timestamp") or (
-                datetime.utcnow().isoformat() + "Z"
-            )
+            timestamp = m.get("timestamp") or (datetime.utcnow().isoformat() + "Z")
 
             if not entity_id or not action:
                 continue
@@ -216,8 +207,7 @@ class TaskModel:
                             "category": payload.get("category", "personal"),
                             "priority": payload.get("priority", "medium"),
                             "completed": payload.get("completed", False),
-                            "created_at": payload.get("created_at")
-                            or timestamp,
+                            "created_at": payload.get("created_at") or timestamp,
                             "updated_at": timestamp,
                             "is_deleted": 0,
                         }
@@ -230,12 +220,8 @@ class TaskModel:
                             "description": payload.get(
                                 "description", existing["description"]
                             ),
-                            "category": payload.get(
-                                "category", existing["category"]
-                            ),
-                            "priority": payload.get(
-                                "priority", existing["priority"]
-                            ),
+                            "category": payload.get("category", existing["category"]),
+                            "priority": payload.get("priority", existing["priority"]),
                             "completed": payload.get(
                                 "completed", existing["completed"]
                             ),
@@ -254,12 +240,8 @@ class TaskModel:
                             "description": payload.get(
                                 "description", existing["description"]
                             ),
-                            "category": payload.get(
-                                "category", existing["category"]
-                            ),
-                            "priority": payload.get(
-                                "priority", existing["priority"]
-                            ),
+                            "category": payload.get("category", existing["category"]),
+                            "priority": payload.get("priority", existing["priority"]),
                             "completed": payload.get(
                                 "completed", existing["completed"]
                             ),
@@ -345,8 +327,6 @@ class TaskModel:
                 (since_timestamp,),
             )
         else:
-            cursor = db.execute(
-                "SELECT * FROM tasks ORDER BY updated_at ASC"
-            )
+            cursor = db.execute("SELECT * FROM tasks ORDER BY updated_at ASC")
         rows = cursor.fetchall()
         return [cls._row_to_dict(row) for row in rows]
