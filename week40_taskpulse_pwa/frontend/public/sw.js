@@ -149,3 +149,21 @@ self.addEventListener("message", (event) => {
     self.skipWaiting();
   }
 });
+
+/**
+ * Background Sync Event: Replays queued mutations when connectivity is restored.
+ */
+self.addEventListener("sync", (event) => {
+  if (event.tag === "taskpulse-sync") {
+    event.waitUntil(
+      self.clients
+        .matchAll({ type: "window", includeUncontrolled: true })
+        .then((clients) => {
+          clients.forEach((client) => {
+            client.postMessage({ type: "BACKGROUND_SYNC_TRIGGER" });
+          });
+        })
+    );
+  }
+});
+
