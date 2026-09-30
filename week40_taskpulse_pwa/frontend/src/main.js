@@ -1,4 +1,9 @@
 import { initHeader } from "./components/header.js";
+import { initTaskGrid } from "./components/taskGrid.js";
+import { initTaskModal } from "./components/taskModal.js";
+import { showToast } from "./components/toast.js";
+import { IdbManager } from "./storage/idbManager.js";
+import { SyncQueue } from "./storage/syncQueue.js";
 import { SwRegister } from "./swRegister.js";
 import { getIcon } from "./utils/helpers.js";
 
@@ -8,6 +13,8 @@ import { getIcon } from "./utils/helpers.js";
 const state = {
   isOnline: navigator.onLine,
   deferredInstallPrompt: null,
+  activeFilter: "all",
+  tasks: [],
 };
 
 // Initialize Header Component
@@ -20,6 +27,96 @@ const header = initHeader({
     header.hideInstallButton();
   },
 });
+
+// Initialize Task Modal Component
+const taskModal = initTaskModal({
+  onSaveTask: async (taskData) => {
+    try {
+      const savedTask = await IdbManager.saveTask(taskData);
+
+      // If currently offline, buffer creation mutation to sync queue
+      if (!state.isOnline) {
+        await SyncQueue.enqueue("CREATE", savedTask.id, savedTask);
+      }
+
+      showToast("Task saved locally to IndexedDB", "success");
+      await refreshTasks();
+    } catch (err) {
+      showToast("Failed to save task to local database.", "error");
+    }
+  },
+});
+
+// Initialize Task Grid Component
+const taskGrid = initTaskGrid({
+  onToggleTask: async (taskId) => {
+    try {
+      const updated = await IdbManager.toggleTaskCompleted(taskId);
+
+      // If currently offline, buffer toggle mutation to sync queue
+      if (!state.isOnline) {
+        await SyncQueue.enqueue("TOGGLE", taskId, { completed: updated.completed });
+      }
+
+      showToast(
+        updated.completed ? "Task marked completed" : "Task marked pending",
+        "info"
+      );
+      await refreshTasks();
+    } catch (err) {
+      showToast("Could not update task status.", "error");
+    }
+  },
+  onDeleteTask: async (taskId) => {
+    try {
+      await IdbManager.deleteTask(taskId);
+
+      // If currently offline, buffer delete mutation to sync queue
+      if (!state.isOnline) {
+        await SyncQueue.enqueue("DELETE", taskId);
+      }
+
+      showToast("Task removed from local storage", "info");
+      await refreshTasks();
+    } catch (err) {
+      showToast("Could not delete task.", "error");
+    }
+  },
+});
+
+/**
+ * Reloads tasks from IndexedDB applying current active category filter.
+ */
+async function refreshTasks() {
+  try {
+    const tasks = await IdbManager.getAllTasks({
+      category: state.activeFilter,
+    });
+    state.tasks = tasks;
+    taskGrid.render(tasks);
+
+    // Update Summary Stats & Quotas
+    const stats = await IdbManager.getTaskStats();
+    const pendingQueueCount = await SyncQueue.getPendingCount();
+
+    const totalEl = document.getElementById("stat-total-tasks");
+    const pendingEl = document.getElementById("stat-pending-tasks");
+    const queueEl = document.getElementById("stat-sync-queue");
+
+    if (totalEl) totalEl.textContent = stats.total;
+    if (pendingEl) pendingEl.textContent = stats.pending;
+    if (queueEl) queueEl.textContent = pendingQueueCount;
+
+    // Refresh browser storage quota display
+    const quota = await IdbManager.getStorageQuota();
+    const quotaLabel = document.getElementById("stat-storage-quota");
+    if (quotaLabel) {
+      quotaLabel.textContent = `${quota.formattedUsage} used (${quota.percentUsed}%)`;
+    }
+  } catch (err) {
+    console.error("[App] Failed to refresh tasks from IndexedDB:", err);
+  }
+}
 
 /**
  * Updates offline warning banner in the sticky banner stack.
@@ -82,10 +179,10 @@ function renderWorkspace() {
     <!-- Controls & Category Filters -->
     <section class="controls-bar">
       <div class="filter-group" id="filter-tabs">
-        <button type="button" class="filter-btn active" data-filter="all">All Tasks</button>
-        <button type="button" class="filter-btn" data-filter="work">Work</button>
-        <button type="button" class="filter-btn" data-filter="personal">Personal</button>
-        <button type="button" class="filter-btn" data-filter="urgent">Urgent</button>
+        <button type="button" class="filter-btn ${state.activeFilter === "all" ? "active" : ""}" data-filter="all">All Tasks</button>
+        <button type="button" class="filter-btn ${state.activeFilter === "work" ? "active" : ""}" data-filter="work">Work</button>
+        <button type="button" class="filter-btn ${state.activeFilter === "personal" ? "active" : ""}" data-filter="personal">Personal</button>
+        <button type="button" class="filter-btn ${state.activeFilter === "urgent" ? "active" : ""}" data-filter="urgent">Urgent</button>
       </div>
       <button type="button" id="btn-open-create" class="btn-add-task">
         ${getIcon("plus", 14)}
@@ -111,29 +208,47 @@ function renderWorkspace() {
       </div>
       <div class="network-status-badge ${state.isOnline ? "network-online" : "network-offline"}">
         ${getIcon("database", 14)}
-        <span>IndexedDB Ready</span>
+        <span id="stat-storage-quota">IndexedDB Ready</span>
       </div>
     </section>
 
     <!-- Task Items List Mount -->
-    <section id="tasks-mount" class="tasks-list">
-      <div class="empty-state">
-        ${getIcon("check", 40)}
-        <h3 class="empty-state-title">No tasks found</h3>
-        <p>Get started by clicking New Task above. Everything works offline!</p>
-      </div>
-    </section>
+    <section id="tasks-mount" class="tasks-list"></section>
   `;
+
+  // Bind Open Task Modal Button
+  const openModalBtn = document.getElementById("btn-open-create");
+  if (openModalBtn) {
+    openModalBtn.addEventListener("click", () => {
+      taskModal.open();
+    });
+  }
+
+  // Bind Filter Tabs
+  const filterTabs = document.querySelectorAll("#filter-tabs .filter-btn");
+  filterTabs.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      filterTabs.forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      state.activeFilter = btn.getAttribute("data-filter") || "all";
+      refreshTasks();
+    });
+  });
 }
 
 /**
  * Application Bootstrap
  */
-function init() {
-  // Render Header & Baseline Workspace
+async function init() {
+  // Render Header, Workspace, and Modal
   header.render(state.isOnline);
   renderWorkspace();
+  taskModal.render();
   updateOfflineBanner(state.isOnline);
+
+  // Initialize and Seed IndexedDB on First Run
+  await IdbManager.seedInitialTasksIfEmpty();
+  await refreshTasks();
 
   // Register Service Worker with Lifecycle Callbacks
   SwRegister.register({
