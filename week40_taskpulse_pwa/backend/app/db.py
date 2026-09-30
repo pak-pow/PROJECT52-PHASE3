@@ -1,5 +1,6 @@
 import sqlite3
 from pathlib import Path
+
 from flask import current_app, g
 
 
@@ -12,9 +13,7 @@ def get_db(db_path=None):
                 path = current_app.config.get("DB_PATH")
             else:
                 path = str(
-                    Path(__file__).resolve().parent.parent
-                    / "data"
-                    / "taskpulse.db"
+                    Path(__file__).resolve().parent.parent / "data" / "taskpulse.db"
                 )
 
         # Ensure parent directory exists for file-based database
