@@ -90,4 +90,37 @@ export const SwRegister = {
   isOnline() {
     return navigator.onLine;
   },
+
+  /**
+   * Requests a background sync registration from the service worker if supported.
+   * @param {string} [tag]
+   * @returns {Promise<boolean>}
+   */
+  async requestBackgroundSync(tag = "taskpulse-sync") {
+    if (this.registration && "sync" in this.registration) {
+      try {
+        await this.registration.sync.register(tag);
+        return true;
+      } catch (err) {
+        console.warn("[SW] Background sync registration failed:", err);
+        return false;
+      }
+    }
+    return false;
+  },
+
+  /**
+   * Listens for messages dispatched from the active Service Worker.
+   * @param {function} handler
+   */
+  onMessage(handler) {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.addEventListener("message", (event) => {
+        if (typeof handler === "function") {
+          handler(event.data);
+        }
+      });
+    }
+  },
 };
+
