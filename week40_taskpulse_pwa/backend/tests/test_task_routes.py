@@ -65,9 +65,7 @@ def test_get_tasks_and_category_filter(client):
 
 def test_get_task_by_id_and_not_found(client):
     """Verify retrieving specific task by ID and 404 for unknown task."""
-    create_res = client.post(
-        "/api/tasks", json={"title": "Inspect single task"}
-    )
+    create_res = client.post("/api/tasks", json={"title": "Inspect single task"})
     task_id = create_res.get_json()["data"]["id"]
 
     res = client.get(f"/api/tasks/{task_id}")
