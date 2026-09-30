@@ -39,10 +39,14 @@ def test_batch_sync_create_and_update(client):
 
 def test_batch_sync_toggle_and_delete(client):
     """Verify offline TOGGLE and DELETE mutations."""
-    # Pre-create task
+    # Pre-create task with earlier timestamp
     client.post(
         "/api/tasks",
-        json={"id": "sync_target_1", "title": "Target for delete"},
+        json={
+            "id": "sync_target_1",
+            "title": "Target for delete",
+            "updated_at": "2026-09-30T10:00:00.000Z",
+        },
     )
 
     mutations = [
@@ -111,9 +115,7 @@ def test_batch_sync_invalid_input(client):
     assert "must be an array" in res.get_json()["message"]
 
     # Exceeding batch size
-    too_many = [
-        {"action": "CREATE", "entity_id": f"id_{i}"} for i in range(105)
-    ]
+    too_many = [{"action": "CREATE", "entity_id": f"id_{i}"} for i in range(105)]
     res_large = client.post("/api/sync/batch", json={"mutations": too_many})
     assert res_large.status_code == 400
     assert "exceeds maximum limit" in res_large.get_json()["message"]
