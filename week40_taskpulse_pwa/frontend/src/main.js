@@ -1,3 +1,4 @@
+import { TaskApi } from "./api/taskApi.js";
 import { initHeader } from "./components/header.js";
 import { initTaskGrid } from "./components/taskGrid.js";
 import { initTaskModal } from "./components/taskModal.js";
@@ -12,6 +13,7 @@ import { getIcon } from "./utils/helpers.js";
  */
 const state = {
   isOnline: navigator.onLine,
+  isSyncing: false,
   deferredInstallPrompt: null,
   activeFilter: "all",
   tasks: [],
@@ -28,18 +30,95 @@ const header = initHeader({
   },
 });
 
+/**
+ * Orchestrates queue replay and bidirectional delta synchronization.
+ * @param {object} [options]
+ * @param {boolean} [options.silent]
+ */
+async function triggerSync({ silent = false } = {}) {
+  if (state.isSyncing) return;
+  if (!state.isOnline) {
+    if (!silent) {
+      showToast("Cannot synchronize while offline.", "info");
+    }
+    return;
+  }
+
+  state.isSyncing = true;
+  updateSyncUIState("syncing");
+
+  try {
+    const result = await SyncQueue.replayQueue(TaskApi, IdbManager);
+
+    if (result.success) {
+      if (result.processed > 0 || result.serverDeltas > 0) {
+        showToast(
+          `Sync complete: ${result.processed} sent, ${result.serverDeltas} received.`,
+          "success"
+        );
+      } else if (!silent) {
+        showToast("All tasks are in sync with server.", "info");
+      }
+    } else if (!silent) {
+      showToast(`Sync warning: ${result.reason}`, "error");
+    }
+  } catch (err) {
+    if (!silent) {
+      showToast("Sync error encountered.", "error");
+    }
+  } finally {
+    state.isSyncing = false;
+    await refreshTasks();
+  }
+}
+
+/**
+ * Updates synchronization status pills and button spin states in the UI.
+ * @param {"synced"|"pending"|"syncing"} status
+ * @param {number} [pendingCount=0]
+ */
+function updateSyncUIState(status, pendingCount = 0) {
+  const syncBtn = document.getElementById("btn-sync-now");
+  const indicator = document.getElementById("sync-status-indicator");
+
+  if (syncBtn) {
+    if (status === "syncing") {
+      syncBtn.classList.add("sync-spinning");
+      syncBtn.setAttribute("disabled", "true");
+    } else {
+      syncBtn.classList.remove("sync-spinning");
+      syncBtn.removeAttribute("disabled");
+    }
+  }
+
+  if (indicator) {
+    indicator.className = `sync-status-pill status-${status}`;
+    if (status === "syncing") {
+      indicator.textContent = "Syncing...";
+    } else if (status === "pending" || pendingCount > 0) {
+      indicator.textContent = `${pendingCount} Queued`;
+    } else {
+      indicator.textContent = "In Sync";
+    }
+  }
+}
+
 // Initialize Task Modal Component
 const taskModal = initTaskModal({
   onSaveTask: async (taskData) => {
     try {
       const savedTask = await IdbManager.saveTask(taskData);
 
-      // If currently offline, buffer creation mutation to sync queue
-      if (!state.isOnline) {
-        await SyncQueue.enqueue("CREATE", savedTask.id, savedTask);
+      // Always buffer mutation to persistent sync queue
+      await SyncQueue.enqueue("CREATE", savedTask.id, savedTask);
+
+      if (state.isOnline) {
+        showToast("Task saved. Syncing to server...", "success");
+        triggerSync({ silent: true });
+      } else {
+        showToast("Saved offline. Queued for server sync.", "info");
       }
 
-      showToast("Task saved locally to IndexedDB", "success");
       await refreshTasks();
     } catch (err) {
       showToast("Failed to save task to local database.", "error");
@@ -53,15 +132,19 @@ const taskGrid = initTaskGrid({
     try {
       const updated = await IdbManager.toggleTaskCompleted(taskId);
 
-      // If currently offline, buffer toggle mutation to sync queue
-      if (!state.isOnline) {
-        await SyncQueue.enqueue("TOGGLE", taskId, { completed: updated.completed });
+      // Always buffer toggle mutation to persistent sync queue
+      await SyncQueue.enqueue("TOGGLE", taskId, { completed: updated.completed });
+
+      if (state.isOnline) {
+        showToast(
+          updated.completed ? "Task completed" : "Task pending",
+          "info"
+        );
+        triggerSync({ silent: true });
+      } else {
+        showToast("Status saved offline (queued).", "info");
       }
 
-      showToast(
-        updated.completed ? "Task marked completed" : "Task marked pending",
-        "info"
-      );
       await refreshTasks();
     } catch (err) {
       showToast("Could not update task status.", "error");
@@ -71,12 +154,16 @@ const taskGrid = initTaskGrid({
     try {
       await IdbManager.deleteTask(taskId);
 
-      // If currently offline, buffer delete mutation to sync queue
-      if (!state.isOnline) {
-        await SyncQueue.enqueue("DELETE", taskId);
+      // Always buffer delete mutation to persistent sync queue
+      await SyncQueue.enqueue("DELETE", taskId);
+
+      if (state.isOnline) {
+        showToast("Task removed. Syncing deletion...", "info");
+        triggerSync({ silent: true });
+      } else {
+        showToast("Task removed locally (queued).", "info");
       }
 
-      showToast("Task removed from local storage", "info");
       await refreshTasks();
     } catch (err) {
       showToast("Could not delete task.", "error");
@@ -107,6 +194,15 @@ async function refreshTasks() {
     if (pendingEl) pendingEl.textContent = stats.pending;
     if (queueEl) queueEl.textContent = pendingQueueCount;
 
+    // Refresh sync pill indicator
+    if (!state.isSyncing) {
+      if (pendingQueueCount > 0) {
+        updateSyncUIState("pending", pendingQueueCount);
+      } else {
+        updateSyncUIState("synced");
+      }
+    }
+
     // Refresh browser storage quota display
     const quota = await IdbManager.getStorageQuota();
     const quotaLabel = document.getElementById("stat-storage-quota");
@@ -132,7 +228,7 @@ function updateOfflineBanner(isOnline) {
       banner.className = "offline-banner";
       banner.innerHTML = `
         ${getIcon("wifiOff", 14)}
-        <span>Working Offline - All task changes saved to local IndexedDB</span>
+        <span>Working Offline - Mutations buffered to local sync queue</span>
       `;
       bannerMount.prepend(banner);
     }
@@ -184,10 +280,16 @@ function renderWorkspace() {
         <button type="button" class="filter-btn ${state.activeFilter === "personal" ? "active" : ""}" data-filter="personal">Personal</button>
         <button type="button" class="filter-btn ${state.activeFilter === "urgent" ? "active" : ""}" data-filter="urgent">Urgent</button>
       </div>
-      <button type="button" id="btn-open-create" class="btn-add-task">
-        ${getIcon("plus", 14)}
-        <span>New Task</span>
-      </button>
+      <div class="controls-actions">
+        <button type="button" id="btn-sync-now" class="btn-sync-now" title="Synchronize with backend">
+          ${getIcon("refresh", 14)}
+          <span>Sync Now</span>
+        </button>
+        <button type="button" id="btn-open-create" class="btn-add-task">
+          ${getIcon("plus", 14)}
+          <span>New Task</span>
+        </button>
+      </div>
     </section>
 
     <!-- PWA Storage & System Health Summary -->
@@ -206,9 +308,12 @@ function renderWorkspace() {
           <span class="status-stat-label">Offline Queue</span>
         </div>
       </div>
-      <div class="network-status-badge ${state.isOnline ? "network-online" : "network-offline"}">
-        ${getIcon("database", 14)}
-        <span id="stat-storage-quota">IndexedDB Ready</span>
+      <div class="controls-actions">
+        <span id="sync-status-indicator" class="sync-status-pill status-synced">In Sync</span>
+        <div class="network-status-badge ${state.isOnline ? "network-online" : "network-offline"}">
+          ${getIcon("database", 14)}
+          <span id="stat-storage-quota">IndexedDB Ready</span>
+        </div>
       </div>
     </section>
 
@@ -221,6 +326,14 @@ function renderWorkspace() {
   if (openModalBtn) {
     openModalBtn.addEventListener("click", () => {
       taskModal.open();
+    });
+  }
+
+  // Bind Manual Sync Button
+  const syncBtn = document.getElementById("btn-sync-now");
+  if (syncBtn) {
+    syncBtn.addEventListener("click", () => {
+      triggerSync({ silent: false });
     });
   }
 
@@ -251,23 +364,40 @@ async function init() {
   await refreshTasks();
 
   // Register Service Worker with Lifecycle Callbacks
-  SwRegister.register({
+  await SwRegister.register({
     onInstalled: () => {
       console.info("[App] TaskPulse App Shell precached for offline use.");
     },
     onUpdated: (worker) => {
       showUpdateNotification(worker);
     },
-    onOnline: () => {
+    onOnline: async () => {
       state.isOnline = true;
       header.updateNetworkStatus(true);
       updateOfflineBanner(true);
+      showToast("Connection restored. Synchronizing queue...", "info");
+
+      // Register background sync event with Service Worker
+      await SwRegister.requestBackgroundSync();
+
+      // Trigger sync replay
+      await triggerSync({ silent: false });
     },
     onOffline: () => {
       state.isOnline = false;
       header.updateNetworkStatus(false);
       updateOfflineBanner(false);
+      showToast("Offline mode enabled. Changes queued locally.", "info");
+      refreshTasks();
     },
+  });
+
+  // Listen for worker messages (e.g. background sync triggers)
+  SwRegister.onMessage((data) => {
+    if (data && data.type === "BACKGROUND_SYNC_TRIGGER") {
+      console.info("[App] Received BACKGROUND_SYNC_TRIGGER from Service Worker.");
+      triggerSync({ silent: true });
+    }
   });
 
   // Listen for Native PWA Install Prompt
@@ -282,6 +412,11 @@ async function init() {
     console.info("[PWA] TaskPulse successfully installed on device.");
     header.hideInstallButton();
   });
+
+  // If online at launch, perform initial delta sync to catch up
+  if (state.isOnline) {
+    triggerSync({ silent: true });
+  }
 }
 
 // Boot application when DOM is ready
