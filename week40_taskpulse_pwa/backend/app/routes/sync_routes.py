@@ -1,5 +1,7 @@
 from datetime import datetime
+
 from flask import Blueprint, current_app, jsonify, request
+
 from app.models.task_model import TaskModel
 
 sync_bp = Blueprint("sync", __name__)
