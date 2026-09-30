@@ -1,12 +1,32 @@
 import { openDatabase } from "./idbManager.js";
 
 /**
- * TaskPulse Offline Sync Queue Manager
+ * TaskPulse Offline Sync Queue Manager & Replay Engine
  * Buffers local mutations (CREATE, UPDATE, DELETE, TOGGLE) into IndexedDB
- * so they can be securely replayed to the backend when connectivity returns.
+ * and reconciles bidirectional changes with the backend upon reconnection.
  */
 
+const STORAGE_LAST_SYNC_KEY = "taskpulse_last_server_sync";
+
 export const SyncQueue = {
+  /**
+   * Retrieves the ISO timestamp of the last successful server synchronization.
+   * @returns {string|null}
+   */
+  getLastSyncTimestamp() {
+    return localStorage.getItem(STORAGE_LAST_SYNC_KEY);
+  },
+
+  /**
+   * Saves the ISO timestamp of the last successful server synchronization.
+   * @param {string} timestamp
+   */
+  setLastSyncTimestamp(timestamp) {
+    if (timestamp) {
+      localStorage.setItem(STORAGE_LAST_SYNC_KEY, timestamp);
+    }
+  },
+
   /**
    * Enqueues an offline mutation into the IndexedDB sync_queue store.
    * @param {"CREATE"|"UPDATE"|"DELETE"|"TOGGLE"} action
@@ -97,5 +117,78 @@ export const SyncQueue = {
       request.onsuccess = () => resolve(request.result || 0);
       request.onerror = (e) => reject(e.target.error);
     });
+  },
+
+  /**
+   * Replays pending mutations to the remote backend and performs delta reconciliation.
+   * @param {object} taskApi - TaskApi instance
+   * @param {object} idbManager - IdbManager instance
+   * @returns {Promise<{success: boolean, processed: number, serverDeltas: number, conflicts: number, reason?: string}>}
+   */
+  async replayQueue(taskApi, idbManager) {
+    if (!navigator.onLine) {
+      return { success: false, reason: "offline", processed: 0, serverDeltas: 0, conflicts: 0 };
+    }
+
+    const pending = await this.getAll();
+    let conflictsCount = 0;
+    let processedCount = 0;
+
+    // 1. Flush local mutation queue if there are pending items
+    if (pending.length > 0) {
+      const batchPayload = pending.map((item) => ({
+        action: item.action,
+        entity_id: item.entity_id,
+        payload: item.payload,
+        timestamp: item.timestamp,
+      }));
+
+      const syncResult = await taskApi.batchSync(batchPayload);
+
+      if (syncResult && syncResult.status === "success") {
+        conflictsCount = syncResult.conflicts || 0;
+        processedCount = pending.length;
+
+        // Clean processed mutations from IndexedDB queue
+        await Promise.all(pending.map((item) => this.remove(item.id)));
+      } else {
+        return {
+          success: false,
+          reason: syncResult?.message || "Batch sync failed",
+          processed: 0,
+          serverDeltas: 0,
+          conflicts: 0,
+        };
+      }
+    }
+
+    // 2. Delta reconciliation: Pull updates and deletions made on server
+    const sinceTimestamp = this.getLastSyncTimestamp();
+    const deltaResult = await taskApi.getDelta(sinceTimestamp);
+    let deltaCount = 0;
+
+    if (deltaResult && deltaResult.status === "success") {
+      const deltas = deltaResult.delta || [];
+      deltaCount = deltas.length;
+
+      for (const item of deltas) {
+        if (item.is_deleted) {
+          await idbManager.deleteTask(item.id);
+        } else {
+          await idbManager.saveTask(item);
+        }
+      }
+
+      if (deltaResult.server_time) {
+        this.setLastSyncTimestamp(deltaResult.server_time);
+      }
+    }
+
+    return {
+      success: true,
+      processed: processedCount,
+      serverDeltas: deltaCount,
+      conflicts: conflictsCount,
+    };
   },
 };
