@@ -1,5 +1,6 @@
 import { TaskApi } from "./api/taskApi.js";
 import { initHeader } from "./components/header.js";
+import { initStorageInspector } from "./components/storageInspector.js";
 import { initTaskGrid } from "./components/taskGrid.js";
 import { initTaskModal } from "./components/taskModal.js";
 import { showToast } from "./components/toast.js";
@@ -14,6 +15,9 @@ import { getIcon } from "./utils/helpers.js";
 const state = {
   isOnline: navigator.onLine,
   isSyncing: false,
+  isStandalone:
+    window.matchMedia("(display-mode: standalone)").matches ||
+    window.navigator.standalone === true,
   deferredInstallPrompt: null,
   activeFilter: "all",
   tasks: [],
@@ -27,6 +31,13 @@ const header = initHeader({
     const { outcome } = await promptEvent.userChoice;
     console.info(`[PWA] Install prompt outcome: ${outcome}`);
     header.hideInstallButton();
+  },
+});
+
+// Initialize Storage & Quota Inspector Component
+const storageInspector = initStorageInspector({
+  onDataChanged: async () => {
+    await refreshTasks();
   },
 });
 
@@ -238,6 +249,60 @@ function updateOfflineBanner(isOnline) {
 }
 
 /**
+ * Renders an install promotion banner if app is not yet installed.
+ * @param {BeforeInstallPromptEvent} promptEvent
+ */
+function renderInstallPromoBanner(promptEvent) {
+  if (state.isStandalone || sessionStorage.getItem("dismissed_install_banner")) {
+    return;
+  }
+
+  const bannerMount = document.getElementById("pwa-banner-mount");
+  if (!bannerMount || bannerMount.querySelector(".install-promo-banner")) return;
+
+  const banner = document.createElement("div");
+  banner.className = "install-promo-banner";
+  banner.innerHTML = `
+    <div class="install-promo-content">
+      <div class="install-promo-icon" aria-hidden="true">
+        ${getIcon("check", 18)}
+      </div>
+      <div class="install-promo-text">
+        <span class="install-promo-title">Install TaskPulse</span>
+        <span class="install-promo-desc">Launch instantly from your home screen or dock with offline speed</span>
+      </div>
+    </div>
+    <div class="install-promo-actions">
+      <button type="button" class="btn-promo-install" id="btn-banner-install">Install App</button>
+      <button type="button" class="btn-promo-dismiss" id="btn-banner-dismiss">Dismiss</button>
+    </div>
+  `;
+  bannerMount.appendChild(banner);
+
+  const installBtn = banner.querySelector("#btn-banner-install");
+  const dismissBtn = banner.querySelector("#btn-banner-dismiss");
+
+  if (installBtn) {
+    installBtn.addEventListener("click", async () => {
+      if (promptEvent) {
+        promptEvent.prompt();
+        const { outcome } = await promptEvent.userChoice;
+        console.info(`[PWA] Install prompt outcome: ${outcome}`);
+        banner.remove();
+        header.hideInstallButton();
+      }
+    });
+  }
+
+  if (dismissBtn) {
+    dismissBtn.addEventListener("click", () => {
+      sessionStorage.setItem("dismissed_install_banner", "true");
+      banner.remove();
+    });
+  }
+}
+
+/**
  * Displays update prompt banner when a new Service Worker version is installed.
  */
 function showUpdateNotification(newWorker) {
@@ -265,6 +330,18 @@ function showUpdateNotification(newWorker) {
 }
 
 /**
+ * Handles navigation shortcut hash anchors (#new, #storage).
+ */
+function handleRouteHash() {
+  const hash = window.location.hash;
+  if (hash === "#new") {
+    taskModal.open();
+  } else if (hash === "#storage") {
+    storageInspector.open();
+  }
+}
+
+/**
  * Renders the baseline workspace controls and summary card.
  */
 function renderWorkspace() {
@@ -281,6 +358,10 @@ function renderWorkspace() {
         <button type="button" class="filter-btn ${state.activeFilter === "urgent" ? "active" : ""}" data-filter="urgent">Urgent</button>
       </div>
       <div class="controls-actions">
+        <button type="button" id="btn-open-storage" class="btn-sync-now" title="Inspect Storage Quota and Backups">
+          ${getIcon("database", 14)}
+          <span>Storage</span>
+        </button>
         <button type="button" id="btn-sync-now" class="btn-sync-now" title="Synchronize with backend">
           ${getIcon("refresh", 14)}
           <span>Sync Now</span>
@@ -310,10 +391,10 @@ function renderWorkspace() {
       </div>
       <div class="controls-actions">
         <span id="sync-status-indicator" class="sync-status-pill status-synced">In Sync</span>
-        <div class="network-status-badge ${state.isOnline ? "network-online" : "network-offline"}">
+        <button type="button" id="btn-quota-badge" class="network-status-badge network-online" title="Click to view storage details">
           ${getIcon("database", 14)}
           <span id="stat-storage-quota">IndexedDB Ready</span>
-        </div>
+        </button>
       </div>
     </section>
 
@@ -326,6 +407,21 @@ function renderWorkspace() {
   if (openModalBtn) {
     openModalBtn.addEventListener("click", () => {
       taskModal.open();
+    });
+  }
+
+  // Bind Storage Inspector Buttons
+  const openStorageBtn = document.getElementById("btn-open-storage");
+  if (openStorageBtn) {
+    openStorageBtn.addEventListener("click", () => {
+      storageInspector.open();
+    });
+  }
+
+  const quotaBadgeBtn = document.getElementById("btn-quota-badge");
+  if (quotaBadgeBtn) {
+    quotaBadgeBtn.addEventListener("click", () => {
+      storageInspector.open();
     });
   }
 
@@ -405,13 +501,21 @@ async function init() {
     e.preventDefault();
     state.deferredInstallPrompt = e;
     header.setInstallPrompt(e);
+    renderInstallPromoBanner(e);
   });
 
   // Track Successful PWA Installation
   window.addEventListener("appinstalled", () => {
     console.info("[PWA] TaskPulse successfully installed on device.");
     header.hideInstallButton();
+    const banner = document.querySelector(".install-promo-banner");
+    if (banner) banner.remove();
+    showToast("TaskPulse installed successfully!", "success");
   });
+
+  // Check URL hash for direct shortcut routing
+  handleRouteHash();
+  window.addEventListener("hashchange", handleRouteHash);
 
   // If online at launch, perform initial delta sync to catch up
   if (state.isOnline) {
