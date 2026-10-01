@@ -1,4 +1,5 @@
 {
+  "id": "/taskpulse-pwa",
   "name": "TaskPulse - Offline Task Manager",
   "short_name": "TaskPulse",
   "description": "Fast, offline-first task management progressive web app with automatic synchronization",
@@ -15,9 +16,15 @@
   "icons": [
     {
       "src": "./icon.svg",
-      "sizes": "any",
+      "sizes": "192x192 512x512 any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "./icon.svg",
+      "sizes": "192x192 512x512 any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
     }
   ],
   "shortcuts": [
@@ -29,10 +36,24 @@
       "icons": [
         {
           "src": "./icon.svg",
-          "sizes": "any",
+          "sizes": "96x96",
+          "type": "image/svg+xml"
+        }
+      ]
+    },
+    {
+      "name": "Storage Inspector",
+      "short_name": "Storage",
+      "description": "Inspect client-side storage quota and IndexedDB health",
+      "url": "./index.html#storage",
+      "icons": [
+        {
+          "src": "./icon.svg",
+          "sizes": "96x96",
           "type": "image/svg+xml"
         }
       ]
     }
-  ]
+  ],
+  "prefer_related_applications": false
 }
