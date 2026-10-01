@@ -3,7 +3,7 @@
  * Production-grade offline-first caching and lifecycle management.
  */
 
-const CACHE_VERSION = "v1";
+const CACHE_VERSION = "v2";
 const STATIC_CACHE = `taskpulse-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `taskpulse-runtime-${CACHE_VERSION}`;
 
@@ -18,6 +18,14 @@ const PRECACHE_ASSETS = [
   "../src/assets/base.css",
   "../src/assets/app.css",
   "../src/utils/helpers.js",
+  "../src/api/taskApi.js",
+  "../src/storage/idbManager.js",
+  "../src/storage/syncQueue.js",
+  "../src/components/header.js",
+  "../src/components/taskGrid.js",
+  "../src/components/taskModal.js",
+  "../src/components/toast.js",
+  "../src/components/storageInspector.js",
 ];
 
 /**
