@@ -654,4 +654,309 @@
   border: 1px solid rgba(6, 182, 212, 0.3);
 }
 
+/* Storage & Quota Inspector Modal */
+.storage-card {
+  max-width: 540px;
+}
+
+.storage-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.storage-icon-box {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  background-color: rgba(99, 102, 241, 0.15);
+  color: var(--color-brand-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.storage-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.storage-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 1rem;
+  background-color: var(--color-bg-base);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.storage-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.storage-section-title {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--color-text-main);
+}
+
+.storage-quota-text {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-dim);
+}
+
+.quota-meter-progress {
+  width: 100%;
+  height: 10px;
+  border-radius: var(--radius-full);
+  appearance: none;
+  border: none;
+  overflow: hidden;
+  background-color: var(--color-bg-card);
+}
+
+.quota-meter-progress::-webkit-progress-bar {
+  background-color: var(--color-bg-card);
+  border-radius: var(--radius-full);
+}
+
+.quota-meter-progress::-webkit-progress-value {
+  background: linear-gradient(90deg, #4f46e5 0%, #06b6d4 100%);
+  border-radius: var(--radius-full);
+}
+
+.quota-meter-progress::-moz-progress-bar {
+  background: linear-gradient(90deg, #4f46e5 0%, #06b6d4 100%);
+  border-radius: var(--radius-full);
+}
+
+.storage-hint {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.persistence-box {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.persistence-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.persistence-desc {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+.badge-persisted {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-full);
+  background-color: rgba(16, 185, 129, 0.15);
+  color: var(--color-success);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.btn-persist {
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-md);
+  background-color: var(--color-brand-primary);
+  color: #ffffff;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+}
+
+.btn-persist:hover {
+  background-color: var(--color-brand-hover);
+}
+
+.storage-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+}
+
+@media (max-width: 600px) {
+  .storage-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.storage-stat-tile {
+  background-color: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.25rem;
+}
+
+.storage-stat-num {
+  font-size: var(--font-size-lg);
+  font-weight: 800;
+  color: var(--color-text-main);
+  font-family: var(--font-family-mono);
+}
+
+.storage-stat-name {
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.storage-actions-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.btn-storage-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-md);
+  background-color: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-dim);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  transition: all var(--transition-fast);
+}
+
+.btn-storage-action:hover {
+  border-color: var(--color-border-active);
+  color: var(--color-text-main);
+}
+
+.btn-storage-action.btn-danger {
+  color: var(--color-danger);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.btn-storage-action.btn-danger:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+  border-color: var(--color-danger);
+}
+
+/* Install Promotion Banner */
+.install-promo-banner {
+  background-color: var(--color-bg-card);
+  border: 1px solid var(--color-brand-primary);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.2);
+  animation: slideDown 250ms ease;
+}
+
+.install-promo-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.install-promo-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+.install-promo-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.install-promo-title {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--color-text-main);
+}
+
+.install-promo-desc {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.install-promo-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.btn-promo-install {
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-md);
+  background-color: var(--color-brand-primary);
+  color: #ffffff;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  transition: all var(--transition-fast);
+}
+
+.btn-promo-install:hover {
+  background-color: var(--color-brand-hover);
+}
+
+.btn-promo-dismiss {
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+
+.btn-promo-dismiss:hover {
+  color: var(--color-text-main);
+}
+
+.badge-installed {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: var(--radius-full);
+  background-color: rgba(6, 182, 212, 0.15);
+  color: var(--color-info);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  font-size: var(--font-size-xs);
+  font-family: var(--font-family-mono);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+
 
