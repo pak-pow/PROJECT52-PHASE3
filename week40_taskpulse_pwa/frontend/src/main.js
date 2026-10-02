@@ -8,6 +8,7 @@ import { IdbManager } from "./storage/idbManager.js";
 import { SyncQueue } from "./storage/syncQueue.js";
 import { SwRegister } from "./swRegister.js";
 import { getIcon } from "./utils/helpers.js";
+import { NotificationService } from "./utils/notifications.js";
 
 /**
  * TaskPulse Application State
@@ -31,6 +32,41 @@ const header = initHeader({
     const { outcome } = await promptEvent.userChoice;
     console.info(`[PWA] Install prompt outcome: ${outcome}`);
     header.hideInstallButton();
+  },
+  onNotificationClick: async () => {
+    if (!NotificationService.isSupported()) {
+      showToast("Notifications are not supported in this browser.", "info");
+      return;
+    }
+
+    const currentPerm = NotificationService.getPermission();
+    if (currentPerm === "default") {
+      const granted = await NotificationService.requestPermission();
+      header.updateNotificationStatus(NotificationService.getPermission());
+      if (granted) {
+        showToast("Notifications enabled!", "success");
+        await NotificationService.showNotification(
+          "TaskPulse Notifications Active",
+          {
+            body: "Task reminders and offline sync alerts are now active.",
+          },
+          SwRegister.registration
+        );
+      } else {
+        showToast("Notification permissions were not granted.", "info");
+      }
+    } else if (currentPerm === "granted") {
+      await NotificationService.showNotification(
+        "TaskPulse Alert Test",
+        {
+          body: "Task alerts and background sync updates are active.",
+        },
+        SwRegister.registration
+      );
+      showToast("Test notification sent.", "info");
+    } else {
+      showToast("Notifications are blocked in site settings.", "error");
+    }
   },
 });
 
@@ -130,6 +166,23 @@ const taskModal = initTaskModal({
         showToast("Saved offline. Queued for server sync.", "info");
       }
 
+      // Dispatch native notification alert if task is marked urgent or high priority
+      if (
+        (savedTask.priority === "urgent" || savedTask.priority === "high") &&
+        NotificationService.getPermission() === "granted"
+      ) {
+        NotificationService.showNotification(
+          `Priority Task: ${savedTask.title}`,
+          {
+            body:
+              savedTask.description ||
+              `Task flagged as ${savedTask.priority} priority.`,
+            tag: `task-${savedTask.id}`,
+          },
+          SwRegister.registration
+        );
+      }
+
       await refreshTasks();
     } catch (err) {
       showToast("Failed to save task to local database.", "error");
@@ -220,6 +273,9 @@ async function refreshTasks() {
     if (quotaLabel) {
       quotaLabel.textContent = `${quota.formattedUsage} used (${quota.percentUsed}%)`;
     }
+
+    // Sync native platform app badge with pending tasks
+    await NotificationService.updateBadge(stats.pending);
   } catch (err) {
     console.error("[App] Failed to refresh tasks from IndexedDB:", err);
   }
@@ -454,6 +510,7 @@ async function init() {
   renderWorkspace();
   taskModal.render();
   updateOfflineBanner(state.isOnline);
+  header.updateNotificationStatus(NotificationService.getPermission());
 
   // Initialize and Seed IndexedDB on First Run
   await IdbManager.seedInitialTasksIfEmpty();
