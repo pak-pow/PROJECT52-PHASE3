@@ -958,5 +958,45 @@
   text-transform: uppercase;
 }
 
+/* Notification Toggle in Header */
+.btn-notification-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-bg-card);
+  color: var(--color-text-dim);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+
+.btn-notification-toggle:hover {
+  border-color: var(--color-border-active);
+  color: var(--color-text-main);
+}
+
+.btn-notification-toggle.status-granted {
+  border-color: rgba(16, 185, 129, 0.4);
+  background-color: rgba(16, 185, 129, 0.12);
+  color: var(--color-success);
+}
+
+.btn-notification-toggle.status-denied {
+  border-color: rgba(239, 68, 68, 0.4);
+  background-color: rgba(239, 68, 68, 0.12);
+  color: var(--color-danger);
+  cursor: not-allowed;
+}
+
+.btn-notification-toggle.status-default {
+  border-color: rgba(99, 102, 241, 0.4);
+  color: var(--color-brand-primary);
+}
+
+
 
 
