@@ -1,9 +1,10 @@
 import { getIcon } from "../utils/helpers.js";
 
 /**
- * Header Component with Live Network Status Beacon and PWA Install Prompt
+ * Header Component with Live Network Status Beacon, PWA Install Prompt,
+ * and Web Notifications Permission Toggle.
  */
-export function initHeader({ onInstallClick } = {}) {
+export function initHeader({ onInstallClick, onNotificationClick } = {}) {
   const mount = document.getElementById("header-mount");
   let installPromptEvent = null;
 
@@ -23,6 +24,12 @@ export function initHeader({ onInstallClick } = {}) {
         </div>
 
         <div class="header-actions">
+          <!-- Notification Alerts Toggle -->
+          <button type="button" id="btn-toggle-notifications" class="btn-notification-toggle status-default" aria-label="Toggle notifications" title="Enable task notifications">
+            ${getIcon("bell", 14)}
+            <span id="notification-status-text">Alerts</span>
+          </button>
+
           <!-- Live Network Status Beacon -->
           <div id="network-badge" class="network-status-badge ${isOnline ? "network-online" : "network-offline"}">
             <span class="status-dot"></span>
@@ -46,6 +53,15 @@ export function initHeader({ onInstallClick } = {}) {
         }
       });
     }
+
+    const notifBtn = mount.querySelector("#btn-toggle-notifications");
+    if (notifBtn) {
+      notifBtn.addEventListener("click", async () => {
+        if (typeof onNotificationClick === "function") {
+          onNotificationClick();
+        }
+      });
+    }
   }
 
   function updateNetworkStatus(isOnline) {
@@ -54,6 +70,24 @@ export function initHeader({ onInstallClick } = {}) {
     if (badge && text) {
       badge.className = `network-status-badge ${isOnline ? "network-online" : "network-offline"}`;
       text.textContent = isOnline ? "Online" : "Offline";
+    }
+  }
+
+  function updateNotificationStatus(permissionStatus) {
+    const notifBtn = document.getElementById("btn-toggle-notifications");
+    const statusText = document.getElementById("notification-status-text");
+    if (notifBtn && statusText) {
+      notifBtn.className = `btn-notification-toggle status-${permissionStatus}`;
+      if (permissionStatus === "granted") {
+        statusText.textContent = "Alerts On";
+        notifBtn.title = "Notifications enabled. Click to send test alert.";
+      } else if (permissionStatus === "denied") {
+        statusText.textContent = "Blocked";
+        notifBtn.title = "Notifications blocked by browser settings.";
+      } else {
+        statusText.textContent = "Alerts";
+        notifBtn.title = "Click to enable task notifications.";
+      }
     }
   }
 
@@ -76,6 +110,7 @@ export function initHeader({ onInstallClick } = {}) {
   return {
     render,
     updateNetworkStatus,
+    updateNotificationStatus,
     setInstallPrompt,
     hideInstallButton,
   };
