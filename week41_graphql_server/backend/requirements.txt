@@ -1,0 +1,11 @@
+Flask>=3.0.0
+flask-cors>=4.0.0
+graphene>=3.3.0
+graphql-core>=3.2.0
+graphql-relay>=3.2.0
+pytest>=8.0.0
+pytest-cov>=4.1.0
+flake8>=7.0.0
+black>=24.0.0
+isort>=5.13.0
+bandit>=1.7.7
