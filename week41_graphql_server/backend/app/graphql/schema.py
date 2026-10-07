@@ -1,6 +1,7 @@
 import graphene
 from graphql import print_schema
 
+from app.graphql.mutations import Mutation
 from app.graphql.queries import Query
 from app.graphql.types import (
     ProjectType,
@@ -14,6 +15,7 @@ from app.graphql.types import (
 # Instantiate executable Graphene GraphQL schema
 schema = graphene.Schema(
     query=Query,
+    mutation=Mutation,
     types=[
         TimestampedInterface,
         TechnologyType,
