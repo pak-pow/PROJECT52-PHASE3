@@ -70,8 +70,28 @@ class ReviewType(graphene.ObjectType):
     rating = graphene.Int(required=True)
     comment = graphene.String()
     created_at = graphene.String(required=True)
+    author_id = graphene.Int()
+    project_id = graphene.Int()
     author = graphene.Field(lambda: UserType)
     project = graphene.Field(lambda: ProjectType)
+
+    def resolve_author(self, info):
+        if hasattr(self, "author") and self.author is not None:
+            return self.author
+        from app.models.user_model import get_user_by_id
+
+        author_id = getattr(self, "author_id", None)
+        user = get_user_by_id(author_id) if author_id else None
+        return UserType(**user) if user else None
+
+    def resolve_project(self, info):
+        if hasattr(self, "project") and self.project is not None:
+            return self.project
+        from app.models.project_model import get_project_by_id
+
+        project_id = getattr(self, "project_id", None)
+        proj = get_project_by_id(project_id) if project_id else None
+        return ProjectType(**proj) if proj else None
 
 
 class ProjectType(graphene.ObjectType):
@@ -92,6 +112,30 @@ class ProjectType(graphene.ObjectType):
     average_rating = graphene.Float()
     review_count = graphene.Int()
 
+    def resolve_owner(self, info):
+        if hasattr(self, "owner") and self.owner is not None:
+            return self.owner
+        from app.models.user_model import get_user_by_id
+
+        user = get_user_by_id(getattr(self, "owner_id", None))
+        return UserType(**user) if user else None
+
+    def resolve_technologies(self, info):
+        if hasattr(self, "technologies") and self.technologies is not None:
+            return self.technologies
+        from app.models.project_model import get_technologies_by_project
+
+        techs = get_technologies_by_project(getattr(self, "id", None))
+        return [TechnologyType(**t) for t in techs]
+
+    def resolve_reviews(self, info):
+        if hasattr(self, "reviews") and self.reviews is not None:
+            return self.reviews
+        from app.models.project_model import get_reviews_by_project
+
+        revs = get_reviews_by_project(getattr(self, "id", None))
+        return [ReviewType(**r) for r in revs]
+
 
 class UserType(graphene.ObjectType):
     """Represents a registered developer profile."""
@@ -107,6 +151,29 @@ class UserType(graphene.ObjectType):
     projects = graphene.List(graphene.NonNull(ProjectType))
     reviews = graphene.List(graphene.NonNull(ReviewType))
     project_count = graphene.Int()
+
+    def resolve_projects(self, info):
+        if hasattr(self, "projects") and self.projects is not None:
+            return self.projects
+        from app.models.project_model import list_projects
+
+        projs = list_projects(owner_id=getattr(self, "id", None))
+        return [ProjectType(**p) for p in projs]
+
+    def resolve_reviews(self, info):
+        if hasattr(self, "reviews") and self.reviews is not None:
+            return self.reviews
+        from app.models.project_model import get_reviews_by_author
+
+        revs = get_reviews_by_author(getattr(self, "id", None))
+        return [ReviewType(**r) for r in revs]
+
+    def resolve_project_count(self, info):
+        if hasattr(self, "project_count") and self.project_count is not None:
+            return self.project_count
+        from app.models.project_model import list_projects
+
+        return len(list_projects(owner_id=getattr(self, "id", None)))
 
 
 class SystemStatsType(graphene.ObjectType):
