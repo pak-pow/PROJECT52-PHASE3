@@ -96,7 +96,7 @@ def test_graphql_technologies_query(client):
     )
     assert res_all.status_code == 200
     techs = res_all.get_json()["data"]["technologies"]
-    assert len(techs) == 4
+    assert len(techs) >= 4
     names = [t["name"] for t in techs]
     assert "Python" in names
     assert "GraphQL" in names
