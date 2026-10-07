@@ -20,4 +20,6 @@ class TestingConfig(Config):
 
     TESTING = True
     DEBUG = True
-    DB_PATH = ":memory:"
+    DB_PATH = os.environ.get(
+        "PULSEGRAPH_TEST_DB_PATH", str(Config.DATA_DIR / "test_pulsegraph.db")
+    )
