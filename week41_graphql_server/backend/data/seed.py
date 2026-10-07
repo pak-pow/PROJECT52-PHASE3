@@ -41,42 +41,87 @@ SEED_USERS = [
 ]
 
 
-def seed_database():
-    """Seeds baseline technologies and developers into SQLite database."""
-    app = create_app()
-    with app.app_context():
+def seed_database(db=None):
+    """Seeds baseline technologies, users, and projects into SQLite."""
+    close_after = False
+    if db is None:
+        app = create_app()
+        ctx = app.app_context()
+        ctx.push()
         db = get_db()
-        cursor = db.execute("SELECT COUNT(*) as count FROM technologies")
-        tech_count = cursor.fetchone()["count"]
+        close_after = True
 
-        if tech_count == 0:
-            for name, cat, icon in SEED_TECHNOLOGIES:
-                db.execute(
-                    """
-                    INSERT INTO technologies (name, category, icon_slug)
-                    VALUES (?, ?, ?)
-                    """,
-                    (name, cat, icon),
-                )
-            print(f"[Seed] Added {len(SEED_TECHNOLOGIES)} technologies.")
+    cursor = db.execute("SELECT COUNT(*) as count FROM technologies")
+    tech_count = cursor.fetchone()["count"]
 
-        cursor = db.execute("SELECT COUNT(*) as count FROM users")
-        user_count = cursor.fetchone()["count"]
+    if tech_count == 0:
+        for name, cat, icon in SEED_TECHNOLOGIES:
+            db.execute(
+                """
+                INSERT INTO technologies (name, category, icon_slug)
+                VALUES (?, ?, ?)
+                """,
+                (name, cat, icon),
+            )
 
-        if user_count == 0:
-            now = datetime.utcnow().isoformat() + "Z"
-            for username, email, role, bio in SEED_USERS:
-                db.execute(
-                    """
-                    INSERT INTO users (
-                        username, email, role, bio, created_at, updated_at
-                    ) VALUES (?, ?, ?, ?, ?, ?)
-                    """,
-                    (username, email, role, bio, now, now),
-                )
-            print(f"[Seed] Added {len(SEED_USERS)} baseline users.")
+    cursor = db.execute("SELECT COUNT(*) as count FROM users")
+    user_count = cursor.fetchone()["count"]
 
-        db.commit()
+    if user_count == 0:
+        now = datetime.utcnow().isoformat() + "Z"
+        for username, email, role, bio in SEED_USERS:
+            db.execute(
+                """
+                INSERT INTO users (
+                    username, email, role, bio, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (username, email, role, bio, now, now),
+            )
+
+    cursor = db.execute("SELECT COUNT(*) as count FROM projects")
+    proj_count = cursor.fetchone()["count"]
+
+    if proj_count == 0:
+        now = datetime.utcnow().isoformat() + "Z"
+        db.execute(
+            """
+            INSERT INTO projects (
+                title, description, status, stars_count, owner_id,
+                created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "PulseGraph API",
+                "High-performance GraphQL server for developer portfolios.",
+                "ACTIVE",
+                42,
+                1,
+                now,
+                now,
+            ),
+        )
+        db.execute("""
+            INSERT OR IGNORE INTO project_technologies (project_id, technology_id)
+            VALUES (1, 1), (1, 2)
+            """)
+        db.execute(
+            """
+            INSERT INTO reviews (project_id, author_id, rating, comment, created_at)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (
+                1,
+                2,
+                5,
+                "Remarkable API architecture and clean schema design.",
+                now,
+            ),
+        )
+
+    db.commit()
+    if close_after:
+        ctx.pop()
 
 
 if __name__ == "__main__":
