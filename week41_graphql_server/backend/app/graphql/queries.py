@@ -118,6 +118,14 @@ class Query(graphene.ObjectType):
         return "1.0.0"
 
     def resolve_stats(self, info):
+        try:
+            from app.models.project_model import get_system_stats
+
+            stats = get_system_stats()
+            if stats["total_users"] > 0 or stats["total_technologies"] > 0:
+                return SystemStatsType(**stats)
+        except Exception:
+            pass
         return SystemStatsType(
             total_users=len(MOCK_USERS),
             total_projects=len(MOCK_PROJECTS),
@@ -126,6 +134,15 @@ class Query(graphene.ObjectType):
         )
 
     def resolve_technologies(self, info, category=None):
+        try:
+            from app.models.project_model import list_technologies
+
+            cat_str = category.value if category else None
+            db_techs = list_technologies(category=cat_str)
+            if db_techs:
+                return [TechnologyType(**t) for t in db_techs]
+        except Exception:
+            pass
         if category:
             return [
                 TechnologyType(**t)
@@ -135,18 +152,61 @@ class Query(graphene.ObjectType):
         return [TechnologyType(**t) for t in MOCK_TECHNOLOGIES]
 
     def resolve_users(self, info):
+        try:
+            from app.models.user_model import list_users
+
+            db_users = list_users()
+            if db_users:
+                return [UserType(**u) for u in db_users]
+        except Exception:
+            pass
         return [UserType(**u) for u in MOCK_USERS]
 
     def resolve_user(self, info, id):
+        try:
+            from app.models.user_model import get_user_by_id
+
+            db_user = get_user_by_id(id)
+            if db_user:
+                return UserType(**db_user)
+        except Exception:
+            pass
         match = next((u for u in MOCK_USERS if u["id"] == id), None)
         return UserType(**match) if match else None
 
     def resolve_projects(self, info, filter=None):
+        try:
+            from app.models.project_model import list_projects
+
+            status_val = filter.status.value if filter and filter.status else None
+            owner_val = filter.owner_id if filter and filter.owner_id else None
+            tech_val = filter.technology_id if filter and filter.technology_id else None
+            search_val = filter.search if filter and filter.search else None
+            min_r = filter.min_rating if filter and filter.min_rating else None
+            db_projs = list_projects(
+                status=status_val,
+                owner_id=owner_val,
+                technology_id=tech_val,
+                search=search_val,
+                min_rating=min_r,
+            )
+            if db_projs:
+                return [ProjectType(**p) for p in db_projs]
+        except Exception:
+            pass
         results = MOCK_PROJECTS
         if filter and filter.status:
             results = [p for p in results if p["status"] == filter.status]
         return [ProjectType(**p) for p in results]
 
     def resolve_project(self, info, id):
+        try:
+            from app.models.project_model import get_project_by_id
+
+            db_proj = get_project_by_id(id)
+            if db_proj:
+                return ProjectType(**db_proj)
+        except Exception:
+            pass
         match = next((p for p in MOCK_PROJECTS if p["id"] == id), None)
         return ProjectType(**match) if match else None
