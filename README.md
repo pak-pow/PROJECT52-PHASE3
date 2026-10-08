@@ -33,7 +33,7 @@ Phase 3 is where developers become production-ready. This phase covers DevOps pr
 | 38 | Containerized App with Docker | DevOps | Docker, Docker Compose | 7h | [✅ Completed](./week38_containerized_app) |
 | 39 | E-commerce Store v1 | Full Stack | Payment Integration, Cart Logic | 10h | [✅ Completed](./week39_ecommerce_store) |
 | 40 | Progressive Web App (PWA) | Frontend | Service Workers, Offline Mode | 8h | [✅ Completed](./week40_taskpulse_pwa) |
-| 41 | GraphQL API Server | Backend | GraphQL, Schema Design | 8h | Not Started |
+| 41 | GraphQL API Server | Backend | GraphQL, Schema Design | 8h | [In Progress](./week41_graphql_server) |
 | 42 | Real-time Collaborative Editor | Full Stack | Operational Transform, WebRTC | 10h | Not Started |
 | 43 | Video Streaming Platform | Full Stack | HLS, Video Processing | 10h | Not Started |
 | 44 | Machine Learning Model API | Backend + ML | TensorFlow/PyTorch, Model Serving | 9h | Not Started |
