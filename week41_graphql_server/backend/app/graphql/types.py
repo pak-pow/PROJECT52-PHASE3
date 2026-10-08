@@ -49,6 +49,18 @@ class TimestampedInterface(graphene.Interface):
     )
 
 
+def get_dataloaders(info):
+    """Retrieves request-scoped dataloaders from execution context."""
+    if not info:
+        return None
+    ctx = getattr(info, "context", None)
+    if isinstance(ctx, dict):
+        return ctx.get("dataloaders")
+    if hasattr(ctx, "dataloaders"):
+        return getattr(ctx, "dataloaders")
+    return None
+
+
 # ============================================================================
 # Object Types
 # ============================================================================
@@ -78,19 +90,33 @@ class ReviewType(graphene.ObjectType):
     def resolve_author(self, info):
         if hasattr(self, "author") and self.author is not None:
             return self.author
-        from app.models.user_model import get_user_by_id
-
         author_id = getattr(self, "author_id", None)
-        user = get_user_by_id(author_id) if author_id else None
+        if not author_id:
+            return None
+
+        loaders = get_dataloaders(info)
+        if loaders and hasattr(loaders, "user_loader"):
+            user = loaders.user_loader.load(author_id)
+        else:
+            from app.models.user_model import get_user_by_id
+
+            user = get_user_by_id(author_id)
         return UserType(**user) if user else None
 
     def resolve_project(self, info):
         if hasattr(self, "project") and self.project is not None:
             return self.project
-        from app.models.project_model import get_project_by_id
-
         project_id = getattr(self, "project_id", None)
-        proj = get_project_by_id(project_id) if project_id else None
+        if not project_id:
+            return None
+
+        loaders = get_dataloaders(info)
+        if loaders and hasattr(loaders, "project_loader"):
+            proj = loaders.project_loader.load(project_id)
+        else:
+            from app.models.project_model import get_project_by_id
+
+            proj = get_project_by_id(project_id)
         return ProjectType(**proj) if proj else None
 
 
@@ -115,25 +141,49 @@ class ProjectType(graphene.ObjectType):
     def resolve_owner(self, info):
         if hasattr(self, "owner") and self.owner is not None:
             return self.owner
-        from app.models.user_model import get_user_by_id
+        owner_id = getattr(self, "owner_id", None)
+        if not owner_id:
+            return None
 
-        user = get_user_by_id(getattr(self, "owner_id", None))
+        loaders = get_dataloaders(info)
+        if loaders and hasattr(loaders, "user_loader"):
+            user = loaders.user_loader.load(owner_id)
+        else:
+            from app.models.user_model import get_user_by_id
+
+            user = get_user_by_id(owner_id)
         return UserType(**user) if user else None
 
     def resolve_technologies(self, info):
         if hasattr(self, "technologies") and self.technologies is not None:
             return self.technologies
-        from app.models.project_model import get_technologies_by_project
+        proj_id = getattr(self, "id", None)
+        if not proj_id:
+            return []
 
-        techs = get_technologies_by_project(getattr(self, "id", None))
+        loaders = get_dataloaders(info)
+        if loaders and hasattr(loaders, "project_technologies_loader"):
+            techs = loaders.project_technologies_loader.load(proj_id) or []
+        else:
+            from app.models.project_model import get_technologies_by_project
+
+            techs = get_technologies_by_project(proj_id)
         return [TechnologyType(**t) for t in techs]
 
     def resolve_reviews(self, info):
         if hasattr(self, "reviews") and self.reviews is not None:
             return self.reviews
-        from app.models.project_model import get_reviews_by_project
+        proj_id = getattr(self, "id", None)
+        if not proj_id:
+            return []
 
-        revs = get_reviews_by_project(getattr(self, "id", None))
+        loaders = get_dataloaders(info)
+        if loaders and hasattr(loaders, "project_reviews_loader"):
+            revs = loaders.project_reviews_loader.load(proj_id) or []
+        else:
+            from app.models.project_model import get_reviews_by_project
+
+            revs = get_reviews_by_project(proj_id)
         return [ReviewType(**r) for r in revs]
 
 
@@ -155,25 +205,44 @@ class UserType(graphene.ObjectType):
     def resolve_projects(self, info):
         if hasattr(self, "projects") and self.projects is not None:
             return self.projects
-        from app.models.project_model import list_projects
+        user_id = getattr(self, "id", None)
+        if not user_id:
+            return []
 
-        projs = list_projects(owner_id=getattr(self, "id", None))
+        loaders = get_dataloaders(info)
+        if loaders and hasattr(loaders, "owner_projects_loader"):
+            projs = loaders.owner_projects_loader.load(user_id) or []
+        else:
+            from app.models.project_model import list_projects
+
+            projs = list_projects(owner_id=user_id)
         return [ProjectType(**p) for p in projs]
 
     def resolve_reviews(self, info):
         if hasattr(self, "reviews") and self.reviews is not None:
             return self.reviews
-        from app.models.project_model import get_reviews_by_author
+        user_id = getattr(self, "id", None)
+        if not user_id:
+            return []
 
-        revs = get_reviews_by_author(getattr(self, "id", None))
+        loaders = get_dataloaders(info)
+        if loaders and hasattr(loaders, "author_reviews_loader"):
+            revs = loaders.author_reviews_loader.load(user_id) or []
+        else:
+            from app.models.project_model import get_reviews_by_author
+
+            revs = get_reviews_by_author(user_id)
         return [ReviewType(**r) for r in revs]
 
     def resolve_project_count(self, info):
         if hasattr(self, "project_count") and self.project_count is not None:
             return self.project_count
+        user_id = getattr(self, "id", None)
+        if not user_id:
+            return 0
         from app.models.project_model import list_projects
 
-        return len(list_projects(owner_id=getattr(self, "id", None)))
+        return len(list_projects(owner_id=user_id))
 
 
 class SystemStatsType(graphene.ObjectType):
