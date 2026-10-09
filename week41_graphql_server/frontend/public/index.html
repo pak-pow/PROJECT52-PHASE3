@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PulseGraph - GraphQL API Explorer</title>
+  <link rel="stylesheet" href="../src/assets/base.css">
+  <link rel="stylesheet" href="../src/assets/explorer.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Top Navigation Header -->
+    <header class="explorer-header">
+      <div class="brand-section">
+        <h1 class="brand-title">
+          PulseGraph
+          <span class="brand-badge">GraphQL Explorer</span>
+        </h1>
+      </div>
+
+      <div class="endpoint-bar">
+        <label for="endpoint-input" class="endpoint-label">Endpoint:</label>
+        <input 
+          id="endpoint-input" 
+          type="text" 
+          class="input-field endpoint-input" 
+          value="http://127.0.0.1:5000/graphql" 
+          spellcheck="false"
+        >
+      </div>
+
+      <div class="header-actions">
+        <button id="btn-toggle-sidebar" class="btn btn-secondary" title="Toggle Sidebar">
+          Explorer Pane
+        </button>
+        <button id="btn-prettify" class="btn btn-secondary" title="Prettify Query & Variables">
+          Prettify
+        </button>
+        <button id="btn-run" class="btn btn-run" title="Execute Query (Ctrl+Enter)">
+          Run Query
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Workbench Layout -->
+    <main class="workbench" id="workbench">
+      <!-- Left Sidebar (Templates, Docs, History) -->
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-tabs">
+          <button id="tab-btn-templates" class="sidebar-tab-btn active" data-tab="templates">
+            Templates
+          </button>
+          <button id="tab-btn-docs" class="sidebar-tab-btn" data-tab="docs">
+            Schema Docs
+          </button>
+          <button id="tab-btn-history" class="sidebar-tab-btn" data-tab="history">
+            History
+          </button>
+        </div>
+
+        <div class="sidebar-content" id="sidebar-content">
+          <!-- Dynamic sidebar content rendered by explorer.js -->
+        </div>
+      </aside>
+
+      <!-- Center Query Editor Pane -->
+      <section class="editor-pane" id="editor-pane">
+        <div class="pane-toolbar">
+          <span class="pane-toolbar-title">Operations Editor</span>
+          <span id="editor-status" class="pane-toolbar-meta">Lines: 1</span>
+        </div>
+
+        <div class="editor-wrapper">
+          <div class="line-numbers" id="line-numbers">1</div>
+          <textarea 
+            id="query-editor" 
+            class="code-textarea" 
+            spellcheck="false" 
+            placeholder="# Write your GraphQL query or mutation here..."
+          ></textarea>
+        </div>
+
+        <!-- Query Variables Drawer -->
+        <div class="variables-drawer" id="variables-drawer">
+          <div class="drawer-header" id="drawer-header">
+            <span class="drawer-title">Query Variables (JSON)</span>
+            <span id="drawer-toggle-icon" class="drawer-toggle">Toggle</span>
+          </div>
+          <textarea 
+            id="variables-editor" 
+            class="variables-textarea" 
+            spellcheck="false" 
+            placeholder='{ "key": "value" }'
+          ></textarea>
+        </div>
+      </section>
+
+      <!-- Right Results Pane -->
+      <section class="results-pane" id="results-pane">
+        <div class="results-tabs">
+          <button id="res-tab-response" class="results-tab-btn active" data-tab="response">
+            Response
+          </button>
+          <button id="res-tab-performance" class="results-tab-btn" data-tab="performance">
+            Performance & Metrics
+          </button>
+          <button id="res-tab-sdl" class="results-tab-btn" data-tab="sdl">
+            Schema SDL
+          </button>
+          <button id="res-tab-headers" class="results-tab-btn" data-tab="headers">
+            Headers
+          </button>
+
+          <div class="results-metrics-pill" id="metrics-summary">
+            <span class="metric-pill" id="pill-duration">0 ms</span>
+            <span class="metric-pill" id="pill-status">Ready</span>
+          </div>
+        </div>
+
+        <div class="results-viewer-container" id="results-viewer">
+          <div class="empty-results" id="empty-results">
+            <p class="empty-results-title">No Query Executed</p>
+            <p>Select a template from the left pane or press "Run Query" (Ctrl+Enter) to begin.</p>
+          </div>
+          <pre class="code-output" id="code-output" style="display: none;"></pre>
+          <div id="performance-view" style="display: none;"></div>
+          <pre class="code-output" id="sdl-output" style="display: none;"></pre>
+          <div id="headers-view" style="display: none;"></div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Bottom Status Bar -->
+    <footer class="status-bar" id="status-bar">
+      <div class="status-left">
+        <span class="status-indicator" id="status-beacon"></span>
+        <span id="status-message">Connected to PulseGraph Engine</span>
+      </div>
+      <div class="status-right">
+        <span id="status-metrics-detail">DataLoader: Ready | Max Depth: 7 | Max Complexity: 300</span>
+      </div>
+    </footer>
+  </div>
+
+  <script type="module" src="../src/explorer.js"></script>
+</body>
+</html>
