@@ -37,7 +37,32 @@ def graphql_endpoint():
 
     start_time = time.perf_counter()
     dataloaders = create_dataloaders()
-    context = {"dataloaders": dataloaders, "request": request}
+
+    # Authenticate user from Authorization Bearer token or X-User-Id
+    current_user = None
+    auth_header = request.headers.get("Authorization", "")
+    if auth_header.startswith("Bearer "):
+        from app.graphql.auth import decode_auth_token
+        from app.models.user_model import get_user_by_id
+
+        token = auth_header[7:].strip()
+        payload = decode_auth_token(token)
+        if payload and payload.get("sub"):
+            current_user = get_user_by_id(payload["sub"])
+    elif request.headers.get("X-User-Id"):
+        try:
+            from app.models.user_model import get_user_by_id
+
+            uid = int(request.headers.get("X-User-Id"))
+            current_user = get_user_by_id(uid)
+        except (ValueError, TypeError):
+            pass
+
+    context = {
+        "dataloaders": dataloaders,
+        "request": request,
+        "current_user": current_user,
+    }
 
     result = execute_query(query_str, variables=variables, context_value=context)
 
