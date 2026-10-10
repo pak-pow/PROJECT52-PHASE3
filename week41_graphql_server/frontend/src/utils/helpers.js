@@ -78,7 +78,8 @@ export async function executeGraphQL(
   endpoint,
   query,
   variables = null,
-  operationName = null
+  operationName = null,
+  authToken = null
 ) {
   let parsedVariables = null;
   if (variables) {
@@ -101,15 +102,20 @@ export async function executeGraphQL(
     payload.operationName = operationName.trim();
   }
 
+  const headers = {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  };
+  if (authToken && authToken.trim().length > 0) {
+    headers["Authorization"] = `Bearer ${authToken.trim()}`;
+  }
+
   const startTime = performance.now();
   let response;
   try {
     response = await fetch(endpoint, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers,
       body: JSON.stringify(payload),
     });
   } catch (netErr) {
@@ -203,6 +209,79 @@ export async function fetchSchemaSDL(endpoint) {
  * Curated query and mutation templates demonstrating schema capabilities.
  */
 export const QUERY_TEMPLATES = [
+  {
+    id: "login-mutation",
+    category: "Auth",
+    title: "Authenticate User (Get Bearer Token)",
+    description:
+      "Logs in as alex_dev and receives an HMAC-SHA256 signed bearer token.",
+    query: `mutation LoginUser($username: String!) {
+  login(username: $username) {
+    success
+    message
+    token
+    user {
+      id
+      username
+      email
+      role
+    }
+  }
+}`,
+    variables: `{\n  "username": "alex_dev"\n}`,
+  },
+  {
+    id: "viewer-query",
+    category: "Auth",
+    title: "Current Authenticated Viewer",
+    description:
+      "Resolves current logged-in profile from the Authorization Bearer header.",
+    query: `query GetCurrentViewer {
+  viewer {
+    id
+    username
+    email
+    role
+    isCurrentUser
+    projectCount
+  }
+}`,
+    variables: "",
+  },
+  {
+    id: "field-level-email-redaction",
+    category: "Auth",
+    title: "Field-Level Email PII Redaction Demo",
+    description:
+      "Demonstrates email redaction for public/unauthenticated requests.",
+    query: `query InspectDeveloperProfiles {
+  users {
+    id
+    username
+    email
+    role
+    isCurrentUser
+  }
+}`,
+    variables: "",
+  },
+  {
+    id: "admin-audit-users",
+    category: "Auth",
+    title: "Admin-Only User Audit (RBAC Gate)",
+    description:
+      "Access restricted strictly to users with the ADMIN system role.",
+    query: `query AdminAuditAllUsers {
+  adminUsers {
+    id
+    username
+    email
+    role
+    createdAt
+  }
+}`,
+    variables: "",
+  },
   {
     id: "projects-with-tech",
     category: "Queries",
