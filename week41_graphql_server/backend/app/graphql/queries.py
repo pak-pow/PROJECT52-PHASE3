@@ -110,6 +110,14 @@ class Query(graphene.ObjectType):
         id=graphene.Int(required=True),
         description="Retrieve a specific project by unique identifier.",
     )
+    viewer = graphene.Field(
+        UserType,
+        description="Retrieve currently authenticated user profile.",
+    )
+    admin_users = graphene.List(
+        graphene.NonNull(UserType),
+        description="Admin-only query to audit all users with full access.",
+    )
 
     def resolve_hello(self, info):
         return "Welcome to PulseGraph GraphQL API"
@@ -210,3 +218,36 @@ class Query(graphene.ObjectType):
             pass
         match = next((p for p in MOCK_PROJECTS if p["id"] == id), None)
         return ProjectType(**match) if match else None
+
+    def resolve_viewer(self, info):
+        from app.graphql.auth import get_current_user
+
+        current_user = get_current_user(info)
+        if not current_user:
+            return None
+        user_id = current_user.get("id") or current_user.get("sub")
+        try:
+            from app.models.user_model import get_user_by_id
+
+            db_user = get_user_by_id(user_id)
+            if db_user:
+                return UserType(**db_user)
+        except Exception:
+            pass
+        return None
+
+    def resolve_admin_users(self, info):
+        from graphql import GraphQLError
+
+        from app.graphql.auth import get_current_user
+
+        current_user = get_current_user(info)
+        if not current_user:
+            raise GraphQLError("Authentication required to access admin audit.")
+        role = (current_user.get("role") or "").upper()
+        if role != "ADMIN":
+            raise GraphQLError("Access denied: ADMIN role required.")
+
+        from app.models.user_model import list_users
+
+        return [UserType(**u) for u in list_users()]
