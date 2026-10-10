@@ -17,11 +17,7 @@ from app.models.project_model import (
     star_project,
     update_project,
 )
-from app.models.user_model import (
-    create_user,
-    delete_user,
-    update_user,
-)
+from app.models.user_model import create_user, delete_user, update_user
 
 
 class CreateUser(graphene.Mutation):
@@ -43,8 +39,10 @@ class CreateUser(graphene.Mutation):
                 role=role_val,
                 bio=input.bio,
             )
+            u_obj = UserType(**user_data)
+            u_obj._unredacted = True
             return CreateUser(
-                user=UserType(**user_data),
+                user=u_obj,
                 success=True,
                 message="User registered successfully.",
             )
@@ -79,8 +77,10 @@ class UpdateUser(graphene.Mutation):
                     success=False,
                     message=f"User with id {id} not found.",
                 )
+            u_obj = UserType(**user_data)
+            u_obj._unredacted = True
             return UpdateUser(
-                user=UserType(**user_data),
+                user=u_obj,
                 success=True,
                 message="User updated successfully.",
             )
@@ -99,6 +99,16 @@ class DeleteUser(graphene.Mutation):
     message = graphene.String()
 
     def mutate(self, info, id):
+        from app.graphql.auth import get_current_user
+
+        current_user = get_current_user(info)
+        if current_user:
+            cur_id = current_user.get("id") or current_user.get("sub")
+            cur_role = (current_user.get("role") or "").upper()
+            if cur_id != id and cur_role != "ADMIN":
+                msg = "Access denied: only account owner or ADMIN may delete user."
+                return DeleteUser(deleted_id=None, success=False, message=msg)
+
         deleted = delete_user(id)
         if not deleted:
             return DeleteUser(
@@ -154,6 +164,25 @@ class UpdateProject(graphene.Mutation):
     message = graphene.String()
 
     def mutate(self, info, id, input):
+        from app.graphql.auth import get_current_user
+        from app.models.project_model import get_project_by_id
+
+        current_user = get_current_user(info)
+        proj = get_project_by_id(id)
+        if not proj:
+            return UpdateProject(
+                project=None,
+                success=False,
+                message=f"Project with id {id} not found.",
+            )
+
+        if current_user:
+            cur_id = current_user.get("id") or current_user.get("sub")
+            cur_role = (current_user.get("role") or "").upper()
+            if cur_id != proj["owner_id"] and cur_role != "ADMIN":
+                msg = "Access denied: only project owner or ADMIN may modify project."
+                return UpdateProject(project=None, success=False, message=msg)
+
         try:
             status_val = input.status.value if input.status else None
             proj_data = update_project(
@@ -163,12 +192,6 @@ class UpdateProject(graphene.Mutation):
                 status=status_val,
                 technology_ids=input.technology_ids,
             )
-            if not proj_data:
-                return UpdateProject(
-                    project=None,
-                    success=False,
-                    message=f"Project with id {id} not found.",
-                )
             return UpdateProject(
                 project=ProjectType(**proj_data),
                 success=True,
@@ -189,6 +212,25 @@ class DeleteProject(graphene.Mutation):
     message = graphene.String()
 
     def mutate(self, info, id):
+        from app.graphql.auth import get_current_user
+        from app.models.project_model import get_project_by_id
+
+        current_user = get_current_user(info)
+        proj = get_project_by_id(id)
+        if not proj:
+            return DeleteProject(
+                deleted_id=None,
+                success=False,
+                message=f"Project with id {id} not found.",
+            )
+
+        if current_user:
+            cur_id = current_user.get("id") or current_user.get("sub")
+            cur_role = (current_user.get("role") or "").upper()
+            if cur_id != proj["owner_id"] and cur_role != "ADMIN":
+                msg = "Access denied: only project owner or ADMIN may delete project."
+                return DeleteProject(deleted_id=None, success=False, message=msg)
+
         deleted = delete_project(id)
         if not deleted:
             return DeleteProject(
@@ -255,9 +297,49 @@ class CreateReview(graphene.Mutation):
             return CreateReview(review=None, success=False, message=str(err))
 
 
+class LoginUser(graphene.Mutation):
+    """Authenticates a developer and returns an HMAC signed bearer token."""
+
+    class Arguments:
+        username = graphene.String(required=True)
+        email = graphene.String()
+
+    token = graphene.String()
+    user = graphene.Field(UserType)
+    success = graphene.Boolean(required=True)
+    message = graphene.String()
+
+    def mutate(self, info, username, email=None):
+        from app.graphql.auth import generate_auth_token
+        from app.models.user_model import get_user_by_email, get_user_by_username
+
+        user_data = get_user_by_username(username)
+        if not user_data and email:
+            user_data = get_user_by_email(email)
+
+        if not user_data:
+            return LoginUser(
+                token=None,
+                user=None,
+                success=False,
+                message=f"User '{username}' not found.",
+            )
+
+        token = generate_auth_token(user_data)
+        u_obj = UserType(**user_data)
+        u_obj._unredacted = True
+        return LoginUser(
+            token=token,
+            user=u_obj,
+            success=True,
+            message="Authentication successful.",
+        )
+
+
 class Mutation(graphene.ObjectType):
     """Root mutation definition for PulseGraph GraphQL schema."""
 
+    login = LoginUser.Field(description="Authenticate user and receive bearer token.")
     create_user = CreateUser.Field(description="Register a new developer profile.")
     update_user = UpdateUser.Field(description="Update existing developer details.")
     delete_user = DeleteUser.Field(
