@@ -1,9 +1,5 @@
 import graphql
-from graphql.language.ast import (
-    FieldNode,
-    InlineFragmentNode,
-    OperationDefinitionNode,
-)
+from graphql.language.ast import FieldNode, InlineFragmentNode, OperationDefinitionNode
 
 LIST_FIELDS = {"users", "projects", "technologies", "reviews"}
 
