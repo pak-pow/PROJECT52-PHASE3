@@ -198,9 +198,37 @@ class UserType(graphene.ObjectType):
     email = graphene.String(required=True)
     role = graphene.Field(UserRoleEnum, required=True)
     bio = graphene.String()
+    is_current_user = graphene.Boolean()
     projects = graphene.List(graphene.NonNull(ProjectType))
     reviews = graphene.List(graphene.NonNull(ReviewType))
     project_count = graphene.Int()
+
+    def resolve_email(self, info):
+        from app.graphql.auth import get_current_user, redact_email
+
+        raw_email = getattr(self, "email", "")
+        if getattr(self, "_unredacted", False):
+            return raw_email
+
+        current_user = get_current_user(info)
+        user_id = getattr(self, "id", None)
+
+        if current_user:
+            cur_id = current_user.get("id") or current_user.get("sub")
+            cur_role = (current_user.get("role") or "").upper()
+            if cur_id == user_id or cur_role == "ADMIN":
+                return raw_email
+
+        return redact_email(raw_email)
+
+    def resolve_is_current_user(self, info):
+        from app.graphql.auth import get_current_user
+
+        current_user = get_current_user(info)
+        if not current_user:
+            return False
+        cur_id = current_user.get("id") or current_user.get("sub")
+        return cur_id == getattr(self, "id", None)
 
     def resolve_projects(self, info):
         if hasattr(self, "projects") and self.projects is not None:
