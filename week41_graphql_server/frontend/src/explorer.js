@@ -20,6 +20,7 @@ const state = {
   endpoint:
     localStorage.getItem("pulsegraph_endpoint") ||
     "http://127.0.0.1:5000/graphql",
+  authToken: localStorage.getItem("pulsegraph_auth_token") || "",
   sidebarTab: "templates",
   resultsTab: "response",
   lastResult: null,
@@ -30,6 +31,7 @@ const state = {
 // DOM References
 const dom = {
   endpointInput: document.getElementById("endpoint-input"),
+  authTokenInput: document.getElementById("auth-token-input"),
   btnToggleSidebar: document.getElementById("btn-toggle-sidebar"),
   btnPrettify: document.getElementById("btn-prettify"),
   btnRun: document.getElementById("btn-run"),
@@ -61,8 +63,11 @@ const dom = {
  * Initializes the GraphQL Explorer application on DOM ready.
  */
 function init() {
-  // Sync endpoint input
+  // Sync endpoint and auth input
   dom.endpointInput.value = state.endpoint;
+  if (dom.authTokenInput) {
+    dom.authTokenInput.value = state.authToken;
+  }
 
   // Setup initial template
   if (QUERY_TEMPLATES.length > 0) {
@@ -84,6 +89,14 @@ function setupEventListeners() {
     localStorage.setItem("pulsegraph_endpoint", state.endpoint);
     state.schemaSDL = null; // Invalidate cached SDL
   });
+
+  // Auth token input change
+  if (dom.authTokenInput) {
+    dom.authTokenInput.addEventListener("change", (e) => {
+      state.authToken = e.target.value.trim();
+      localStorage.setItem("pulsegraph_auth_token", state.authToken);
+    });
+  }
 
   // Run query button
   dom.btnRun.addEventListener("click", () => {
@@ -231,8 +244,19 @@ async function handleRunQuery() {
     const result = await executeGraphQL(
       state.endpoint,
       queryStr,
-      dom.variablesEditor.value.trim()
+      dom.variablesEditor.value.trim(),
+      null,
+      state.authToken
     );
+
+    // Auto-capture token from login mutation
+    if (result.data && result.data.login && result.data.login.token) {
+      state.authToken = result.data.login.token;
+      if (dom.authTokenInput) {
+        dom.authTokenInput.value = state.authToken;
+      }
+      localStorage.setItem("pulsegraph_auth_token", state.authToken);
+    }
 
     state.lastResult = result;
     HistoryManager.addEntry(
@@ -471,7 +495,7 @@ function renderSidebar() {
  * Renders the templates selection list in the sidebar.
  */
 function renderTemplatesSidebar() {
-  const categories = ["Queries", "Mutations", "Performance", "Protection"];
+  const categories = ["Auth", "Queries", "Mutations", "Performance", "Protection"];
 
   categories.forEach((cat) => {
     const items = QUERY_TEMPLATES.filter((t) => t.category === cat);
