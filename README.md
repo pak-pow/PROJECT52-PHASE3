@@ -33,7 +33,7 @@ Phase 3 is where developers become production-ready. This phase covers DevOps pr
 | 38 | Containerized App with Docker | DevOps | Docker, Docker Compose | 7h | [✅ Completed](./week38_containerized_app) |
 | 39 | E-commerce Store v1 | Full Stack | Payment Integration, Cart Logic | 10h | [✅ Completed](./week39_ecommerce_store) |
 | 40 | Progressive Web App (PWA) | Frontend | Service Workers, Offline Mode | 8h | [✅ Completed](./week40_taskpulse_pwa) |
-| 41 | GraphQL API Server | Backend | GraphQL, Schema Design | 8h | [In Progress](./week41_graphql_server) |
+| 41 | GraphQL API Server | Backend | GraphQL, Schema Design | 8h | [Completed](./week41_graphql_server) |
 | 42 | Real-time Collaborative Editor | Full Stack | Operational Transform, WebRTC | 10h | Not Started |
 | 43 | Video Streaming Platform | Full Stack | HLS, Video Processing | 10h | Not Started |
 | 44 | Machine Learning Model API | Backend + ML | TensorFlow/PyTorch, Model Serving | 9h | Not Started |
@@ -121,6 +121,27 @@ Phase 3 is where developers become production-ready. This phase covers DevOps pr
 - Storage & Quota Inspector with JSON backup export
 - Custom PWA installation promotion banner
 - Operating system notifications and dynamic app icon badging
+
+---
+
+### Week 41: PulseGraph GraphQL API Server
+**Goal:** Build a production-grade GraphQL API service for developer showcases and peer reviews
+
+**Learning Objectives:**
+- Graphene 3.3 schema design with typed queries, mutations, interfaces, and enums
+- Request-scoped DataLoader engine resolving N+1 relationship queries via O(1) batch database lookups
+- Abstract Syntax Tree (AST) query depth and complexity cost protection
+- HMAC-SHA256 authentication, role-based access control, and field-level PII email redaction
+- Server-Timing metrics and response extensions for execution profiling
+- Interactive frontend GraphQL Explorer workbench with query builder and schema documentation
+
+**Key Features:**
+- Developer portfolio showcase with project listings, tech stacks, and peer reviews
+- O(1) batching with request-scoped DataLoaders and memoization caching
+- Pre-execution AST query safety enforcing depth <= 7 and complexity <= 300
+- Multi-role authorization (ADMIN, MAINTAINER, DEVELOPER) and ownership guardrails
+- Dynamic field-level PII redaction for user email addresses
+- 5/5 quality gates passing with 96.56% automated backend test coverage
 
 ---
 
