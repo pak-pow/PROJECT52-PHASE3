@@ -527,12 +527,17 @@ function setupEventListeners() {
 }
 
 /**
- * Handles Tab indentation, autocomplete keys, and Enter execution within code textareas.
+ * Handles Tab indentation, auto-indent on Enter, bracket pairing, and autocomplete keys.
  * @param {KeyboardEvent} e - Keydown event.
  */
 function handleTextareaKeydown(e) {
-  // Autocomplete keyboard navigation
-  if (e.target === dom.queryEditor && state.autocompleteVisible) {
+  const target = e.target;
+  const start = target.selectionStart;
+  const end = target.selectionEnd;
+  const value = target.value;
+
+  // 1. Autocomplete keyboard navigation
+  if (target === dom.queryEditor && state.autocompleteVisible) {
     if (e.key === "ArrowDown") {
       e.preventDefault();
       moveAutocompleteSelection(1);
@@ -555,18 +560,169 @@ function handleTextareaKeydown(e) {
     }
   }
 
+  // 2. Tab & Shift+Tab (Indent & Outdent)
   if (e.key === "Tab") {
     e.preventDefault();
-    const target = e.target;
-    const start = target.selectionStart;
-    const end = target.selectionEnd;
+    if (e.shiftKey) {
+      // Outdent (remove up to 2 leading spaces on current line)
+      const textBefore = value.slice(0, start);
+      const lineStart = textBefore.lastIndexOf("\n") + 1;
+      const line = value.slice(lineStart);
+      if (line.startsWith("  ")) {
+        target.value = value.slice(0, lineStart) + value.slice(lineStart + 2);
+        target.selectionStart = target.selectionEnd = Math.max(lineStart, start - 2);
+      } else if (line.startsWith(" ")) {
+        target.value = value.slice(0, lineStart) + value.slice(lineStart + 1);
+        target.selectionStart = target.selectionEnd = Math.max(lineStart, start - 1);
+      }
+    } else {
+      // Indent (insert 2 spaces)
+      target.value = value.substring(0, start) + "  " + value.substring(end);
+      target.selectionStart = target.selectionEnd = start + 2;
+    }
+    if (target === dom.queryEditor) {
+      updateLineNumbers();
+    }
+    return;
+  }
 
-    target.value =
-      target.value.substring(0, start) + "  " + target.value.substring(end);
-    target.selectionStart = target.selectionEnd = start + 2;
+  // 3. Smart Enter (Auto-Indent & Block Expansion)
+  if (e.key === "Enter" && !e.ctrlKey && !e.metaKey) {
+    e.preventDefault();
+    const textBefore = value.slice(0, start);
+    const textAfter = value.slice(end);
+    const currentLine = textBefore.split("\n").pop() || "";
+    const matchIndent = currentLine.match(/^[ \t]*/);
+    const currentIndent = matchIndent ? matchIndent[0] : "";
+
+    const charBefore = textBefore.trim().slice(-1);
+    const charAfter = textAfter.trim().slice(0, 1);
+
+    // Case A: Between braces expansion: { | }
+    if (charBefore === "{" && charAfter === "}") {
+      const extraIndent = currentIndent + "  ";
+      const insert = "\n" + extraIndent + "\n" + currentIndent;
+      target.value = textBefore + insert + textAfter;
+      target.selectionStart = target.selectionEnd = start + 1 + extraIndent.length;
+    }
+    // Case B: Between parens expansion: ( | )
+    else if (charBefore === "(" && charAfter === ")") {
+      const extraIndent = currentIndent + "  ";
+      const insert = "\n" + extraIndent + "\n" + currentIndent;
+      target.value = textBefore + insert + textAfter;
+      target.selectionStart = target.selectionEnd = start + 1 + extraIndent.length;
+    }
+    // Case C: After opening brace or paren
+    else if (charBefore === "{" || charBefore === "(" || charBefore === "[") {
+      const extraIndent = currentIndent + "  ";
+      const insert = "\n" + extraIndent;
+      target.value = textBefore + insert + textAfter;
+      target.selectionStart = target.selectionEnd = start + insert.length;
+    }
+    // Case D: Standard line continuation preserving indent
+    else {
+      const insert = "\n" + currentIndent;
+      target.value = textBefore + insert + textAfter;
+      target.selectionStart = target.selectionEnd = start + insert.length;
+    }
 
     if (target === dom.queryEditor) {
       updateLineNumbers();
+    }
+    return;
+  }
+
+  // 4. Smart Auto-Closing Brackets & Quotes
+  const pairs = {
+    "{": "}",
+    "(": ")",
+    "[": "]",
+    '"': '"',
+  };
+
+  if (pairs[e.key]) {
+    const openChar = e.key;
+    const closeChar = pairs[openChar];
+
+    // If text is selected, wrap selection in pair
+    if (start !== end) {
+      e.preventDefault();
+      const selected = value.substring(start, end);
+      target.value =
+        value.substring(0, start) + openChar + selected + closeChar + value.substring(end);
+      target.selectionStart = start + 1;
+      target.selectionEnd = end + 1;
+      return;
+    }
+
+    // Auto-insert closing pair
+    e.preventDefault();
+    target.value = value.substring(0, start) + openChar + closeChar + value.substring(end);
+    target.selectionStart = target.selectionEnd = start + 1;
+    if (target === dom.queryEditor) {
+      updateLineNumbers();
+    }
+    return;
+  }
+
+  // 5. Skip over existing closing character
+  if ((e.key === "}" || e.key === ")" || e.key === "]" || e.key === '"') && start === end) {
+    if (value[start] === e.key) {
+      e.preventDefault();
+      target.selectionStart = target.selectionEnd = start + 1;
+      return;
+    }
+  }
+
+  // 6. Smart Dedent on typing closing brace '}' on whitespace line
+  if (e.key === "}" && start === end) {
+    const textBefore = value.slice(0, start);
+    const currentLine = textBefore.split("\n").pop() || "";
+    if (/^[ ]{2,}$/.test(currentLine)) {
+      e.preventDefault();
+      const lineStart = textBefore.lastIndexOf("\n") + 1;
+      target.value =
+        value.slice(0, lineStart) + currentLine.slice(2) + "}" + value.slice(end);
+      target.selectionStart = target.selectionEnd = start - 1;
+      if (target === dom.queryEditor) {
+        updateLineNumbers();
+      }
+      return;
+    }
+  }
+
+  // 7. Smart Backspace
+  if (e.key === "Backspace" && start === end && start > 0) {
+    const charBefore = value[start - 1];
+    const charAfter = value[start];
+
+    // Delete matching empty pair: {} or () or [] or ""
+    if (
+      (charBefore === "{" && charAfter === "}") ||
+      (charBefore === "(" && charAfter === ")") ||
+      (charBefore === "[" && charAfter === "]") ||
+      (charBefore === '"' && charAfter === '"')
+    ) {
+      e.preventDefault();
+      target.value = value.substring(0, start - 1) + value.substring(start + 1);
+      target.selectionStart = target.selectionEnd = start - 1;
+      if (target === dom.queryEditor) {
+        updateLineNumbers();
+      }
+      return;
+    }
+
+    // Dedent 2 spaces if preceding text on line is multiple of 2 spaces
+    const textBefore = value.slice(0, start);
+    const currentLine = textBefore.split("\n").pop() || "";
+    if (/^[ ]+$/.test(currentLine) && currentLine.length >= 2 && currentLine.length % 2 === 0) {
+      e.preventDefault();
+      target.value = value.substring(0, start - 2) + value.substring(start);
+      target.selectionStart = target.selectionEnd = start - 2;
+      if (target === dom.queryEditor) {
+        updateLineNumbers();
+      }
+      return;
     }
   }
 }
