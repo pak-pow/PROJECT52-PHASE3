@@ -304,8 +304,9 @@
 }
 
 .line-numbers {
-  width: 44px;
-  padding: 12px 6px;
+  width: 52px;
+  min-width: 52px;
+  padding: 12px 8px;
   background-color: var(--bg-secondary);
   border-right: 1px solid var(--border-subtle);
   font-family: var(--font-mono);
@@ -315,6 +316,8 @@
   text-align: right;
   user-select: none;
   overflow: hidden;
+  white-space: pre;
+  box-sizing: border-box;
 }
 
 .code-textarea {
@@ -329,8 +332,10 @@
   resize: none;
   outline: none;
   white-space: pre;
+  word-wrap: normal;
   overflow: auto;
   tab-size: 2;
+  box-sizing: border-box;
 }
 
 /* Variables Drawer */
