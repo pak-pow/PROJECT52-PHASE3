@@ -562,3 +562,139 @@
 .status-indicator.offline {
   background-color: var(--color-danger);
 }
+
+/* JetBrains-style Code Prediction & Autocomplete */
+.autocomplete-popup {
+  position: absolute;
+  z-index: 100;
+  width: 380px;
+  max-height: 280px;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: var(--font-sans);
+  pointer-events: auto;
+}
+
+.autocomplete-list {
+  flex: 1;
+  max-height: 210px;
+  overflow-y: auto;
+  list-style: none;
+  padding: 4px 0;
+  margin: 0;
+}
+
+.autocomplete-item {
+  display: flex;
+  align-items: center;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  user-select: none;
+  gap: 8px;
+  transition: background-color var(--transition-fast);
+}
+
+.autocomplete-item:hover,
+.autocomplete-item.selected {
+  background-color: var(--bg-highlight);
+}
+
+.autocomplete-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: var(--radius-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.badge-query {
+  background-color: rgba(99, 102, 241, 0.2);
+  color: #818cf8;
+}
+
+.badge-mutation {
+  background-color: rgba(168, 85, 247, 0.2);
+  color: #c084fc;
+}
+
+.badge-field {
+  background-color: rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+}
+
+.badge-type {
+  background-color: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+}
+
+.badge-enum {
+  background-color: rgba(234, 88, 12, 0.2);
+  color: #fb923c;
+}
+
+.badge-keyword {
+  background-color: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+}
+
+.badge-arg {
+  background-color: rgba(244, 63, 94, 0.2);
+  color: #fb7185;
+}
+
+.autocomplete-label {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text-primary);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.autocomplete-label mark {
+  background: transparent;
+  color: var(--color-info);
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.autocomplete-type {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.autocomplete-doc-bar {
+  padding: 6px 10px;
+  background-color: var(--bg-secondary);
+  border-top: 1px solid var(--border-subtle);
+  font-size: 11px;
+  color: var(--text-secondary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.autocomplete-doc-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 250px;
+}
+
+.autocomplete-hint-key {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
