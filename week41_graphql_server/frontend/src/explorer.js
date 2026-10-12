@@ -147,6 +147,10 @@ function setupEventListeners() {
     dom.lineNumbers.scrollTop = dom.queryEditor.scrollTop;
   });
 
+  dom.lineNumbers.addEventListener("wheel", (e) => {
+    dom.queryEditor.scrollTop += e.deltaY;
+  });
+
   dom.queryEditor.addEventListener("keydown", handleTextareaKeydown);
   dom.variablesEditor.addEventListener("keydown", handleTextareaKeydown);
 
