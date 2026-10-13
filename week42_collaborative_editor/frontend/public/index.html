@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PulsePad - Real-Time Collaborative Editor</title>
+  <link rel="stylesheet" href="../src/assets/base.css">
+  <link rel="stylesheet" href="../src/assets/editor.css">
+  <link rel="stylesheet" href="../src/assets/timeline.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-left">
+      <span class="app-logo">PulsePad</span>
+      <input type="text" id="doc-title-input" class="doc-title-input" value="Untitled Document" spellcheck="false" />
+      <span id="sync-status" class="status-badge synced">Synced</span>
+    </div>
+    <div class="header-right">
+      <div id="presence-bar" class="presence-bar"></div>
+      <button id="toggle-split-btn" class="btn btn-secondary">Split View</button>
+      <button id="toggle-timeline-btn" class="btn btn-secondary">History</button>
+    </div>
+  </header>
+
+  <main class="workbench-layout">
+    <div class="editor-pane active" id="primary-pane">
+      <div class="editor-gutter" id="primary-gutter"></div>
+      <div class="editor-container">
+        <textarea id="primary-editor" class="editor-area" spellcheck="false" placeholder="Start typing collaboratively..."></textarea>
+      </div>
+    </div>
+  </main>
+
+  <aside id="timeline-drawer" class="timeline-drawer hidden">
+    <div class="drawer-header">
+      <h3>Revision History</h3>
+      <button id="close-timeline-btn" class="btn-icon">&times;</button>
+    </div>
+    <div id="timeline-list" class="timeline-list">
+      <div class="timeline-empty">No past revisions recorded yet.</div>
+    </div>
+  </aside>
+
+  <script src="../src/main.js" type="module"></script>
+</body>
+</html>
