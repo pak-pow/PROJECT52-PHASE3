@@ -1,6 +1,7 @@
 """In-memory document state wrapper for applying transformed operations."""
 
 from dataclasses import dataclass
+from typing import Any, Dict
 
 from app.engine.operation import TextOperation
 
@@ -18,3 +19,12 @@ class DocumentState:
         """Apply an operation to update the document text."""
         self.content = op.apply(self.content)
         self.version += 1
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert document state to dictionary."""
+        return {
+            "doc_id": self.doc_id,
+            "title": self.title,
+            "content": self.content,
+            "version": self.version,
+        }
