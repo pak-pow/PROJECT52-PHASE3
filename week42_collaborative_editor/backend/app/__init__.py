@@ -23,7 +23,7 @@ def create_app(config_class=Config) -> Flask:
     if not app.config.get("TESTING", False):
         try:
             init_db(app.config.get("DB_PATH"))
-        except Exception:
-            pass
+        except (OSError, FileNotFoundError) as exc:
+            app.logger.warning("Could not auto-initialize database: %s", exc)
 
     return app
