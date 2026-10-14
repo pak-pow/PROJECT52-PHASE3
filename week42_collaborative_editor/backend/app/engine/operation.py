@@ -80,6 +80,28 @@ class TextOperation:
         """Check if operation performs no textual modifications."""
         return all(c.kind == OpKind.RETAIN for c in self.components)
 
+    def copy(self) -> "TextOperation":
+        """Return a deep copy of the operation."""
+        return TextOperation(
+            components=[OpComponent(c.kind, c.value) for c in self.components],
+            base_length=self.base_length,
+            target_length=self.target_length,
+        )
+
+    def __eq__(self, other: object) -> bool:
+        """Compare two operations for equality."""
+        if not isinstance(other, TextOperation):
+            return False
+        return (
+            self.base_length == other.base_length
+            and self.target_length == other.target_length
+            and len(self.components) == len(other.components)
+            and all(
+                c1.kind == c2.kind and c1.value == c2.value
+                for c1, c2 in zip(self.components, other.components)
+            )
+        )
+
     def apply(self, document_text: str) -> str:
         """Apply operation components sequentially to a source string."""
         if len(document_text) != self.base_length:
@@ -105,7 +127,7 @@ class TextOperation:
 
         if cursor != len(document_text):
             raise ValueError(
-                f"Operation ended at cursor {cursor}, expected {len(document_text)}"
+                f"Operation ended at cursor {cursor}, " f"expected {len(document_text)}"
             )
 
         new_text = "".join(result_parts)
