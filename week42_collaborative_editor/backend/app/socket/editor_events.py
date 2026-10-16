@@ -1,4 +1,4 @@
-"""Socket.IO event listeners for real-time document synchronization."""
+"""Socket.IO event listeners for real-time document synchronization and presence."""
 
 from flask import request
 from flask_socketio import SocketIO, emit, join_room, leave_room
@@ -38,7 +38,7 @@ def register_socket_events(socketio: SocketIO) -> None:
         """Handle client joining a collaborative document session."""
         doc_id = data.get("doc_id", "welcome-doc")
         user_name = data.get("user_name", "Anonymous")
-        color = data.get("color", "#3b82f6")
+        color = data.get("color")
         sid = request.sid
 
         if doc_id not in room_manager.rooms:
@@ -100,6 +100,66 @@ def register_socket_events(socketio: SocketIO) -> None:
                 room=doc_id,
             )
 
+    @socketio.on("cursor_move")
+    def handle_cursor_move(data: dict):
+        """Update and broadcast participant cursor/selection positions."""
+        doc_id = data.get("doc_id")
+        cursor_pos = data.get("cursor_pos", 0)
+        selection_end = data.get("selection_end")
+        sid = request.sid
+
+        if not doc_id:
+            return
+
+        end_val = int(selection_end) if selection_end is not None else None
+        participant = room_manager.update_participant_cursor(
+            doc_id=doc_id,
+            sid=sid,
+            cursor_pos=int(cursor_pos),
+            selection_end=end_val,
+        )
+        if participant:
+            emit(
+                "cursor_update",
+                participant.to_dict(),
+                room=doc_id,
+                include_self=False,
+            )
+
+    @socketio.on("typing_status")
+    def handle_typing_status(data: dict):
+        """Update and broadcast participant typing indicator status."""
+        doc_id = data.get("doc_id")
+        is_typing = bool(data.get("is_typing", False))
+        sid = request.sid
+
+        if not doc_id:
+            return
+
+        participant = room_manager.update_participant_typing(
+            doc_id=doc_id, sid=sid, is_typing=is_typing
+        )
+        if participant:
+            emit(
+                "typing_update",
+                {
+                    "sid": sid,
+                    "user_name": participant.user_name,
+                    "is_typing": is_typing,
+                },
+                room=doc_id,
+                include_self=False,
+            )
+
+    @socketio.on("heartbeat")
+    def handle_heartbeat(data: dict):
+        """Touch participant activity timestamp to prevent timeout."""
+        doc_id = data.get("doc_id")
+        sid = request.sid
+        if doc_id:
+            room_manager.touch_participant(doc_id, sid)
+            emit("heartbeat_ack", {"status": "ok"})
+
     @socketio.on("client_operation")
     def handle_client_operation(data: dict):
         """Process, transform, and broadcast an incoming client text operation."""
@@ -107,6 +167,7 @@ def register_socket_events(socketio: SocketIO) -> None:
         client_revision = data.get("revision")
         raw_operation = data.get("operation")
         author = data.get("author", "Anonymous")
+        sid = request.sid
 
         if not doc_id or client_revision is None or raw_operation is None:
             emit(
@@ -122,6 +183,7 @@ def register_socket_events(socketio: SocketIO) -> None:
                 client_revision=int(client_revision),
                 operation=op,
                 author=author,
+                author_sid=sid,
             )
 
             # Acknowledge submission to the author
