@@ -1,3 +1,5 @@
+"""Tests for application HTTP REST endpoints, models, and services."""
+
 from app.services.document_service import DocumentService
 from app.services.revision_service import RevisionService
 from data.seed import seed_database
@@ -10,6 +12,13 @@ def test_health_check(client):
     data = response.get_json()
     assert data["status"] == "healthy"
     assert "PulsePad" in data["service"]
+
+
+def test_index_route(client):
+    """Verify index route serves frontend workbench HTML."""
+    response = client.get("/")
+    assert response.status_code == 200
+    assert b"PulsePad" in response.data
 
 
 def test_list_documents(client):
