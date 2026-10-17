@@ -1,4 +1,5 @@
-/* Editor workbench styles and remote presence placeholders */
+/* Editor workbench styles, remote presence, and split simulator */
+
 .workbench-layout {
   flex: 1;
   display: flex;
@@ -9,27 +10,104 @@
 .editor-pane {
   flex: 1;
   display: flex;
+  flex-direction: column;
   height: 100%;
   overflow: hidden;
 }
 
+.editor-pane.simulated-pane {
+  border-left: 2px solid var(--border-color);
+}
+
+.pane-header {
+  height: 38px;
+  background-color: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 10px;
+}
+
+.pane-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  position: relative;
+}
+
+.user-pill {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.user-pill.primary-pill {
+  background-color: #3b82f6;
+}
+
+.pane-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
 .editor-gutter {
-  width: 48px;
+  width: 52px;
   background-color: var(--bg-secondary);
   border-right: 1px solid var(--border-color);
   color: var(--text-muted);
   font-family: var(--font-mono);
   font-size: 0.85rem;
-  padding: 16px 0;
+  line-height: 1.6;
+  padding: 16px 8px 16px 0;
   text-align: right;
-  padding-right: 8px;
   user-select: none;
+  white-space: pre;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .editor-container {
   flex: 1;
   position: relative;
-  overflow: auto;
+  overflow: hidden;
+  background-color: var(--bg-primary);
+}
+
+.cursor-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 5;
+  overflow: hidden;
+}
+
+.remote-caret {
+  position: absolute;
+  width: 2px;
+  height: 22.4px;
+  pointer-events: none;
+  z-index: 10;
+  transition: top 0.05s ease, left 0.05s ease;
+}
+
+.remote-tag {
+  position: absolute;
+  bottom: 100%;
+  left: -2px;
+  padding: 1px 5px;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 3px 3px 3px 0;
+  color: #ffffff;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .editor-area {
@@ -40,14 +118,59 @@
   border: none;
   outline: none;
   font-family: var(--font-mono);
-  font-size: 0.95rem;
+  font-size: 14px;
   line-height: 1.6;
   padding: 16px;
   resize: none;
+  box-sizing: border-box;
+  white-space: pre;
+  overflow: auto;
+  position: relative;
+  z-index: 2;
 }
 
+/* Presence Bar and Avatars */
 .presence-bar {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+}
+
+.presence-count {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-right: 4px;
+}
+
+.participant-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: default;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.participant-avatar.typing .typing-pulse-dot {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #10b981;
+  border: 1px solid var(--bg-secondary);
+  animation: pulse-dot 1.2s infinite;
+}
+
+@keyframes pulse-dot {
+  0% { transform: scale(0.8); opacity: 0.6; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(0.8); opacity: 0.6; }
 }
