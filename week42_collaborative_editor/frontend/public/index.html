@@ -7,12 +7,14 @@
   <link rel="stylesheet" href="../src/assets/base.css">
   <link rel="stylesheet" href="../src/assets/editor.css">
   <link rel="stylesheet" href="../src/assets/timeline.css">
+  <!-- Socket.IO client library -->
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 </head>
 <body>
   <header class="app-header">
     <div class="header-left">
       <span class="app-logo">PulsePad</span>
-      <input type="text" id="doc-title-input" class="doc-title-input" value="Untitled Document" spellcheck="false" />
+      <input type="text" id="doc-title-input" class="doc-title-input" value="Welcome to PulsePad" spellcheck="false" />
       <span id="sync-status" class="status-badge synced">Synced</span>
     </div>
     <div class="header-right">
@@ -22,11 +24,18 @@
     </div>
   </header>
 
-  <main class="workbench-layout">
+  <main class="workbench-layout" id="workbench-layout">
     <div class="editor-pane active" id="primary-pane">
-      <div class="editor-gutter" id="primary-gutter"></div>
-      <div class="editor-container">
-        <textarea id="primary-editor" class="editor-area" spellcheck="false" placeholder="Start typing collaboratively..."></textarea>
+      <div class="pane-header">
+        <span class="user-pill primary-pill" id="primary-user-pill">Alice</span>
+        <span class="pane-label">Primary Collaborator (You)</span>
+      </div>
+      <div class="pane-body">
+        <div class="editor-gutter" id="primary-gutter">1</div>
+        <div class="editor-container" id="primary-editor-container">
+          <div class="cursor-overlay" id="primary-cursor-overlay"></div>
+          <textarea id="primary-editor" class="editor-area" spellcheck="false" placeholder="Start typing collaboratively..."></textarea>
+        </div>
       </div>
     </div>
   </main>
