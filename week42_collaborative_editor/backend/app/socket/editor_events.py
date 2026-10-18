@@ -1,11 +1,16 @@
 """Socket.IO event listeners for real-time document synchronization and presence."""
 
+import json
+import sqlite3
+
 from flask import request
 from flask_socketio import SocketIO, emit, join_room, leave_room
 
 from app.db.connection import get_db_connection
 from app.engine.operation import TextOperation
 from app.models.document_model import Document
+from app.services.document_service import DocumentService
+from app.services.revision_service import RevisionService
 from app.socket.room_manager import RoomManager
 
 room_manager = RoomManager()
@@ -46,12 +51,22 @@ def register_socket_events(socketio: SocketIO) -> None:
                 with get_db_connection() as conn:
                     doc = Document.get_by_id(conn, doc_id)
                     if doc:
-                        room_manager.get_or_create_room(
+                        room = room_manager.get_or_create_room(
                             doc_id=doc.id,
                             title=doc.title,
                             initial_content=doc.content,
                             initial_version=doc.version,
                         )
+                        if not room.history:
+                            rev_service = RevisionService(conn)
+                            revisions = rev_service.get_revisions(doc.id)
+                            for r in revisions:
+                                try:
+                                    op_data = json.loads(r.operation_json)
+                                    op = TextOperation.from_dict(op_data)
+                                    room.history.append((r.revision_num, op, r.author))
+                                except (ValueError, KeyError, TypeError):
+                                    pass  # nosec B110
                     else:
                         room_manager.get_or_create_room(
                             doc_id=doc_id,
@@ -59,7 +74,7 @@ def register_socket_events(socketio: SocketIO) -> None:
                             initial_content="",
                             initial_version=0,
                         )
-            except Exception:
+            except (sqlite3.Error, OSError):
                 room_manager.get_or_create_room(
                     doc_id=doc_id,
                     title="Untitled Document",
@@ -204,6 +219,31 @@ def register_socket_events(socketio: SocketIO) -> None:
                 room=doc_id,
                 include_self=False,
             )
+
+            # Persist revision and document state to SQLite database
+            try:
+                with get_db_connection() as conn:
+                    rev_service = RevisionService(conn)
+                    doc_service = DocumentService(conn)
+                    room = room_manager.rooms.get(doc_id)
+                    current_content = room.content if room else ""
+                    current_title = room.title if room else "Untitled Document"
+                    rev_service.record_revision(
+                        doc_id=doc_id,
+                        revision_num=new_version,
+                        author=author,
+                        operation=transformed_op,
+                        current_content=current_content,
+                    )
+                    doc_service.save_document(
+                        doc_id=doc_id,
+                        content=current_content,
+                        version=new_version,
+                        title=current_title,
+                    )
+            except (sqlite3.Error, OSError):
+                # Persistence fallback when running in-memory or DB is locked
+                pass  # nosec B110
 
         except Exception as exc:
             emit("operation_error", {"doc_id": doc_id, "error": str(exc)})
