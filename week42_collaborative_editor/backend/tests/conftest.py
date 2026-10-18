@@ -1,3 +1,5 @@
+"""Pytest configuration and common fixtures for PulsePad backend tests."""
+
 import pytest
 from flask import Flask
 from flask_socketio import SocketIO
@@ -9,12 +11,14 @@ from app.socket.editor_events import register_socket_events
 
 
 @pytest.fixture
-def app() -> Flask:
-    """Create test application instance with in-memory database."""
+def app(tmp_path) -> Flask:
+    """Create test application instance with temporary isolated database."""
+    test_db = str(tmp_path / "test_pulsepad.db")
     test_app = create_app(TestingConfig)
+    test_app.config["DB_PATH"] = test_db
     with test_app.app_context():
         init_db(
-            db_path=":memory:",
+            db_path=test_db,
             schema_path=TestingConfig.DATA_DIR / "schema.sql",
         )
         yield test_app
@@ -27,15 +31,10 @@ def client(app: Flask):
 
 
 @pytest.fixture
-def db_conn():
-    """Create in-memory SQLite database connection with schema."""
-    conn = get_db_connection(":memory:")
-    schema_path = TestingConfig.DATA_DIR / "schema.sql"
-    with open(schema_path, "r", encoding="utf-8") as f:
-        conn.executescript(f.read())
-    conn.commit()
-    yield conn
-    conn.close()
+def db_conn(app: Flask):
+    """Create SQLite database connection to test app database."""
+    with get_db_connection(app.config["DB_PATH"]) as conn:
+        yield conn
 
 
 @pytest.fixture
