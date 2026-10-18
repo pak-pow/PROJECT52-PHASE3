@@ -148,10 +148,64 @@ class TextOperation:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "TextOperation":
-        """Deserialize operation from dictionary."""
+        """Deserialize operation from dictionary, computing lengths if omitted."""
         components = [OpComponent.from_dict(c) for c in data.get("components", [])]
+        base_len = data.get("base_length")
+        target_len = data.get("target_length")
+        if base_len is None:
+            base_len = sum(
+                int(c.value) if c.kind != OpKind.INSERT else 0 for c in components
+            )
+        if target_len is None:
+            target_len = sum(
+                (
+                    int(c.value)
+                    if c.kind == OpKind.RETAIN
+                    else (len(str(c.value)) if c.kind == OpKind.INSERT else 0)
+                )
+                for c in components
+            )
         return cls(
             components=components,
-            base_length=data.get("base_length", 0),
-            target_length=data.get("target_length", 0),
+            base_length=base_len,
+            target_length=target_len,
         )
+
+
+def create_operation_from_diff(old_text: str, new_text: str) -> TextOperation:
+    """Derive an optimal TextOperation transforming old_text into new_text."""
+    if old_text == new_text:
+        op = TextOperation()
+        if old_text:
+            op.retain(len(old_text))
+        return op
+
+    prefix_len = 0
+    max_prefix = min(len(old_text), len(new_text))
+    while prefix_len < max_prefix and old_text[prefix_len] == new_text[prefix_len]:
+        prefix_len += 1
+
+    suffix_len = 0
+    max_suffix = min(len(old_text) - prefix_len, len(new_text) - prefix_len)
+    while (
+        suffix_len < max_suffix
+        and old_text[len(old_text) - 1 - suffix_len]
+        == new_text[len(new_text) - 1 - suffix_len]
+    ):
+        suffix_len += 1
+
+    delete_len = len(old_text) - prefix_len - suffix_len
+    inserted_end = len(new_text) - suffix_len
+    inserted_text = new_text[prefix_len:inserted_end]
+
+    op = TextOperation()
+    if prefix_len > 0:
+        op.retain(prefix_len)
+    if delete_len > 0:
+        op.delete(delete_len)
+    if inserted_text:
+        op.insert(inserted_text)
+    if suffix_len > 0:
+        op.retain(suffix_len)
+
+    return op
