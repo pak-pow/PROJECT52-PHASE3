@@ -9,7 +9,12 @@ from app.engine.cursor import (
 )
 from app.engine.document import DocumentState
 from app.engine.invert import invert
-from app.engine.operation import OpComponent, OpKind, TextOperation
+from app.engine.operation import (
+    OpComponent,
+    OpKind,
+    TextOperation,
+    create_operation_from_diff,
+)
 from app.engine.transform import transform
 
 __all__ = [
@@ -24,4 +29,5 @@ __all__ = [
     "transform_cursor_position",
     "transform_selection",
     "PRESENCE_COLORS",
+    "create_operation_from_diff",
 ]
