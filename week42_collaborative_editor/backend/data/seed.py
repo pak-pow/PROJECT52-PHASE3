@@ -24,6 +24,13 @@ def seed_database() -> None:
             """,
             (doc_id, title, initial_content),
         )
+        cursor.execute(
+            """
+            INSERT OR IGNORE INTO snapshots (document_id, revision_num, content)
+            VALUES (?, 0, ?)
+            """,
+            (doc_id, initial_content),
+        )
         conn.commit()
 
 
