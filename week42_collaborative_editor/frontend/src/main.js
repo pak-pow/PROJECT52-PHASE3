@@ -7,6 +7,7 @@ import { CursorTracker } from "./engine/cursor_tracker.js";
 import { SocketClient } from "./socket/socket_client.js";
 import { PresenceView } from "./ui/presence_view.js";
 import { SplitSimulator } from "./ui/split_simulator.js";
+import { TimelineView } from "./ui/timeline_view.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   // DOM Elements
@@ -20,6 +21,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const toggleTimelineBtn = document.getElementById("toggle-timeline-btn");
   const closeTimelineBtn = document.getElementById("close-timeline-btn");
   const timelineDrawer = document.getElementById("timeline-drawer");
+  const timelineList = document.getElementById("timeline-list");
+  const exportMdBtn = document.getElementById("export-md-btn");
+  const exportTxtBtn = document.getElementById("export-txt-btn");
   const workbenchLayout = document.getElementById("workbench-layout");
 
   // Determine Document ID and Server URL
@@ -38,10 +42,28 @@ document.addEventListener("DOMContentLoaded", () => {
   const cursorTracker = new CursorTracker(cursorOverlay, editorArea);
   const presenceView = new PresenceView(presenceBar);
   const splitSimulator = new SplitSimulator(workbenchLayout, docId, serverUrl);
+  const timelineView = new TimelineView({
+    drawerElement: timelineDrawer,
+    listElement: timelineList,
+    docId: docId,
+    serverUrl: serverUrl,
+    onRollback: (result) => {
+      setStatus("Rolled back", "synced");
+      if (result && result.content !== undefined) {
+        isApplyingRemote = true;
+        editorArea.value = result.content;
+        previousText = result.content;
+        isApplyingRemote = false;
+        otClient.reset(result.version);
+        updateGutter();
+      }
+    },
+  });
 
   let previousText = "";
   let isApplyingRemote = false;
   let typingTimer = null;
+
 
   function setStatus(text, className) {
     if (!syncStatus) return;
@@ -92,6 +114,10 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       setStatus("Synced", "synced");
     }
+
+    if (timelineView.isOpen()) {
+      timelineView.fetchRevisions();
+    }
   });
 
   socketClient.on("remote_operation", (data) => {
@@ -124,6 +150,10 @@ document.addEventListener("DOMContentLoaded", () => {
       // Transform all remote cursors
       cursorTracker.transformAll(result.applyToDoc);
       updateGutter();
+
+      if (timelineView.isOpen()) {
+        timelineView.fetchRevisions();
+      }
     }
   });
 
@@ -195,16 +225,32 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Timeline Drawer Toggle
-  if (toggleTimelineBtn && timelineDrawer) {
+  // Timeline Drawer Toggle & Actions
+  if (toggleTimelineBtn) {
     toggleTimelineBtn.addEventListener("click", () => {
-      timelineDrawer.classList.toggle("hidden");
+      const opened = timelineView.toggle();
+      toggleTimelineBtn.className = opened ? "btn btn-primary active" : "btn btn-secondary";
     });
   }
 
-  if (closeTimelineBtn && timelineDrawer) {
+  if (closeTimelineBtn) {
     closeTimelineBtn.addEventListener("click", () => {
-      timelineDrawer.classList.add("hidden");
+      timelineView.close();
+      if (toggleTimelineBtn) {
+        toggleTimelineBtn.className = "btn btn-secondary";
+      }
+    });
+  }
+
+  if (exportMdBtn) {
+    exportMdBtn.addEventListener("click", () => {
+      timelineView.exportDocument("markdown");
+    });
+  }
+
+  if (exportTxtBtn) {
+    exportTxtBtn.addEventListener("click", () => {
+      timelineView.exportDocument("txt");
     });
   }
 
