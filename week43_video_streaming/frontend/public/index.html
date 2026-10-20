@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PulseStream - Adaptive Video Streaming Platform</title>
+    <link rel="stylesheet" href="src/assets/base.css">
+    <link rel="stylesheet" href="src/assets/player.css">
+    <link rel="stylesheet" href="src/assets/catalog.css">
+</head>
+<body class="theme-dark">
+    <header class="app-header">
+        <div class="header-container">
+            <div class="brand">
+                <span class="brand-icon">PS</span>
+                <span class="brand-title">PulseStream</span>
+            </div>
+            <div class="header-search">
+                <input type="text" id="searchInput" placeholder="Search videos by title or topic..." autocomplete="off">
+            </div>
+            <div class="header-actions">
+                <button id="uploadBtn" class="btn btn-primary">Upload Video</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="app-main">
+        <section id="playerSection" class="player-section hidden">
+            <div class="player-container">
+                <div id="videoWrapper" class="video-wrapper">
+                    <video id="videoElement" playsinline preload="metadata"></video>
+                    <div id="customControls" class="custom-controls">
+                        <div class="scrub-container">
+                            <div id="bufferedBar" class="buffer-bar"></div>
+                            <input type="range" id="progressBar" min="0" max="100" value="0" step="0.1">
+                        </div>
+                        <div class="controls-row">
+                            <div class="controls-left">
+                                <button id="playPauseBtn" class="ctrl-btn" title="Play/Pause">Play</button>
+                                <button id="muteBtn" class="ctrl-btn" title="Mute">Mute</button>
+                                <input type="range" id="volumeBar" min="0" max="1" step="0.05" value="1">
+                                <span id="timeDisplay" class="time-display">0:00 / 0:00</span>
+                            </div>
+                            <div class="controls-right">
+                                <select id="speedSelect" class="ctrl-select" title="Playback Speed">
+                                    <option value="0.5">0.5x</option>
+                                    <option value="0.75">0.75x</option>
+                                    <option value="1" selected>1.0x</option>
+                                    <option value="1.25">1.25x</option>
+                                    <option value="1.5">1.5x</option>
+                                    <option value="2">2.0x</option>
+                                </select>
+                                <select id="qualitySelect" class="ctrl-select" title="Resolution">
+                                    <option value="auto">Auto (ABR)</option>
+                                </select>
+                                <button id="pipBtn" class="ctrl-btn" title="Picture in Picture">PiP</button>
+                                <button id="fullscreenBtn" class="ctrl-btn" title="Fullscreen">Full</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="video-meta">
+                    <h1 id="activeVideoTitle" class="video-title">Select a video to stream</h1>
+                    <div class="video-stats">
+                        <span id="activeVideoViews">0 views</span> &bull; 
+                        <span id="activeVideoCategory">General</span>
+                    </div>
+                    <p id="activeVideoDesc" class="video-description"></p>
+                </div>
+            </div>
+        </section>
+
+        <section class="catalog-section">
+            <div class="category-tabs" id="categoryTabs">
+                <button class="tab-btn active" data-category="all">All</button>
+            </div>
+            <div class="video-grid" id="videoGrid">
+                <!-- Video cards rendered dynamically -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Upload Modal -->
+    <div id="uploadModal" class="modal-overlay hidden">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h2>Upload Video File</h2>
+                <button id="closeModalBtn" class="close-btn">&times;</button>
+            </div>
+            <form id="uploadForm" class="modal-body">
+                <div class="drop-zone" id="dropZone">
+                    <p class="drop-text">Drag and drop MP4 / WebM video file here</p>
+                    <p class="drop-subtext">or click to browse from device</p>
+                    <input type="file" id="videoFileInput" accept="video/mp4,video/webm" class="hidden">
+                    <div id="fileSelectionInfo" class="file-selection-info hidden"></div>
+                </div>
+                <div class="form-group">
+                    <label for="videoTitle">Video Title</label>
+                    <input type="text" id="videoTitle" required placeholder="e.g. Distributed Systems Overview">
+                </div>
+                <div class="form-group">
+                    <label for="videoCategory">Category</label>
+                    <select id="videoCategory"></select>
+                </div>
+                <div class="form-group">
+                    <label for="videoDescription">Description</label>
+                    <textarea id="videoDescription" rows="3" placeholder="Brief summary of video contents..."></textarea>
+                </div>
+                <div id="uploadProgressContainer" class="progress-container hidden">
+                    <div class="progress-label">
+                        <span id="progressStage">Uploading...</span>
+                        <span id="progressPercent">0%</span>
+                    </div>
+                    <div class="progress-bar-track">
+                        <div id="progressBarFill" class="progress-bar-fill"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="cancelUploadBtn" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" id="submitUploadBtn" class="btn btn-primary">Start Upload</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.8/dist/hls.min.js"></script>
+    <script type="module" src="src/player/video_player.js"></script>
+    <script type="module" src="src/ui/catalog_view.js"></script>
+    <script type="module" src="src/ui/upload_modal.js"></script>
+</body>
+</html>
