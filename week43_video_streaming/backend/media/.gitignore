@@ -1,0 +1,5 @@
+# Ignore media binaries but retain directory structure
+*
+!.gitignore
+!**/.gitkeep
+
