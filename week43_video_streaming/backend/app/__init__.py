@@ -3,11 +3,15 @@
 from pathlib import Path
 from typing import Any, Optional
 
+from flask import Flask, Response
+
 from app.config.settings import Config, get_config
 from app.db.connection import init_db
 from app.routes.health import health_bp
+from app.routes.job_routes import job_bp
+from app.routes.video_routes import video_bp
 from app.services.storage_service import StorageService
-from flask import Flask, Response
+from app.services.transcoding_service import TranscodingQueue
 
 
 def create_app(config: Optional[Any] = None) -> Flask:
@@ -28,15 +32,26 @@ def create_app(config: Optional[Any] = None) -> Flask:
         app.config.from_object(app_cfg)
 
     # Initialize storage and schema if not in testing memory
-    storage = StorageService(media_dir=app.config.get("MEDIA_DIR"))
+    media_dir = app.config.get("MEDIA_DIR")
+    storage = StorageService(media_dir=media_dir)
     storage.ensure_storage_dirs()
 
     db_path = app.config.get("DB_PATH", Config.DB_PATH)
     if str(db_path) != ":memory:" and not Path(db_path).exists():
         init_db(db_path=db_path)
 
+    # Attach transcoding queue
+    is_testing = app.config.get("TESTING", False)
+    app.transcoding_queue = TranscodingQueue(
+        db_path=db_path,
+        media_dir=storage.media_dir,
+        autostart_worker=not is_testing,
+    )
+
     # Register blueprints
     app.register_blueprint(health_bp)
+    app.register_blueprint(video_bp)
+    app.register_blueprint(job_bp)
 
     # CORS & Streaming Headers
     @app.after_request
