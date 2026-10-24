@@ -4,6 +4,7 @@ import sqlite3
 from pathlib import Path
 
 import pytest
+
 from app.config.settings import DevelopmentConfig, TestingConfig, get_config
 from app.db.connection import close_db, get_db_connection, init_db
 
