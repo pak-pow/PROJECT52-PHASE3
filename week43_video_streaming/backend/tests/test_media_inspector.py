@@ -5,8 +5,9 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-from app.services.media_inspector import MediaInspector, MediaMetadata
 from PIL import Image
+
+from app.services.media_inspector import MediaInspector, MediaMetadata
 from tests.helpers import generate_sample_mp4
 
 
