@@ -5,11 +5,12 @@ from pathlib import Path
 from typing import Generator
 
 import pytest
+from flask import Flask
+from flask.testing import FlaskClient
+
 from app import create_app
 from app.db.connection import get_db_connection, init_db
 from app.services.storage_service import StorageService
-from flask import Flask
-from flask.testing import FlaskClient
 
 
 @pytest.fixture
