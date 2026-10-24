@@ -3,9 +3,10 @@
 import shutil
 from typing import Any, Dict, Tuple
 
+from flask import Blueprint, jsonify
+
 from app.db.connection import get_db_connection
 from app.services.storage_service import StorageService
-from flask import Blueprint, jsonify
 
 health_bp = Blueprint("health", __name__)
 
