@@ -4,6 +4,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
+
 from app.services.hls_packager import (
     HLSPackager,
     HLSPackageResult,
