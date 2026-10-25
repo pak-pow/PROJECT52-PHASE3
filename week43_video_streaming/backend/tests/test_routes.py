@@ -352,3 +352,22 @@ def test_job_status_endpoints(
         resp_fallback = client.get("/api/jobs/active")
         assert resp_fallback.status_code == 200
         assert resp_fallback.get_json()["count"] >= 1
+
+
+def test_serve_frontend_index_and_static_assets(client: FlaskClient) -> None:
+    """Verify serving index.html, static assets, and missing file handling."""
+    resp_index = client.get("/")
+    assert resp_index.status_code == 200
+    assert "PulseStream" in resp_index.get_data(as_text=True)
+
+    resp_css = client.get("/src/assets/base.css")
+    assert resp_css.status_code == 200
+
+    resp_js = client.get("/src/app.js")
+    assert resp_js.status_code == 200
+
+    resp_public_index = client.get("/public/index.html")
+    assert resp_public_index.status_code == 200
+
+    resp_missing = client.get("/src/assets/nonexistent.css")
+    assert resp_missing.status_code == 404
