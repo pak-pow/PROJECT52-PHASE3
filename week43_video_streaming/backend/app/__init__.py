@@ -3,7 +3,7 @@
 from pathlib import Path
 from typing import Any, Optional
 
-from flask import Flask, Response
+from flask import Flask, Response, send_file, send_from_directory
 
 from app.config.settings import Config, get_config
 from app.db.connection import init_db
@@ -52,6 +52,24 @@ def create_app(config: Optional[Any] = None) -> Flask:
     app.register_blueprint(health_bp)
     app.register_blueprint(video_bp)
     app.register_blueprint(job_bp)
+
+    # Static frontend routes
+    @app.route("/")
+    def index() -> Any:
+        index_file = Path(Config.FRONTEND_DIR) / "public" / "index.html"
+        if index_file.exists():
+            return send_file(index_file)
+        return "PulseStream API is running", 200
+
+    @app.route("/src/<path:filename>")
+    def serve_frontend_src(filename: str) -> Any:
+        src_dir = Path(Config.FRONTEND_DIR) / "src"
+        return send_from_directory(src_dir, filename)
+
+    @app.route("/public/<path:filename>")
+    def serve_frontend_public(filename: str) -> Any:
+        public_dir = Path(Config.FRONTEND_DIR) / "public"
+        return send_from_directory(public_dir, filename)
 
     # CORS & Streaming Headers
     @app.after_request
