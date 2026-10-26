@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PulseInfer - Production ML Model Serving & Inference Gateway</title>
+    <link rel="stylesheet" href="src/assets/base.css">
+    <link rel="stylesheet" href="src/assets/workbench.css">
+    <link rel="stylesheet" href="src/assets/dashboard.css">
+</head>
+<body class="theme-dark">
+    <header class="app-header">
+        <div class="header-container">
+            <div class="brand">
+                <span class="brand-icon">PI</span>
+                <span class="brand-title">PulseInfer</span>
+                <span class="brand-badge">ML Gateway</span>
+            </div>
+            <nav class="nav-tabs" id="navTabs">
+                <button class="nav-btn active" data-tab="playground">Inference Playground</button>
+                <button class="nav-btn" data-tab="dashboard">Observability Dashboard</button>
+                <button class="nav-btn" data-tab="models">Model Registry</button>
+            </nav>
+            <div class="header-status">
+                <span id="gatewayHealthPill" class="health-pill">Connecting...</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="app-main">
+        <!-- Tab 1: Inference Playground -->
+        <section id="playgroundTab" class="tab-content active">
+            <div class="playground-layout">
+                <aside class="sidebar-panel">
+                    <div class="panel-header">
+                        <h2>Model Registry</h2>
+                        <span class="panel-subtext">Select an active production model</span>
+                    </div>
+                    <div id="modelsList" class="models-list">
+                        <!-- Loaded dynamically -->
+                    </div>
+                </aside>
+
+                <div class="main-panel">
+                    <div class="panel-header">
+                        <div class="active-model-title">
+                            <h2 id="activeModelName">Select Model</h2>
+                            <span id="activeModelDomain" class="domain-tag">Domain</span>
+                            <span id="activeModelVersion" class="version-tag">v1</span>
+                        </div>
+                        <p id="activeModelDesc" class="model-description">Choose a model to test real-time inference.</p>
+                    </div>
+
+                    <div class="interactive-console">
+                        <div class="console-inputs" id="consoleInputs">
+                            <!-- Injected dynamically based on domain -->
+                        </div>
+
+                        <div class="console-actions">
+                            <button id="runInferenceBtn" class="btn btn-primary">Run Inference</button>
+                            <button id="clearInputsBtn" class="btn btn-secondary">Clear</button>
+                        </div>
+
+                        <div id="predictionResultCard" class="result-card hidden">
+                            <div class="result-header">
+                                <h3>Inference Output</h3>
+                                <div class="telemetry-badges">
+                                    <span id="resLatencyBadge" class="badge">0.0 ms</span>
+                                    <span id="resCachedBadge" class="badge">Cache Miss</span>
+                                </div>
+                            </div>
+                            <div id="resultContent" class="result-content"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab 2: Observability Dashboard -->
+        <section id="dashboardTab" class="tab-content hidden">
+            <div class="dashboard-container">
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <span class="metric-label">Total Predictions</span>
+                        <span id="statTotalRequests" class="metric-value">0</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">Average Latency</span>
+                        <span id="statAvgLatency" class="metric-value">0.0 ms</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">Cache Hit Ratio</span>
+                        <span id="statCacheHit" class="metric-value">0.0%</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">Error Rate</span>
+                        <span id="statErrorRate" class="metric-value">0.0%</span>
+                    </div>
+                </div>
+
+                <div class="dashboard-panel">
+                    <div class="panel-header">
+                        <h2>Recent Inference Logs</h2>
+                        <button id="refreshLogsBtn" class="btn btn-secondary">Refresh</button>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Model ID</th>
+                                    <th>Version</th>
+                                    <th>Batch Size</th>
+                                    <th>Latency</th>
+                                    <th>Cached</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logsTableBody">
+                                <tr>
+                                    <td colspan="7" class="empty-state">No execution logs recorded yet.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab 3: Model Registry Explorer -->
+        <section id="modelsTab" class="tab-content hidden">
+            <div class="registry-container">
+                <div class="panel-header">
+                    <h2>Registered Model Architecture & Versions</h2>
+                </div>
+                <div id="registryGrid" class="registry-grid">
+                    <!-- Loaded dynamically -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Scripts -->
+    <script type="module" src="src/app.js"></script>
+</body>
+</html>
