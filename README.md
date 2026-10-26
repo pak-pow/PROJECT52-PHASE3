@@ -35,8 +35,8 @@ Phase 3 is where developers become production-ready. This phase covers DevOps pr
 | 40 | Progressive Web App (PWA) | Frontend | Service Workers, Offline Mode | 8h | [Completed](./week40_taskpulse_pwa) |
 | 41 | GraphQL API Server | Backend | GraphQL, Schema Design | 8h | [Completed](./week41_graphql_server) |
 | 42 | PulsePad Collaborative Editor | Full Stack | Operational Transformation, WebSockets | 10h | [Completed](./week42_collaborative_editor) |
-| 43 | Video Streaming Platform | Full Stack | HLS, Video Processing | 10h | Not Started |
-| 44 | Machine Learning Model API | Backend + ML | TensorFlow/PyTorch, Model Serving | 9h | Not Started |
+| 43 | Video Streaming Platform (PulseStream) | Full Stack | RFC 7233 Range, ABR HLS, Transcoding Queue | 10h | [Completed](./week43_video_streaming) |
+| 44 | ML Model API (PulseInfer) | Backend | Dynamic Micro-Batching, Model Registry, Caching | 9h | [In Progress](./week44_ml_model_api) |
 | 45 | Mobile-First SaaS App | Full Stack | Responsive Design, Subscriptions | 10h | Not Started |
 | 46 | OAuth Provider Service | Backend | OAuth 2.0, Security Standards | 9h | Not Started |
 | 47 | Microservices Architecture | Backend + DevOps | Service Communication, Load Balancing | 10h | Not Started |
@@ -167,6 +167,48 @@ Phase 3 is where developers become production-ready. This phase covers DevOps pr
 
 ---
 
+### Week 43: PulseStream Video Streaming Platform
+**Goal:** Build a production-grade video streaming platform with byte-range slicing and ABR HLS packaging
+
+**Learning Objectives:**
+- RFC 7233 byte-range progressive streaming (206 Partial Content, 416 Range Not Satisfiable)
+- Adaptive Bitrate (ABR) HLS packaging (master.m3u8, variant playlists, 188-byte MPEG-2 TS chunking)
+- Asynchronous transcoding queue with 4-stage daemon worker (inspecting, thumbnailing, packaging, persisting)
+- Pure-Python ISO BMFF container parser and FFmpeg fallback acceleration
+- Custom HTML5 video player workbench with buffered range visualization and ABR resolution picker
+- High-concurrency seeking stress tests and chaos engineering validation
+
+**Key Features:**
+- Dual-engine streaming: direct byte-range delivery and multi-bitrate HLS (1080p, 720p, 480p, 360p)
+- Real-time transcoding job telemetry polling with stage percentage tracking
+- Drag-and-drop video upload modal with automatic title derivation
+- Responsive catalog card grid with debounced keyword search and category filtering
+- Keyboard shortcut controls (Space, F, M, Arrow Keys, Number Keys)
+- 5/5 quality gates passing with 58 automated tests and 97% coverage
+
+---
+
+### Week 44: PulseInfer ML Model Serving & Inference Gateway
+**Goal:** Build a high-performance machine learning model serving API and inference gateway
+
+**Learning Objectives:**
+- Multi-model registry with version lifecycle management (active, staging, archived)
+- Dynamic request micro-batching across concurrent clients with vectorized execution
+- High-throughput in-memory SHA-256 LRU prediction caching with TTL eviction
+- Vectorized preprocessing pipelines across NLP (text), Vision (image), and Tabular domains
+- Sliding-window latency percentiles (p50, p90, p95, p99) and telemetry aggregation
+- Zero-downtime model hot-reloading without dropping active client connections
+
+**Key Features:**
+- Multi-domain production models: PulseText Sentiment, PulseVision Classifier, PulseRisk Fraud Scorer
+- Dynamic request micro-batcher merging concurrent requests into vectorized matrix operations
+- In-memory prediction cache delivering sub-millisecond cached inference responses
+- Interactive testing playground and observability telemetry dashboard
+- Clean SQLite WAL schema with complete prediction audit logs
+- 5/5 quality gates passing with 16 automated tests and 98% coverage
+
+---
+
 ### Week 47: Microservices Architecture
 **Goal:** Build a system with multiple independent services
 
@@ -268,7 +310,7 @@ PROJECT52-PHASE3/
 - Completed - Project finished and documented
 - Deployed - Project live and accessible online
 
-**Current Progress:** 6/16 Projects Completed
+**Current Progress:** 7/16 Projects Completed (Week 44 in progress)
 
 ---
 
