@@ -249,10 +249,16 @@ class ModelRegistry:
         self,
         model_id: str,
         payload: Any,
+        conn: Optional[sqlite3.Connection] = None,
     ) -> Tuple[bool, Optional[str]]:
         """Validate inference input payload against model schema specification."""
         clean_id = model_id.strip().lower()
         with self._lock:
+            if clean_id not in self._models and conn:
+                try:
+                    self.load_model(clean_id, conn)
+                except Exception as exc:  # nosec B110
+                    _ = str(exc)
             if clean_id not in self._models:
                 return False, f"Model '{clean_id}' is not registered"
             model = self._models[clean_id]
@@ -291,6 +297,11 @@ class ModelRegistry:
         """Perform end-to-end model inference with validation, caching, and batching."""
         clean_id = model_id.strip().lower()
         with self._lock:
+            if clean_id not in self._models and conn:
+                try:
+                    self.load_model(clean_id, conn)
+                except Exception as exc:  # nosec B110
+                    _ = str(exc)
             if clean_id not in self._models:
                 raise KeyError(f"Model '{clean_id}' is not loaded in registry")
             model = self._models[clean_id]
@@ -408,6 +419,11 @@ class ModelRegistry:
         """Direct vectorized batch inference executing across payload records."""
         clean_id = model_id.strip().lower()
         with self._lock:
+            if clean_id not in self._models and conn:
+                try:
+                    self.load_model(clean_id, conn)
+                except Exception as exc:  # nosec B110
+                    _ = str(exc)
             if clean_id not in self._models:
                 raise KeyError(f"Model '{clean_id}' is not loaded in registry")
             model = self._models[clean_id]
@@ -479,10 +495,17 @@ class ModelRegistry:
         self.cache.invalidate_model(clean_id)
         return True
 
-    def get_model_status(self, model_id: str) -> Dict[str, Any]:
+    def get_model_status(
+        self, model_id: str, conn: Optional[sqlite3.Connection] = None
+    ) -> Dict[str, Any]:
         """Return comprehensive lifecycle state, configuration, and runtime metrics."""
         clean_id = model_id.strip().lower()
         with self._lock:
+            if clean_id not in self._models and conn:
+                try:
+                    self.load_model(clean_id, conn)
+                except Exception as exc:  # nosec B110
+                    _ = str(exc)
             if clean_id not in self._models:
                 raise KeyError(f"Model '{clean_id}' is not loaded in registry")
             model = self._models[clean_id]
@@ -505,12 +528,28 @@ class ModelRegistry:
                 "telemetry": telemetry_metrics,
             }
 
-    def list_models(self) -> List[Dict[str, Any]]:
-        """Return list of summaries for all currently loaded in-memory models."""
+    def list_models(
+        self,
+        domain: Optional[str] = None,
+        conn: Optional[sqlite3.Connection] = None,
+    ) -> List[Dict[str, Any]]:
+        """Return list of summaries for all loaded models, optionally filtered."""
+        if conn:
+            try:
+                self.load_all_active_models(conn)
+            except Exception as exc:  # nosec B110
+                _ = str(exc)
+
+        clean_domain = domain.strip().lower() if domain else None
         with self._lock:
             model_ids = list(self._models.keys())
 
-        return [self.get_model_status(mid) for mid in model_ids]
+        results = []
+        for mid in model_ids:
+            status = self.get_model_status(mid)
+            if clean_domain is None or status.get("domain", "").lower() == clean_domain:
+                results.append(status)
+        return results
 
     def shutdown(self) -> None:
         """Gracefully unload all active models and stop background worker threads."""
