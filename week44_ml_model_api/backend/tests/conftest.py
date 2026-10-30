@@ -45,6 +45,10 @@ def app(temp_dir: Path, test_db_path: Path) -> Generator[Flask, None, None]:
     with application.app_context():
         yield application
 
+    registry = application.extensions.get("registry")
+    if registry:
+        registry.shutdown()
+
 
 @pytest.fixture
 def client(app: Flask) -> FlaskClient:
