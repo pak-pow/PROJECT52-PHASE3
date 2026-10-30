@@ -39,12 +39,23 @@ def health_check() -> Tuple[Any, int]:
 
     vault_stats: Dict[str, Any] = storage.get_storage_stats()
 
+    registry = current_app.extensions.get("registry")
+    loaded_models: list = []
+    if registry and hasattr(registry, "_models"):
+        loaded_models = list(registry._models.keys())
+
+    cache = current_app.extensions.get("cache")
+    cache_stats: Dict[str, Any] = cache.get_stats() if cache else {}
+
     return (
         jsonify(
             {
                 "status": "healthy",
                 "database": db_status,
                 "vault": vault_stats,
+                "loaded_models_count": len(loaded_models),
+                "loaded_models": loaded_models,
+                "cache": cache_stats,
                 "service": "pulseinfer-ml-api",
             }
         ),
