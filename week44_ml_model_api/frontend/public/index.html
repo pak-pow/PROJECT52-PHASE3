@@ -14,10 +14,11 @@
             <div class="brand">
                 <span class="brand-icon">PI</span>
                 <span class="brand-title">PulseInfer</span>
-                <span class="brand-badge">ML Gateway</span>
+                <span class="brand-badge">Production Gateway</span>
             </div>
             <nav class="nav-tabs" id="navTabs">
-                <button class="nav-btn active" data-tab="playground">Inference Playground</button>
+                <button class="nav-btn active" data-tab="playground">Inference Workbench</button>
+                <button class="nav-btn" data-tab="benchmarker">Concurrency Benchmarker</button>
                 <button class="nav-btn" data-tab="dashboard">Observability Dashboard</button>
                 <button class="nav-btn" data-tab="models">Model Registry</button>
             </nav>
@@ -28,12 +29,12 @@
     </header>
 
     <main class="app-main">
-        <!-- Tab 1: Inference Playground -->
+        <!-- Tab 1: Inference Workbench -->
         <section id="playgroundTab" class="tab-content active">
             <div class="playground-layout">
                 <aside class="sidebar-panel">
                     <div class="panel-header">
-                        <h2>Model Registry</h2>
+                        <h2>Registered Models</h2>
                         <span class="panel-subtext">Select an active production model</span>
                     </div>
                     <div id="modelsList" class="models-list">
@@ -42,23 +43,53 @@
                 </aside>
 
                 <div class="main-panel">
-                    <div class="panel-header">
-                        <div class="active-model-title">
-                            <h2 id="activeModelName">Select Model</h2>
-                            <span id="activeModelDomain" class="domain-tag">Domain</span>
-                            <span id="activeModelVersion" class="version-tag">v1</span>
+                    <div class="panel-header flex-header">
+                        <div>
+                            <div class="active-model-title">
+                                <h2 id="activeModelName">Select Model</h2>
+                                <span id="activeModelDomain" class="domain-tag">Domain</span>
+                                <span id="activeModelVersion" class="version-tag">v1</span>
+                            </div>
+                            <p id="activeModelDesc" class="model-description">Choose a model to test real-time inference.</p>
                         </div>
-                        <p id="activeModelDesc" class="model-description">Choose a model to test real-time inference.</p>
+                        <div class="hotswap-control">
+                            <label for="swapVersionSelect" class="hotswap-label">Active Version:</label>
+                            <div class="hotswap-inputs">
+                                <select id="swapVersionSelect" class="form-control select-control">
+                                    <option value="v1">v1</option>
+                                </select>
+                                <button id="swapVersionBtn" class="btn btn-secondary btn-sm">Hot-Swap</button>
+                            </div>
+                            <span id="hotswapNotice" class="hotswap-notice hidden">Hot-swapped successfully</span>
+                        </div>
                     </div>
 
                     <div class="interactive-console">
+                        <div class="presets-row">
+                            <span class="presets-label">Quick Presets:</span>
+                            <div id="presetsContainer" class="presets-buttons">
+                                <!-- Dynamic preset buttons -->
+                            </div>
+                        </div>
+
                         <div class="console-inputs" id="consoleInputs">
                             <!-- Injected dynamically based on domain -->
                         </div>
 
+                        <div class="console-options">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="bypassCacheToggle">
+                                <span>Bypass Prediction Cache</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="bypassBatcherToggle">
+                                <span>Direct Inference (Bypass Batcher)</span>
+                            </label>
+                        </div>
+
                         <div class="console-actions">
                             <button id="runInferenceBtn" class="btn btn-primary">Run Inference</button>
-                            <button id="clearInputsBtn" class="btn btn-secondary">Clear</button>
+                            <button id="clearInputsBtn" class="btn btn-secondary">Clear Inputs</button>
                         </div>
 
                         <div id="predictionResultCard" class="result-card hidden">
@@ -67,18 +98,181 @@
                                 <div class="telemetry-badges">
                                     <span id="resLatencyBadge" class="badge">0.0 ms</span>
                                     <span id="resCachedBadge" class="badge">Cache Miss</span>
+                                    <span id="resVersionBadge" class="badge version-badge">v1</span>
                                 </div>
                             </div>
-                            <div id="resultContent" class="result-content"></div>
+                            <div id="visualResultContainer" class="visual-result-container">
+                                <!-- Visualized chart or gauge -->
+                            </div>
+                            <div class="raw-json-collapsible">
+                                <details>
+                                    <summary>View Raw JSON Response</summary>
+                                    <div id="resultContent" class="result-content"></div>
+                                </details>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Tab 2: Observability Dashboard -->
+        <!-- Tab 2: In-Browser Concurrency Benchmarker -->
+        <section id="benchmarkerTab" class="tab-content hidden">
+            <div class="benchmarker-container">
+                <div class="benchmarker-grid">
+                    <div class="benchmarker-config-card">
+                        <div class="panel-header">
+                            <h2>Concurrency Benchmark Suite</h2>
+                            <span class="panel-subtext">Simulate parallel client traffic against model batcher and cache</span>
+                        </div>
+
+                        <div class="config-form">
+                            <div class="form-group">
+                                <label for="bmTargetModel">Target Model</label>
+                                <select id="bmTargetModel" class="form-control">
+                                    <option value="nlp-sentiment">PulseText Sentiment (NLP)</option>
+                                    <option value="vision-classifier">PulseVision Classifier (Vision)</option>
+                                    <option value="fraud-detector">PulseRisk Scorer (Tabular)</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="bmWorkloadPattern">Workload Pattern</label>
+                                <select id="bmWorkloadPattern" class="form-control">
+                                    <option value="cache-stress">Repetitive Queries (Cache Hit Saturation)</option>
+                                    <option value="batch-stress">Diverse Payloads (Dynamic Batching Coalescing)</option>
+                                    <option value="mixed-load">Mixed Real-World (50% Repeat / 50% Varied)</option>
+                                </select>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group flex-1">
+                                    <label for="bmConcurrency">Concurrency Workers: <strong id="bmConcurrencyVal">25</strong></label>
+                                    <input type="range" id="bmConcurrency" min="5" max="100" step="5" value="25" class="form-range">
+                                </div>
+                                <div class="form-group flex-1">
+                                    <label for="bmTotalRequests">Total Requests: <strong id="bmTotalRequestsVal">50</strong></label>
+                                    <input type="range" id="bmTotalRequests" min="10" max="200" step="10" value="50" class="form-range">
+                                </div>
+                            </div>
+
+                            <div class="bm-actions">
+                                <button id="startBenchmarkBtn" class="btn btn-primary">Start Concurrency Benchmark</button>
+                                <button id="resetBenchmarkBtn" class="btn btn-secondary">Reset Benchmark</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="benchmarker-status-card">
+                        <div class="panel-header">
+                            <h2>Benchmark Execution Status</h2>
+                            <span id="bmStatusPill" class="badge">Idle</span>
+                        </div>
+
+                        <div class="progress-section">
+                            <div class="progress-info">
+                                <span>Progress</span>
+                                <span id="bmProgressText">0 / 0 completed</span>
+                            </div>
+                            <div class="progress-track large-track">
+                                <div id="bmProgressBar" class="progress-fill" style="width: 0%;"></div>
+                            </div>
+                        </div>
+
+                        <div id="bmInsightBanner" class="insight-banner hidden">
+                            <span class="insight-title">Gateway Insight</span>
+                            <p id="bmInsightText">Benchmark results will appear here upon completion.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Benchmark Results Metrics -->
+                <div class="metrics-grid bm-metrics-grid">
+                    <div class="metric-card">
+                        <span class="metric-label">Elapsed Time</span>
+                        <span id="bmElapsedVal" class="metric-value">0 ms</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">Client Throughput</span>
+                        <span id="bmThroughputVal" class="metric-value">0.0 req/s</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">Cache Hit Ratio</span>
+                        <span id="bmCacheHitVal" class="metric-value">0.0%</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">Success Rate</span>
+                        <span id="bmSuccessRateVal" class="metric-value">100%</span>
+                    </div>
+                </div>
+
+                <!-- Percentiles Breakdown -->
+                <div class="percentiles-grid">
+                    <div class="percentile-box">
+                        <span class="pct-label">Median Latency (p50)</span>
+                        <span id="bmP50Val" class="pct-value">0.00 ms</span>
+                    </div>
+                    <div class="percentile-box">
+                        <span class="pct-label">90th Percentile (p90)</span>
+                        <span id="bmP90Val" class="pct-value">0.00 ms</span>
+                    </div>
+                    <div class="percentile-box">
+                        <span class="pct-label">95th Percentile (p95)</span>
+                        <span id="bmP95Val" class="pct-value">0.00 ms</span>
+                    </div>
+                    <div class="percentile-box">
+                        <span class="pct-label">99th Percentile (p99)</span>
+                        <span id="bmP99Val" class="pct-value">0.00 ms</span>
+                    </div>
+                </div>
+
+                <!-- Live Request Stream Table -->
+                <div class="dashboard-panel">
+                    <div class="panel-header">
+                        <h2>Live Request Stream (Latest 20 Samples)</h2>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Model ID</th>
+                                    <th>Client Latency</th>
+                                    <th>Server Cache</th>
+                                    <th>HTTP Status</th>
+                                    <th>Payload Summary</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bmStreamTableBody">
+                                <tr>
+                                    <td colspan="6" class="empty-state">No benchmark requests dispatched yet.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab 3: Observability Dashboard -->
         <section id="dashboardTab" class="tab-content hidden">
             <div class="dashboard-container">
+                <div class="dashboard-toolbar">
+                    <div class="toolbar-left">
+                        <h2>Live Gateway Telemetry</h2>
+                        <span class="panel-subtext">Sliding window latency metrics and cache memory telemetry</span>
+                    </div>
+                    <div class="toolbar-right">
+                        <label class="auto-refresh-label">
+                            <input type="checkbox" id="autoRefreshToggle" checked>
+                            <span>Auto Refresh (3s)</span>
+                        </label>
+                        <button id="refreshLogsBtn" class="btn btn-secondary btn-sm">Refresh Now</button>
+                        <button id="clearCacheBtn" class="btn btn-secondary btn-sm">Clear Cache</button>
+                        <button id="resetTelemetryBtn" class="btn btn-secondary btn-sm">Reset Telemetry</button>
+                    </div>
+                </div>
+
                 <div class="metrics-grid">
                     <div class="metric-card">
                         <span class="metric-label">Total Predictions</span>
@@ -93,15 +287,88 @@
                         <span id="statCacheHit" class="metric-value">0.0%</span>
                     </div>
                     <div class="metric-card">
+                        <span class="metric-label">Throughput</span>
+                        <span id="statThroughput" class="metric-value">0.0 req/s</span>
+                    </div>
+                    <div class="metric-card">
                         <span class="metric-label">Error Rate</span>
                         <span id="statErrorRate" class="metric-value">0.0%</span>
                     </div>
                 </div>
 
+                <!-- Latency Percentiles Card -->
                 <div class="dashboard-panel">
                     <div class="panel-header">
+                        <h2>Server Latency Percentiles (Sliding Window)</h2>
+                    </div>
+                    <div class="percentiles-grid">
+                        <div class="percentile-box">
+                            <span class="pct-label">p50 (Median)</span>
+                            <span id="statP50" class="pct-value">0.00 ms</span>
+                        </div>
+                        <div class="percentile-box">
+                            <span class="pct-label">p90</span>
+                            <span id="statP90" class="pct-value">0.00 ms</span>
+                        </div>
+                        <div class="percentile-box">
+                            <span class="pct-label">p95</span>
+                            <span id="statP95" class="pct-value">0.00 ms</span>
+                        </div>
+                        <div class="percentile-box">
+                            <span class="pct-label">p99 (Tail Latency)</span>
+                            <span id="statP99" class="pct-value">0.00 ms</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Per-Model Telemetry Cards -->
+                <div class="dashboard-panel">
+                    <div class="panel-header">
+                        <h2>Per-Model Inference Statistics</h2>
+                    </div>
+                    <div id="modelTelemetryGrid" class="model-telemetry-grid">
+                        <!-- Loaded dynamically -->
+                    </div>
+                </div>
+
+                <!-- Cache Telemetry Card -->
+                <div class="dashboard-panel">
+                    <div class="panel-header">
+                        <h2>In-Memory Prediction Cache Health</h2>
+                    </div>
+                    <div class="cache-metrics-row">
+                        <div class="cache-metric-item">
+                            <span class="cache-metric-title">Occupancy</span>
+                            <span id="cacheOccupancyVal" class="cache-metric-num">0 / 1024</span>
+                        </div>
+                        <div class="cache-metric-item">
+                            <span class="cache-metric-title">Cache Hits</span>
+                            <span id="cacheHitsVal" class="cache-metric-num">0</span>
+                        </div>
+                        <div class="cache-metric-item">
+                            <span class="cache-metric-title">Cache Misses</span>
+                            <span id="cacheMissesVal" class="cache-metric-num">0</span>
+                        </div>
+                        <div class="cache-metric-item">
+                            <span class="cache-metric-title">Evictions</span>
+                            <span id="cacheEvictionsVal" class="cache-metric-num">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Logs Panel -->
+                <div class="dashboard-panel">
+                    <div class="panel-header flex-header">
                         <h2>Recent Inference Logs</h2>
-                        <button id="refreshLogsBtn" class="btn btn-secondary">Refresh</button>
+                        <div class="filter-controls">
+                            <label for="logFilterModel">Filter by Model:</label>
+                            <select id="logFilterModel" class="form-control select-control">
+                                <option value="">All Models</option>
+                                <option value="nlp-sentiment">NLP Sentiment</option>
+                                <option value="vision-classifier">Vision Classifier</option>
+                                <option value="fraud-detector">Fraud Detector</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="table-container">
                         <table class="data-table">
@@ -127,11 +394,12 @@
             </div>
         </section>
 
-        <!-- Tab 3: Model Registry Explorer -->
+        <!-- Tab 4: Model Registry Explorer -->
         <section id="modelsTab" class="tab-content hidden">
             <div class="registry-container">
                 <div class="panel-header">
                     <h2>Registered Model Architecture & Versions</h2>
+                    <span class="panel-subtext">Zero-downtime model catalog and input/output contract specifications</span>
                 </div>
                 <div id="registryGrid" class="registry-grid">
                     <!-- Loaded dynamically -->
