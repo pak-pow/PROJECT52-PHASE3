@@ -124,28 +124,41 @@ export class SplitSimulator {
     this.socketClient.on("remote_operation", (data) => {
       if (data.author === this.userName) return;
 
-      const remoteOp = TextOperation.fromDict(data.operation);
-      const result = this.otClient.applyServer(remoteOp);
-      if (result && result.applyToDoc) {
-        this.isApplyingRemote = true;
-        const currentPos = this.simulatedTextarea.selectionStart;
-        const currentEnd = this.simulatedTextarea.selectionEnd;
+      try {
+        const remoteOp = TextOperation.fromDict(data.operation);
+        const result = this.otClient.applyServer(remoteOp);
+        if (result && result.applyToDoc) {
+          this.isApplyingRemote = true;
+          try {
+            const currentPos = this.simulatedTextarea.selectionStart;
+            const currentEnd = this.simulatedTextarea.selectionEnd;
 
-        this.simulatedTextarea.value = result.applyToDoc.apply(this.simulatedTextarea.value);
-        this.previousText = this.simulatedTextarea.value;
+            this.simulatedTextarea.value = result.applyToDoc.apply(this.simulatedTextarea.value);
+            this.previousText = this.simulatedTextarea.value;
 
-        // Shift local cursor
-        const [newStart, newEnd] = this.cursorTracker.transformSelection(
-          currentPos,
-          currentEnd,
-          result.applyToDoc
-        );
-        this.simulatedTextarea.setSelectionRange(newStart, newEnd);
-        this.isApplyingRemote = false;
+            // Shift local cursor
+            const [newStart, newEnd] = this.cursorTracker.transformSelection(
+              currentPos,
+              currentEnd,
+              result.applyToDoc
+            );
+            this.simulatedTextarea.setSelectionRange(newStart, newEnd);
 
-        this.cursorTracker.transformAll(result.applyToDoc);
-        this._updateGutter();
+            this.cursorTracker.transformAll(result.applyToDoc);
+            this._updateGutter();
+          } finally {
+            this.isApplyingRemote = false;
+          }
+        }
+      } catch (err) {
+        console.warn("Simulated user error applying remote operation, resyncing:", err);
+        this.socketClient.joinDocument(this.docId, this.userName, this.userColor);
       }
+    });
+
+    this.socketClient.on("operation_error", (data) => {
+      console.warn("Simulated user operation error, resyncing:", data);
+      this.socketClient.joinDocument(this.docId, this.userName, this.userColor);
     });
 
     this.socketClient.on("cursor_update", (data) => {
