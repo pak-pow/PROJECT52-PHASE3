@@ -1,13 +1,16 @@
 /**
  * PulseInfer Main Application Orchestrator.
+ * Initializes controllers, coordinates tabs, and synchronizes telemetry.
  */
 
+import { BenchmarkerController } from "./ui/benchmarker.js";
 import { DashboardController } from "./ui/dashboard.js";
 import { WorkbenchController } from "./ui/workbench.js";
 
 class PulseInferApp {
     constructor() {
         this.workbench = null;
+        this.benchmarker = null;
         this.dashboard = null;
         this.navTabs = document.getElementById("navTabs");
         this.healthPill = document.getElementById("gatewayHealthPill");
@@ -15,6 +18,7 @@ class PulseInferApp {
 
     async init() {
         this.workbench = new WorkbenchController();
+        this.benchmarker = new BenchmarkerController();
         this.dashboard = new DashboardController();
 
         this.bindNavigation();
@@ -40,7 +44,7 @@ class PulseInferApp {
             });
         }
 
-        const tabs = ["playground", "dashboard", "models"];
+        const tabs = ["playground", "benchmarker", "dashboard", "models"];
         tabs.forEach((t) => {
             const section = document.getElementById(`${t}Tab`);
             if (section) {
@@ -82,7 +86,7 @@ class PulseInferApp {
                 return;
             }
         } catch {
-            // Fallback default definitions for baseline scaffolding
+            // Graceful baseline fallback
         }
 
         const defaultModels = [
