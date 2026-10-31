@@ -407,6 +407,25 @@ class TestMetricsAndHealthRoutes:
         resp_metrics = seeded_client.get("/api/v1/metrics")
         assert resp_metrics.get_json()["global"]["total_requests"] == 0
 
+    def test_get_prediction_logs(self, seeded_client: FlaskClient) -> None:
+        seeded_client.post(
+            "/api/v1/models/nlp-sentiment/predict",
+            json={"text": "Log test inference"},
+        )
+        resp = seeded_client.get("/api/v1/logs?limit=10")
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data["status"] == "success"
+        assert len(data["logs"]) >= 1
+        assert data["logs"][0]["model_id"] == "nlp-sentiment"
+
+        # Model filter and invalid limit fallback
+        resp_filtered = seeded_client.get(
+            "/api/v1/logs?model_id=nlp-sentiment&limit=not_a_number"
+        )
+        assert resp_filtered.status_code == 200
+        assert len(resp_filtered.get_json()["logs"]) >= 1
+
     def test_enhanced_health_check(self, seeded_client: FlaskClient) -> None:
         resp = seeded_client.get("/api/health")
         assert resp.status_code == 200
