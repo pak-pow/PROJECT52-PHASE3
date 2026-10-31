@@ -40,6 +40,16 @@ def create_app(config_class=Config) -> Flask:
     if not app.config.get("TESTING", False):
         try:
             init_db(app.config.get("DB_PATH"))
+            # Auto-seed default document if table is empty
+            from app.db.connection import get_db_connection
+
+            with get_db_connection(app.config.get("DB_PATH")) as conn:
+                cur = conn.cursor()
+                cur.execute("SELECT COUNT(*) FROM documents")
+                if cur.fetchone()[0] == 0:
+                    from data.seed import seed_database
+
+                    seed_database()
         except (OSError, FileNotFoundError) as exc:
             app.logger.warning("Could not auto-initialize database: %s", exc)
 
