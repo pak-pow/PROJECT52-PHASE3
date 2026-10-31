@@ -1,8 +1,88 @@
 /**
  * Revision timeline drawer controller for PulsePad.
  * Manages fetching, rendering, restoring point-in-time document revisions,
- * and exporting content.
+ * and exporting content. Groups granular character keystrokes into clean
+ * word-level checkpoints at space/punctuation boundaries.
  */
+
+export function groupRevisionsByWord(revisions) {
+  if (!revisions || revisions.length === 0) return [];
+
+  const grouped = [];
+  let currentGroup = null;
+
+  for (const rev of revisions) {
+    let op = null;
+    try {
+      op =
+        typeof rev.operation_json === "string"
+          ? JSON.parse(rev.operation_json)
+          : rev.operation_json;
+    } catch {
+      op = null;
+    }
+
+    const components = op ? op.components || [] : [];
+    const insertedChars = components
+      .filter((c) => c.kind === "insert")
+      .map((c) => String(c.value))
+      .join("");
+    const deletedCount = components
+      .filter((c) => c.kind === "delete")
+      .reduce((sum, c) => sum + Number(c.value), 0);
+
+    const isWordBoundary =
+      insertedChars.includes(" ") ||
+      insertedChars.includes("\n") ||
+      insertedChars.includes("\t") ||
+      /[.,!?;:]/.test(insertedChars);
+
+    if (!currentGroup) {
+      currentGroup = {
+        revision_num: rev.revision_num,
+        author: rev.author,
+        created_at: rev.created_at,
+        insertedText: insertedChars,
+        deletedCount: deletedCount,
+        count: 1,
+      };
+    } else {
+      const sameAuthor = currentGroup.author === rev.author;
+      const bothTyping = currentGroup.deletedCount === 0 && deletedCount === 0;
+      const bothDeleting =
+        currentGroup.insertedText.length === 0 && insertedChars.length === 0;
+
+      if (sameAuthor && (bothTyping || bothDeleting) && currentGroup.count < 60) {
+        currentGroup.revision_num = rev.revision_num;
+        currentGroup.created_at = rev.created_at;
+        currentGroup.insertedText += insertedChars;
+        currentGroup.deletedCount += deletedCount;
+        currentGroup.count++;
+      } else {
+        grouped.push(currentGroup);
+        currentGroup = {
+          revision_num: rev.revision_num,
+          author: rev.author,
+          created_at: rev.created_at,
+          insertedText: insertedChars,
+          deletedCount: deletedCount,
+          count: 1,
+        };
+      }
+    }
+
+    if (isWordBoundary && currentGroup) {
+      grouped.push(currentGroup);
+      currentGroup = null;
+    }
+  }
+
+  if (currentGroup) {
+    grouped.push(currentGroup);
+  }
+
+  return grouped;
+}
 
 export class TimelineView {
   constructor({
@@ -64,37 +144,35 @@ export class TimelineView {
     }
   }
 
-  summarizeOperation(operationJson) {
-    if (!operationJson) return "Text modified";
-    try {
-      const op = JSON.parse(operationJson);
-      const components = op.components || [];
-      const parts = [];
-
-      let inserts = 0;
-      let deletes = 0;
-
-      for (const comp of components) {
-        if (comp.kind === "insert") {
-          inserts += String(comp.value).length;
-        } else if (comp.kind === "delete") {
-          deletes += Number(comp.value);
-        }
-      }
-
-      if (inserts > 0) parts.push(`Inserted ${inserts} chars`);
-      if (deletes > 0) parts.push(`Deleted ${deletes} chars`);
-      return parts.length > 0 ? parts.join(", ") : "Maintained structure";
-    } catch {
-      return "Edit recorded";
+  summarizeGroup(group) {
+    if (group.insertedText && group.deletedCount > 0) {
+      const ins =
+        group.insertedText.length > 25
+          ? `${group.insertedText.slice(0, 25)}...`
+          : group.insertedText;
+      return `Replaced ${group.deletedCount} chars with "${ins}"`;
     }
+    if (group.insertedText) {
+      const clean = group.insertedText.replace(/\n/g, "\\n");
+      const display =
+        clean.length > 32 ? `${clean.slice(0, 32)}...` : clean;
+      return `Inserted "${display}"`;
+    }
+    if (group.deletedCount > 0) {
+      return `Deleted ${group.deletedCount} chars`;
+    }
+    return "Structure modified";
   }
 
   formatTime(isoString) {
     if (!isoString) return "";
     try {
       const date = new Date(isoString);
-      return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+      return date.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      });
     } catch {
       return isoString;
     }
@@ -104,16 +182,20 @@ export class TimelineView {
     if (!this.list) return;
 
     if (this.revisions.length === 0) {
-      this.list.innerHTML = '<div class="timeline-empty">No past revisions recorded yet.</div>';
+      this.list.innerHTML =
+        '<div class="timeline-empty">No past revisions recorded yet.</div>';
       return;
     }
+
+    // Group single-character edits into word-level checkpoints
+    const groupedRevs = groupRevisionsByWord(this.revisions);
 
     this.list.innerHTML = "";
 
     // Render revisions in descending order (newest first)
-    const sortedRevs = [...this.revisions].reverse();
+    const sortedRevs = [...groupedRevs].reverse();
 
-    sortedRevs.forEach((rev) => {
+    sortedRevs.forEach((group) => {
       const card = document.createElement("div");
       card.className = "timeline-card";
 
@@ -122,22 +204,22 @@ export class TimelineView {
 
       const badge = document.createElement("span");
       badge.className = "rev-badge";
-      badge.textContent = `Rev #${rev.revision_num}`;
+      badge.textContent = `Rev #${group.revision_num}`;
 
       const author = document.createElement("span");
       author.className = "rev-author";
-      author.textContent = rev.author;
+      author.textContent = group.author;
 
       header.appendChild(badge);
       header.appendChild(author);
 
       const time = document.createElement("div");
       time.className = "timeline-card-time";
-      time.textContent = this.formatTime(rev.created_at);
+      time.textContent = this.formatTime(group.created_at);
 
       const summary = document.createElement("div");
       summary.className = "timeline-card-summary";
-      summary.textContent = this.summarizeOperation(rev.operation_json);
+      summary.textContent = this.summarizeGroup(group);
 
       const actions = document.createElement("div");
       actions.className = "timeline-card-actions";
@@ -146,7 +228,7 @@ export class TimelineView {
       restoreBtn.className = "btn-restore";
       restoreBtn.textContent = "Restore";
       restoreBtn.addEventListener("click", () => {
-        this.confirmAndRollback(rev.revision_num);
+        this.confirmAndRollback(group.revision_num);
       });
 
       actions.appendChild(restoreBtn);
