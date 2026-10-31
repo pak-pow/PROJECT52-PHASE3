@@ -203,8 +203,9 @@ class RoomManager:
 
         # If client is behind, transform against intervening historical ops
         if client_revision < room.version:
-            for _, hist_op, _ in room.history[client_revision:]:
-                op, _ = transform(op, hist_op, priority=True)
+            for rev_num, hist_op, _ in room.history:
+                if rev_num > client_revision:
+                    op, _ = transform(op, hist_op, priority=True)
 
         # Apply transformed operation to current server document
         room.content = op.apply(room.content)
@@ -233,12 +234,13 @@ class RoomManager:
             return []
 
         result = []
-        for rev_num, op, author in room.history[since_revision:]:
-            result.append(
-                {
-                    "revision": rev_num,
-                    "operation": op.to_dict(),
-                    "author": author,
-                }
-            )
+        for rev_num, op, author in room.history:
+            if rev_num > since_revision:
+                result.append(
+                    {
+                        "revision": rev_num,
+                        "operation": op.to_dict(),
+                        "author": author,
+                    }
+                )
         return result
