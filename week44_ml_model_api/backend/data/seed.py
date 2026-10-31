@@ -84,6 +84,47 @@ def seed_database(
                 status="active",
             )
 
+        # Artifact weights for NLP v2-rc1 (hot-swap candidate)
+        v1_2_path = storage.get_artifact_path(m1_id, "v2-rc1", "weights.json")
+        v1_2_weights = {
+            "model_id": m1_id,
+            "version": "v2-rc1",
+            "classes": ["negative", "neutral", "positive"],
+            "vocabulary": {
+                "great": 1.8,
+                "excellent": 2.2,
+                "good": 1.4,
+                "love": 2.0,
+                "fast": 1.3,
+                "poor": -1.7,
+                "bad": -2.0,
+                "terrible": -2.5,
+                "slow": -1.2,
+                "error": -1.6,
+                "exceptional": 2.5,
+                "flawless": 2.3,
+                "horrible": -2.7,
+            },
+            "bias": [0.05, 0.4, 0.05],
+        }
+        v1_2_path.write_text(json.dumps(v1_2_weights, indent=2), encoding="utf-8")
+
+        if not ModelVersionDAO.get(conn, m1_id, "v2-rc1"):
+            ModelVersionDAO.create(
+                conn=conn,
+                model_id=m1_id,
+                version="v2-rc1",
+                artifact_path=str(v1_2_path),
+                input_schema={"text": "string"},
+                output_schema={
+                    "sentiment": "string",
+                    "confidence": "float",
+                    "probabilities": "dict",
+                },
+                metrics={"accuracy": 0.965, "f1_score": 0.961},
+                status="inactive",
+            )
+
         # Model 2: Computer Vision Classifier
         m2_id = "vision-classifier"
         if not ModelDAO.get_by_id(conn, m2_id):
