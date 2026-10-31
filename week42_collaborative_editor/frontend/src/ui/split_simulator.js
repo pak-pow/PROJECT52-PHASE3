@@ -60,7 +60,12 @@ export class SplitSimulator {
       </div>
     `;
 
-    this.container.appendChild(this.simulatedPane);
+    const drawer = this.container.querySelector("#timeline-drawer");
+    if (drawer) {
+      this.container.insertBefore(this.simulatedPane, drawer);
+    } else {
+      this.container.appendChild(this.simulatedPane);
+    }
 
     this.simulatedTextarea = this.simulatedPane.querySelector("#simulated-editor");
     this.simulatedGutter = this.simulatedPane.querySelector("#simulated-gutter");
