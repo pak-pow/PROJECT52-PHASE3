@@ -5,6 +5,7 @@
   display: flex;
   overflow: hidden;
   position: relative;
+  height: calc(100vh - 54px);
 }
 
 .editor-pane {
@@ -13,6 +14,7 @@
   flex-direction: column;
   height: 100%;
   overflow: hidden;
+  background-color: var(--editor-bg);
 }
 
 .editor-pane.simulated-pane {
@@ -21,12 +23,14 @@
 
 .pane-header {
   height: 38px;
-  background-color: var(--bg-tertiary);
+  background-color: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
   padding: 0 16px;
   gap: 10px;
+  flex-shrink: 0;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .pane-body {
@@ -34,6 +38,7 @@
   display: flex;
   overflow: hidden;
   position: relative;
+  background-color: var(--editor-bg);
 }
 
 .user-pill {
@@ -55,7 +60,7 @@
 
 .editor-gutter {
   width: 52px;
-  background-color: var(--bg-secondary);
+  background-color: var(--editor-gutter-bg);
   border-right: 1px solid var(--border-color);
   color: var(--text-muted);
   font-family: var(--font-mono);
@@ -67,13 +72,15 @@
   white-space: pre;
   box-sizing: border-box;
   overflow: hidden;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .editor-container {
   flex: 1;
   position: relative;
   overflow: hidden;
-  background-color: var(--bg-primary);
+  background-color: var(--editor-bg);
+  transition: background-color 0.2s ease;
 }
 
 .cursor-overlay {
@@ -127,34 +134,25 @@
   overflow: auto;
   position: relative;
   z-index: 2;
+  transition: color 0.2s ease;
 }
 
-/* Presence Bar and Avatars */
-.presence-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.editor-area::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-.presence-count {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  margin-right: 4px;
+.editor-area::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-.participant-avatar {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  color: #ffffff;
-  font-size: 11px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  cursor: default;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+.editor-area::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 4px;
+}
+
+.editor-area::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
 }
 
 .participant-avatar.typing .typing-pulse-dot {
