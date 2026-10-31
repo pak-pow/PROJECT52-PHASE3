@@ -1,14 +1,58 @@
 /* Base styles and design tokens for PulsePad */
 :root {
-  --bg-primary: #0f172a;
+  /* Dark Mode (Default) */
+  --bg-primary: #0b1120;
   --bg-secondary: #1e293b;
   --bg-tertiary: #334155;
+  --bg-hover: #475569;
   --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
   --text-muted: #94a3b8;
   --accent-color: #3b82f6;
+  --accent-primary: #3b82f6;
+  --accent-hover: #2563eb;
   --border-color: #334155;
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --editor-bg: #0b1120;
+  --editor-gutter-bg: #111827;
+  --card-bg: #1e293b;
+  --card-border: #334155;
+  --header-bg: #1e293b;
+  --input-focus-bg: #1e293b;
+  --status-synced-bg: rgba(16, 185, 129, 0.2);
+  --status-synced-text: #10b981;
+  --badge-bg: rgba(59, 130, 246, 0.15);
+  --badge-text: #60a5fa;
+  --scrollbar-thumb: #334155;
+  --scrollbar-thumb-hover: #475569;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: "JetBrains Mono", "Fira Code", monospace;
+}
+
+[data-theme="light"] {
+  /* Crisp Light Mode */
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f1f5f9;
+  --bg-hover: #e2e8f0;
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --accent-color: #2563eb;
+  --accent-primary: #2563eb;
+  --accent-hover: #1d4ed8;
+  --border-color: #e2e8f0;
+  --editor-bg: #ffffff;
+  --editor-gutter-bg: #f8fafc;
+  --card-bg: #ffffff;
+  --card-border: #e2e8f0;
+  --header-bg: #ffffff;
+  --input-focus-bg: #f1f5f9;
+  --status-synced-bg: rgba(16, 185, 129, 0.15);
+  --status-synced-text: #059669;
+  --badge-bg: rgba(37, 99, 235, 0.1);
+  --badge-text: #2563eb;
+  --scrollbar-thumb: #cbd5e1;
+  --scrollbar-thumb-hover: #94a3b8;
 }
 
 * {
@@ -25,16 +69,19 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .app-header {
   height: 54px;
-  background-color: var(--bg-secondary);
+  background-color: var(--header-bg);
   border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 16px;
+  flex-shrink: 0;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .header-left, .header-right {
@@ -46,7 +93,8 @@ body {
 .app-logo {
   font-weight: 700;
   color: var(--accent-color);
-  font-size: 1.1rem;
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
 }
 
 .doc-title-input {
@@ -54,39 +102,97 @@ body {
   border: 1px solid transparent;
   color: var(--text-primary);
   font-size: 0.95rem;
-  padding: 4px 8px;
-  border-radius: 4px;
+  font-weight: 500;
+  padding: 5px 10px;
+  border-radius: 6px;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.doc-title-input:hover {
+  border-color: var(--border-color);
 }
 
 .doc-title-input:focus {
-  border-color: var(--border-color);
+  border-color: var(--accent-color);
   outline: none;
-  background-color: var(--bg-tertiary);
+  background-color: var(--input-focus-bg);
 }
 
 .status-badge {
   font-size: 0.75rem;
-  padding: 2px 8px;
+  font-weight: 500;
+  padding: 3px 10px;
   border-radius: 12px;
   background: var(--bg-tertiary);
   color: var(--text-muted);
+  transition: all 0.2s ease;
 }
 
 .status-badge.synced {
-  background: rgba(16, 185, 129, 0.2);
-  color: #10b981;
+  background: var(--status-synced-bg);
+  color: var(--status-synced-text);
 }
 
 .btn {
-  background: var(--bg-tertiary);
+  background: var(--bg-secondary);
   color: var(--text-primary);
   border: 1px solid var(--border-color);
-  padding: 6px 12px;
-  border-radius: 4px;
+  padding: 6px 14px;
+  border-radius: 6px;
   font-size: 0.85rem;
+  font-weight: 500;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+  user-select: none;
 }
 
 .btn:hover {
-  background: #475569;
+  background: var(--bg-hover);
+  border-color: var(--border-color);
+}
+
+.btn-secondary {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+}
+
+.btn-primary, .btn.active {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: #ffffff;
+}
+
+.btn-primary:hover, .btn.active:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.presence-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.presence-count {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.participant-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--header-bg);
+  box-shadow: 0 0 0 1px var(--border-color);
 }
