@@ -2,7 +2,7 @@
  * Built-in dual-editor simulator for testing real-time multi-user collaboration in a single window.
  */
 
-import { ClientOT, createOperationFromDiff } from "../engine/client_ot.js";
+import { ClientOT, TextOperation, createOperationFromDiff } from "../engine/client_ot.js";
 import { CursorTracker } from "../engine/cursor_tracker.js";
 import { SocketClient } from "../socket/socket_client.js";
 
@@ -24,6 +24,7 @@ export class SplitSimulator {
     this.userName = "Bob (Collaborator 2)";
     this.userColor = "#ec4899"; // Pink
     this.isApplyingRemote = false;
+    this.previousText = "";
   }
 
   toggle() {
@@ -48,7 +49,7 @@ export class SplitSimulator {
       <div class="pane-header">
         <span class="user-pill" style="background-color: ${this.userColor}">Bob</span>
         <span class="pane-label">Collaborator 2 (Simulated)</span>
-        <span class="status-badge synced" id="sim-sync-status">Synced</span>
+        <span class="status-badge" id="sim-sync-status">Connecting...</span>
       </div>
       <div class="pane-body">
         <div class="editor-gutter" id="simulated-gutter">1</div>
@@ -75,40 +76,55 @@ export class SplitSimulator {
     this.socketClient.joinDocument(this.docId, this.userName, this.userColor);
   }
 
-  _bindEvents() {
-    let previousText = "";
+  _setSimStatus(text, className) {
+    const statusEl = this.simulatedPane ? this.simulatedPane.querySelector("#sim-sync-status") : null;
+    if (statusEl) {
+      statusEl.textContent = text;
+      statusEl.className = `status-badge ${className}`;
+    }
+  }
 
-    // Socket events
+  _bindEvents() {
+    // Socket connection events
+    this.socketClient.on("connect", () => {
+      this._setSimStatus("Synced", "synced");
+      this.socketClient.joinDocument(this.docId, this.userName, this.userColor);
+    });
+
+    this.socketClient.on("disconnect", () => {
+      this._setSimStatus("Offline", "");
+    });
+
+    // Socket document state & sync events
     this.socketClient.on("document_state", (state) => {
       this.otClient.reset(state.version);
       this.isApplyingRemote = true;
       this.simulatedTextarea.value = state.content;
-      previousText = state.content;
+      this.previousText = state.content;
       this.isApplyingRemote = false;
       this._updateGutter();
+      this._setSimStatus("Synced", "synced");
     });
 
     this.socketClient.on("operation_ack", (data) => {
       const nextSend = this.otClient.serverAck(data.revision);
       if (nextSend) {
+        this._setSimStatus("Syncing...", "");
         this.socketClient.sendOperation(
           this.docId,
           nextSend.revision,
           nextSend.send,
           this.userName
         );
+      } else {
+        this._setSimStatus("Synced", "synced");
       }
     });
 
     this.socketClient.on("remote_operation", (data) => {
       if (data.author === this.userName) return;
 
-      const remoteOp = {
-        components: data.operation.components,
-        baseLength: data.operation.base_length,
-        targetLength: data.operation.target_length,
-      };
-
+      const remoteOp = TextOperation.fromDict(data.operation);
       const result = this.otClient.applyServer(remoteOp);
       if (result && result.applyToDoc) {
         this.isApplyingRemote = true;
@@ -116,7 +132,7 @@ export class SplitSimulator {
         const currentEnd = this.simulatedTextarea.selectionEnd;
 
         this.simulatedTextarea.value = result.applyToDoc.apply(this.simulatedTextarea.value);
-        previousText = this.simulatedTextarea.value;
+        this.previousText = this.simulatedTextarea.value;
 
         // Shift local cursor
         const [newStart, newEnd] = this.cursorTracker.transformSelection(
@@ -146,11 +162,12 @@ export class SplitSimulator {
       if (this.isApplyingRemote) return;
 
       const currentText = this.simulatedTextarea.value;
-      const op = createOperationFromDiff(previousText, currentText);
-      previousText = currentText;
+      const op = createOperationFromDiff(this.previousText, currentText);
+      this.previousText = currentText;
 
       const action = this.otClient.applyClient(op);
       if (action && action.send) {
+        this._setSimStatus("Syncing...", "");
         this.socketClient.sendOperation(
           this.docId,
           action.revision,
@@ -221,5 +238,6 @@ export class SplitSimulator {
     this.simulatedTextarea = null;
     this.simulatedGutter = null;
     this.simulatedOverlay = null;
+    this.previousText = "";
   }
 }
