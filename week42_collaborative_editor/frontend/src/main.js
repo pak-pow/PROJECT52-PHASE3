@@ -2,7 +2,7 @@
  * PulsePad frontend main controller and event coordinator.
  */
 
-import { ClientOT, createOperationFromDiff } from "./engine/client_ot.js";
+import { ClientOT, TextOperation, createOperationFromDiff } from "./engine/client_ot.js";
 import { CursorTracker } from "./engine/cursor_tracker.js";
 import { SocketClient } from "./socket/socket_client.js";
 import { PresenceView } from "./ui/presence_view.js";
@@ -25,6 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const exportMdBtn = document.getElementById("export-md-btn");
   const exportTxtBtn = document.getElementById("export-txt-btn");
   const workbenchLayout = document.getElementById("workbench-layout");
+  const primaryUserPill = document.getElementById("primary-user-pill");
 
   // Determine Document ID and Server URL
   const urlParams = new URLSearchParams(window.location.search);
@@ -33,8 +34,24 @@ document.addEventListener("DOMContentLoaded", () => {
     ? window.location.origin
     : "http://127.0.0.1:5000";
 
-  const userName = "Alice (Primary)";
+  // Determine user identity
+  const userParam = urlParams.get("user");
+  let userName = userParam;
+  if (!userName) {
+    const savedName = sessionStorage.getItem("pulsepad_user_name");
+    if (savedName) {
+      userName = savedName;
+    } else {
+      const randomSuffix = Math.floor(100 + Math.random() * 900);
+      userName = `Alice-${randomSuffix}`;
+      sessionStorage.setItem("pulsepad_user_name", userName);
+    }
+  }
+
   const userColor = "#3b82f6"; // Blue
+  if (primaryUserPill) {
+    primaryUserPill.textContent = userName;
+  }
 
   // Initialize Modules
   const socketClient = new SocketClient(serverUrl);
@@ -63,7 +80,6 @@ document.addEventListener("DOMContentLoaded", () => {
   let previousText = "";
   let isApplyingRemote = false;
   let typingTimer = null;
-
 
   function setStatus(text, className) {
     if (!syncStatus) return;
@@ -123,12 +139,7 @@ document.addEventListener("DOMContentLoaded", () => {
   socketClient.on("remote_operation", (data) => {
     if (data.author === userName) return;
 
-    const remoteOp = {
-      components: data.operation.components,
-      baseLength: data.operation.base_length,
-      targetLength: data.operation.target_length,
-    };
-
+    const remoteOp = TextOperation.fromDict(data.operation);
     const result = otClient.applyServer(remoteOp);
     if (result && result.applyToDoc) {
       isApplyingRemote = true;
@@ -175,6 +186,19 @@ document.addEventListener("DOMContentLoaded", () => {
     presenceView.removeParticipant(data.sid);
     cursorTracker.removeRemoteCursor(data.sid);
   });
+
+  socketClient.on("title_updated", (data) => {
+    if (docTitleInput && data.doc_id === docId && docTitleInput.value !== data.title) {
+      docTitleInput.value = data.title;
+    }
+  });
+
+  // Title Input Handling
+  if (docTitleInput) {
+    docTitleInput.addEventListener("input", () => {
+      socketClient.sendTitleUpdate(docId, docTitleInput.value);
+    });
+  }
 
   // Editor Input and Typing Handling
   editorArea.addEventListener("input", () => {
