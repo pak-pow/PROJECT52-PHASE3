@@ -8,6 +8,7 @@ export class SocketClient {
     this.socket = null;
     this.connected = false;
     this.listeners = new Map();
+    this._joinedDoc = null;
   }
 
   connect() {
@@ -17,12 +18,19 @@ export class SocketClient {
     if (typeof io !== "undefined") {
       this.socket = io(this.serverUrl, {
         transports: ["websocket", "polling"],
-        reconnectionAttempts: 5,
+        reconnectionAttempts: 10,
         reconnectionDelay: 1000,
       });
 
       this.socket.on("connect", () => {
         this.connected = true;
+        if (this._joinedDoc) {
+          this.socket.emit("join_document", {
+            doc_id: this._joinedDoc.docId,
+            user_name: this._joinedDoc.userName,
+            color: this._joinedDoc.color,
+          });
+        }
         this._trigger("connect");
       });
 
@@ -40,6 +48,7 @@ export class SocketClient {
       this.socket.on("participant_left", (data) => this._trigger("participant_left", data));
       this.socket.on("catch_up_response", (data) => this._trigger("catch_up_response", data));
       this.socket.on("operation_error", (data) => this._trigger("operation_error", data));
+      this.socket.on("title_updated", (data) => this._trigger("title_updated", data));
     } else {
       console.warn("Socket.IO client library not loaded. Running in local standalone mode.");
     }
@@ -64,6 +73,7 @@ export class SocketClient {
   }
 
   joinDocument(docId, userName, color) {
+    this._joinedDoc = { docId, userName, color };
     if (this.socket && this.connected) {
       this.socket.emit("join_document", {
         doc_id: docId,
@@ -74,6 +84,7 @@ export class SocketClient {
   }
 
   leaveDocument(docId) {
+    this._joinedDoc = null;
     if (this.socket && this.connected) {
       this.socket.emit("leave_document", { doc_id: docId });
     }
@@ -112,6 +123,15 @@ export class SocketClient {
   sendHeartbeat(docId) {
     if (this.socket && this.connected) {
       this.socket.emit("heartbeat", { doc_id: docId });
+    }
+  }
+
+  sendTitleUpdate(docId, title) {
+    if (this.socket && this.connected) {
+      this.socket.emit("update_title", {
+        doc_id: docId,
+        title: title,
+      });
     }
   }
 }
