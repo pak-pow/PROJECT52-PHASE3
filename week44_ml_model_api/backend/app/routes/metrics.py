@@ -4,6 +4,8 @@ from typing import Any, Tuple
 
 from flask import Blueprint, current_app, jsonify, request
 
+from app.db.connection import get_db_connection
+from app.models.prediction_log import PredictionLogDAO
 from app.services.cache_service import InferenceCache
 from app.services.telemetry_service import TelemetryEngine
 
@@ -100,3 +102,22 @@ def clear_cache() -> Tuple[Any, int]:
         ),
         200,
     )
+
+
+@metrics_bp.route("/logs", methods=["GET"])
+def get_prediction_logs() -> Tuple[Any, int]:
+    """Retrieve recent inference execution logs for observability."""
+    model_id = request.args.get("model_id")
+    raw_limit = request.args.get("limit", "50")
+    try:
+        limit = min(max(1, int(raw_limit)), 200)
+    except ValueError:
+        limit = 50
+
+    db_path = current_app.config.get("DB_PATH")
+    conn = get_db_connection(db_path)
+    try:
+        logs = PredictionLogDAO.get_recent(conn, model_id=model_id, limit=limit)
+        return jsonify({"status": "success", "count": len(logs), "logs": logs}), 200
+    finally:
+        conn.close()
