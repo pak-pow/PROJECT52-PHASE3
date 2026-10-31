@@ -26,6 +26,20 @@ document.addEventListener("DOMContentLoaded", () => {
   const exportTxtBtn = document.getElementById("export-txt-btn");
   const workbenchLayout = document.getElementById("workbench-layout");
   const primaryUserPill = document.getElementById("primary-user-pill");
+  const themeToggleBtn = document.getElementById("theme-toggle-btn");
+
+  // Theme Management (Light / Dark mode)
+  let currentTheme = localStorage.getItem("pulsepad_theme") || "dark";
+  document.documentElement.setAttribute("data-theme", currentTheme);
+  if (themeToggleBtn) {
+    themeToggleBtn.textContent = currentTheme === "dark" ? "Light Mode" : "Dark Mode";
+    themeToggleBtn.addEventListener("click", () => {
+      currentTheme = currentTheme === "dark" ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", currentTheme);
+      localStorage.setItem("pulsepad_theme", currentTheme);
+      themeToggleBtn.textContent = currentTheme === "dark" ? "Light Mode" : "Dark Mode";
+    });
+  }
 
   // Determine Document ID and Server URL
   const urlParams = new URLSearchParams(window.location.search);
