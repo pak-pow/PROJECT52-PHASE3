@@ -19,6 +19,7 @@
     </div>
     <div class="header-right">
       <div id="presence-bar" class="presence-bar"></div>
+      <button id="theme-toggle-btn" class="btn btn-secondary" title="Switch Theme">Light Mode</button>
       <button id="toggle-split-btn" class="btn btn-secondary">Split View</button>
       <button id="toggle-timeline-btn" class="btn btn-secondary">History</button>
     </div>
@@ -38,21 +39,21 @@
         </div>
       </div>
     </div>
-  </main>
 
-  <aside id="timeline-drawer" class="timeline-drawer hidden">
-    <div class="drawer-header">
-      <h3>Revision History</h3>
-      <button id="close-timeline-btn" class="btn-icon">&times;</button>
-    </div>
-    <div class="drawer-toolbar">
-      <button id="export-md-btn" class="btn btn-sm btn-secondary">Export MD</button>
-      <button id="export-txt-btn" class="btn btn-sm btn-secondary">Export TXT</button>
-    </div>
-    <div id="timeline-list" class="timeline-list">
-      <div class="timeline-empty">No past revisions recorded yet.</div>
-    </div>
-  </aside>
+    <aside id="timeline-drawer" class="timeline-drawer hidden">
+      <div class="drawer-header">
+        <h3>Revision History</h3>
+        <button id="close-timeline-btn" class="btn-icon">&times;</button>
+      </div>
+      <div class="drawer-toolbar">
+        <button id="export-md-btn" class="btn btn-sm btn-secondary">Export MD</button>
+        <button id="export-txt-btn" class="btn btn-sm btn-secondary">Export TXT</button>
+      </div>
+      <div id="timeline-list" class="timeline-list">
+        <div class="timeline-empty">No past revisions recorded yet.</div>
+      </div>
+    </aside>
+  </main>
 
   <script src="../src/main.js" type="module"></script>
 </body>
