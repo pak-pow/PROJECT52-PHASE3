@@ -18,8 +18,9 @@ export class SocketClient {
     if (typeof io !== "undefined") {
       this.socket = io(this.serverUrl, {
         transports: ["websocket", "polling"],
-        reconnectionAttempts: 10,
-        reconnectionDelay: 1000,
+        upgrade: true,
+        reconnectionAttempts: 20,
+        reconnectionDelay: 500,
       });
 
       this.socket.on("connect", () => {
