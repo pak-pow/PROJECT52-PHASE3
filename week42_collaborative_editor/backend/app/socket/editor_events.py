@@ -223,11 +223,17 @@ def register_socket_events(socketio: SocketIO) -> None:
             # Persist revision and document state to SQLite database
             try:
                 with get_db_connection() as conn:
-                    rev_service = RevisionService(conn)
                     doc_service = DocumentService(conn)
+                    rev_service = RevisionService(conn)
                     room = room_manager.rooms.get(doc_id)
                     current_content = room.content if room else ""
                     current_title = room.title if room else "Untitled Document"
+                    doc_service.save_document(
+                        doc_id=doc_id,
+                        content=current_content,
+                        version=new_version,
+                        title=current_title,
+                    )
                     rev_service.record_revision(
                         doc_id=doc_id,
                         revision_num=new_version,
@@ -235,18 +241,37 @@ def register_socket_events(socketio: SocketIO) -> None:
                         operation=transformed_op,
                         current_content=current_content,
                     )
-                    doc_service.save_document(
-                        doc_id=doc_id,
-                        content=current_content,
-                        version=new_version,
-                        title=current_title,
-                    )
             except (sqlite3.Error, OSError):
                 # Persistence fallback when running in-memory or DB is locked
                 pass  # nosec B110
 
         except Exception as exc:
             emit("operation_error", {"doc_id": doc_id, "error": str(exc)})
+
+    @socketio.on("update_title")
+    def handle_update_title(data: dict):
+        """Update and broadcast document title change."""
+        doc_id = data.get("doc_id")
+        title = (data.get("title") or "Untitled Document").strip()
+        if not doc_id:
+            return
+        if doc_id in room_manager.rooms:
+            room_manager.rooms[doc_id].title = title
+        try:
+            with get_db_connection() as conn:
+                doc_service = DocumentService(conn)
+                doc = doc_service.get_document(doc_id)
+                current_content = doc.content if doc else ""
+                current_ver = doc.version if doc else 0
+                doc_service.save_document(
+                    doc_id=doc_id,
+                    content=current_content,
+                    version=current_ver,
+                    title=title,
+                )
+        except (sqlite3.Error, OSError):
+            pass  # nosec B110
+        emit("title_updated", {"doc_id": doc_id, "title": title}, room=doc_id)
 
     @socketio.on("catch_up")
     def handle_catch_up(data: dict):
