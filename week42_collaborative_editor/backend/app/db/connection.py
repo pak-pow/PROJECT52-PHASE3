@@ -18,11 +18,12 @@ def get_db_connection(db_path: Optional[str] = None) -> sqlite3.Connection:
     else:
         target_path = Config.DB_PATH
 
-    conn = sqlite3.connect(target_path, check_same_thread=False)
+    conn = sqlite3.connect(target_path, check_same_thread=False, timeout=10.0)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON;")
     if str(target_path) != ":memory:":
         conn.execute("PRAGMA journal_mode = WAL;")
+        conn.execute("PRAGMA synchronous = NORMAL;")
     return conn
 
 
