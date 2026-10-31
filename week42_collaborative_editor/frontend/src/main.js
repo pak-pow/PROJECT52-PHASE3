@@ -139,33 +139,46 @@ document.addEventListener("DOMContentLoaded", () => {
   socketClient.on("remote_operation", (data) => {
     if (data.author === userName) return;
 
-    const remoteOp = TextOperation.fromDict(data.operation);
-    const result = otClient.applyServer(remoteOp);
-    if (result && result.applyToDoc) {
-      isApplyingRemote = true;
-      const currentPos = editorArea.selectionStart;
-      const currentEnd = editorArea.selectionEnd;
+    try {
+      const remoteOp = TextOperation.fromDict(data.operation);
+      const result = otClient.applyServer(remoteOp);
+      if (result && result.applyToDoc) {
+        isApplyingRemote = true;
+        try {
+          const currentPos = editorArea.selectionStart;
+          const currentEnd = editorArea.selectionEnd;
 
-      editorArea.value = result.applyToDoc.apply(editorArea.value);
-      previousText = editorArea.value;
+          editorArea.value = result.applyToDoc.apply(editorArea.value);
+          previousText = editorArea.value;
 
-      // Transform local cursor offset
-      const [newStart, newEnd] = cursorTracker.transformSelection(
-        currentPos,
-        currentEnd,
-        result.applyToDoc
-      );
-      editorArea.setSelectionRange(newStart, newEnd);
-      isApplyingRemote = false;
+          // Transform local cursor offset
+          const [newStart, newEnd] = cursorTracker.transformSelection(
+            currentPos,
+            currentEnd,
+            result.applyToDoc
+          );
+          editorArea.setSelectionRange(newStart, newEnd);
 
-      // Transform all remote cursors
-      cursorTracker.transformAll(result.applyToDoc);
-      updateGutter();
+          // Transform all remote cursors
+          cursorTracker.transformAll(result.applyToDoc);
+          updateGutter();
 
-      if (timelineView.isOpen()) {
-        timelineView.fetchRevisions();
+          if (timelineView.isOpen()) {
+            timelineView.fetchRevisions();
+          }
+        } finally {
+          isApplyingRemote = false;
+        }
       }
+    } catch (err) {
+      console.warn("Error applying remote operation, requesting state sync:", err);
+      socketClient.joinDocument(docId, userName, userColor);
     }
+  });
+
+  socketClient.on("operation_error", (data) => {
+    console.warn("Operation error reported by server, resynchronizing:", data);
+    socketClient.joinDocument(docId, userName, userColor);
   });
 
   socketClient.on("cursor_update", (data) => {
