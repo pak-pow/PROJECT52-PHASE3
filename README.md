@@ -37,7 +37,7 @@ Phase 3 is where developers become production-ready. This phase covers DevOps pr
 | 42 | PulsePad Collaborative Editor | Full Stack | Operational Transformation, WebSockets | 10h | [Completed](./week42_collaborative_editor) |
 | 43 | Video Streaming Platform (PulseStream) | Full Stack | RFC 7233 Range, ABR HLS, Transcoding Queue | 10h | [Completed](./week43_video_streaming) |
 | 44 | ML Model API (PulseInfer) | Backend | Dynamic Micro-Batching, Model Registry, Caching | 9h | [Completed](./week44_ml_model_api) |
-| 45 | Mobile-First SaaS App | Full Stack | Responsive Design, Subscriptions | 10h | Not Started |
+| 45 | PulseSub Mobile-First SaaS | Full Stack | Responsive Design, FSM Subscriptions, Webhooks | 10h | [In Progress](./week45_mobile_first_saas) |
 | 46 | OAuth Provider Service | Backend | OAuth 2.0, Security Standards | 9h | Not Started |
 | 47 | Microservices Architecture | Backend + DevOps | Service Communication, Load Balancing | 10h | Not Started |
 | 48 | Full-Featured Blog Platform | Full Stack | SEO, Comments, Tags, Search | 10h | Not Started |
@@ -209,6 +209,25 @@ Phase 3 is where developers become production-ready. This phase covers DevOps pr
 
 ---
 
+### Week 45: PulseSub Mobile-First SaaS Subscription & Entitlements Platform
+**Goal:** Build a mobile-first SaaS subscription and billing platform with deterministic lifecycle management
+
+**Learning Objectives:**
+- Subscription Lifecycle State Machine (`trialing`, `active`, `past_due`, `canceled`, `expired`)
+- Linear proration calculator for mid-cycle tier upgrades and immediate credit balance adjustments
+- Entitlements resolver enforcing boolean feature toggles and numerical usage quotas
+- Stripe-compatible webhook gateway with HMAC-SHA256 signature verification and 300s replay defense
+- Mobile-first responsive app with device simulator frame (iPhone 15, Pixel 8, iPad) and interactive billing sandbox
+
+**Key Features:**
+- Multi-tier subscription model (`Free`, `Starter`, `Pro`, `Enterprise`) with annual discounts
+- Real-world invoice generation with line items, tax, and currency settlement
+- Real-time metered usage tracking with 80%, 90%, and 100% capacity alerts
+- Mobile-first touch-optimized UX with bottom tab navigation and light/dark theme modes
+- Hermetic SQLite WAL database and full test coverage
+
+---
+
 ### Week 47: Microservices Architecture
 **Goal:** Build a system with multiple independent services
 
@@ -310,7 +329,7 @@ PROJECT52-PHASE3/
 - Completed - Project finished and documented
 - Deployed - Project live and accessible online
 
-**Current Progress:** 7/16 Projects Completed (Week 44 in progress)
+**Current Progress:** 8/16 Projects Completed (Week 45 in progress)
 
 ---
 
