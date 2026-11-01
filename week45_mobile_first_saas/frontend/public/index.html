@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>PulseSub - Mobile-First SaaS Platform</title>
+    <link rel="stylesheet" href="/css/base.css">
+</head>
+<body>
+    <div id="app-root" class="app-layout">
+        <!-- Top Application Bar -->
+        <header class="app-header">
+            <div class="header-brand">
+                <span class="brand-badge">PULSE</span>
+                <h1 class="brand-title">PulseSub</h1>
+            </div>
+            <div class="header-actions">
+                <button id="theme-toggle-btn" class="icon-btn" aria-label="Toggle theme">
+                    <span class="theme-icon">Mode</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main id="main-content" class="app-main">
+            <section class="hero-section">
+                <div class="tier-pill" id="current-tier-pill">PRO PLAN</div>
+                <h2 class="hero-title">Subscription & Entitlements</h2>
+                <p class="hero-subtitle">Mobile-first SaaS platform with real-time quota tracking, proration, and Stripe-compatible webhooks.</p>
+            </section>
+
+            <section class="status-card" id="system-status-card">
+                <div class="status-header">
+                    <span class="status-indicator online"></span>
+                    <span class="status-text">Backend System Online</span>
+                </div>
+                <div class="status-meta" id="status-meta-text">Connecting to backend...</div>
+            </section>
+        </main>
+
+        <!-- Bottom Navigation Bar for Mobile-First UX -->
+        <nav class="bottom-nav" aria-label="Bottom navigation">
+            <button class="nav-item active" data-tab="overview">
+                <span class="nav-label">Overview</span>
+            </button>
+            <button class="nav-item" data-tab="usage">
+                <span class="nav-label">Usage</span>
+            </button>
+            <button class="nav-item" data-tab="plans">
+                <span class="nav-label">Plans</span>
+            </button>
+            <button class="nav-item" data-tab="portal">
+                <span class="nav-label">Portal</span>
+            </button>
+            <button class="nav-item" data-tab="sandbox">
+                <span class="nav-label">Sandbox</span>
+            </button>
+        </nav>
+    </div>
+
+    <script type="module" src="/js/app.js"></script>
+</body>
+</html>
