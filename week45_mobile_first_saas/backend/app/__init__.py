@@ -9,6 +9,7 @@ from app.config.settings import Config, get_config
 from app.db.connection import init_db
 from app.routes.health import health_bp
 from app.routes.static_routes import static_bp
+from app.routes.webhooks import webhooks_bp
 
 
 def create_app(config: Optional[Any] = None) -> Flask:
@@ -34,6 +35,7 @@ def create_app(config: Optional[Any] = None) -> Flask:
     # Register HTTP blueprints
     app.register_blueprint(health_bp)
     app.register_blueprint(static_bp)
+    app.register_blueprint(webhooks_bp)
 
     # Standard security and CORS headers
     @app.after_request
