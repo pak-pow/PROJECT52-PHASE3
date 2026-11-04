@@ -7,8 +7,14 @@ from flask import Flask, Response
 
 from app.config.settings import Config, get_config
 from app.db.connection import init_db
+from app.routes.auth import auth_bp
+from app.routes.billing import billing_bp
+from app.routes.entitlements import entitlements_bp
 from app.routes.health import health_bp
+from app.routes.plans import plans_bp
 from app.routes.static_routes import static_bp
+from app.routes.subscriptions import subscriptions_bp
+from app.routes.usage import usage_bp
 from app.routes.webhooks import webhooks_bp
 
 
@@ -35,6 +41,12 @@ def create_app(config: Optional[Any] = None) -> Flask:
     # Register HTTP blueprints
     app.register_blueprint(health_bp)
     app.register_blueprint(static_bp)
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(plans_bp)
+    app.register_blueprint(subscriptions_bp)
+    app.register_blueprint(entitlements_bp)
+    app.register_blueprint(usage_bp)
+    app.register_blueprint(billing_bp)
     app.register_blueprint(webhooks_bp)
 
     # Standard security and CORS headers
@@ -45,7 +57,7 @@ def create_app(config: Optional[Any] = None) -> Flask:
             "GET, POST, PUT, PATCH, DELETE, OPTIONS"
         )
         response.headers["Access-Control-Allow-Headers"] = (
-            "Content-Type, Authorization, Stripe-Signature, X-Request-ID"
+            "Content-Type, Authorization, Stripe-Signature, X-Request-ID, X-User-ID"
         )
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "SAMEORIGIN"
