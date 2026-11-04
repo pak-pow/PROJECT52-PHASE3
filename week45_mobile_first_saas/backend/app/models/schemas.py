@@ -51,6 +51,15 @@ class WebhookStatus(str, Enum):
     FAILED = "failed"
 
 
+def _to_str_timestamp(val: Any) -> str:
+    """Safely normalize timestamp values from database rows into strings."""
+    if val is None:
+        return ""
+    if hasattr(val, "strftime"):
+        return val.strftime("%Y-%m-%d %H:%M:%S")
+    return str(val)
+
+
 @dataclass
 class Plan:
     """Pricing plan definition with limits and feature toggles."""
@@ -126,12 +135,22 @@ class Subscription:
             plan_id=row["plan_id"],
             billing_interval=row["billing_interval"],
             status=row["status"],
-            current_period_start=row["current_period_start"],
-            current_period_end=row["current_period_end"],
+            current_period_start=_to_str_timestamp(row["current_period_start"]),
+            current_period_end=_to_str_timestamp(row["current_period_end"]),
             cancel_at_period_end=bool(row["cancel_at_period_end"]),
-            canceled_at=row["canceled_at"],
-            created_at=row["created_at"] if "created_at" in row.keys() else "",
-            updated_at=row["updated_at"] if "updated_at" in row.keys() else "",
+            canceled_at=(
+                _to_str_timestamp(row["canceled_at"]) if row["canceled_at"] else None
+            ),
+            created_at=(
+                _to_str_timestamp(row["created_at"])
+                if "created_at" in row.keys()
+                else ""
+            ),
+            updated_at=(
+                _to_str_timestamp(row["updated_at"])
+                if "updated_at" in row.keys()
+                else ""
+            ),
         )
 
 
@@ -178,9 +197,13 @@ class Invoice:
             status=row["status"],
             line_items=line_items,
             payment_attempt_count=row["payment_attempt_count"],
-            due_date=row["due_date"],
-            paid_at=row["paid_at"],
-            created_at=row["created_at"] if "created_at" in row.keys() else "",
+            due_date=_to_str_timestamp(row["due_date"]),
+            paid_at=_to_str_timestamp(row["paid_at"]) if row["paid_at"] else None,
+            created_at=(
+                _to_str_timestamp(row["created_at"])
+                if "created_at" in row.keys()
+                else ""
+            ),
         )
 
 
@@ -210,7 +233,7 @@ class UsageRecord:
             quantity=row["quantity"],
             subscription_id=row["subscription_id"],
             idempotency_key=row["idempotency_key"],
-            recorded_at=row["recorded_at"],
+            recorded_at=_to_str_timestamp(row["recorded_at"]),
         )
 
 
@@ -248,6 +271,8 @@ class WebhookEventRecord:
             payload=payload,
             status=row["status"],
             error_message=row["error_message"],
-            received_at=row["received_at"],
-            processed_at=row["processed_at"],
+            received_at=_to_str_timestamp(row["received_at"]),
+            processed_at=(
+                _to_str_timestamp(row["processed_at"]) if row["processed_at"] else None
+            ),
         )
