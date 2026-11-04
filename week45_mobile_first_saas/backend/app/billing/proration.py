@@ -105,14 +105,20 @@ def calculate_proration(
     if now.tzinfo is None:
         now = now.replace(tzinfo=timezone.utc)
 
-    # Parse period start and end
     fmt = "%Y-%m-%d %H:%M:%S"
-    start_dt = datetime.strptime(subscription.current_period_start, fmt).replace(
-        tzinfo=timezone.utc
-    )
-    end_dt = datetime.strptime(subscription.current_period_end, fmt).replace(
-        tzinfo=timezone.utc
-    )
+    if isinstance(subscription.current_period_start, datetime):
+        start_dt = subscription.current_period_start
+    else:
+        start_dt = datetime.strptime(str(subscription.current_period_start), fmt)
+    if start_dt.tzinfo is None:
+        start_dt = start_dt.replace(tzinfo=timezone.utc)
+
+    if isinstance(subscription.current_period_end, datetime):
+        end_dt = subscription.current_period_end
+    else:
+        end_dt = datetime.strptime(str(subscription.current_period_end), fmt)
+    if end_dt.tzinfo is None:
+        end_dt = end_dt.replace(tzinfo=timezone.utc)
 
     total_seconds = max(1.0, (end_dt - start_dt).total_seconds())
     diff_remaining = (end_dt - now).total_seconds()
