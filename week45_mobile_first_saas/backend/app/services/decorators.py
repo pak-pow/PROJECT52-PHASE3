@@ -7,12 +7,21 @@ from flask import current_app, jsonify, make_response, request
 
 from app.config.settings import Config
 from app.db.connection import get_db_connection
+from app.services.auth_service import verify_auth_token
 from app.services.entitlements_service import EntitlementsService
 from app.services.usage_service import UsageService
 
 
 def _resolve_user_id() -> str:
     """Extract authenticated user identifier from headers, query parameters, or body."""
+    auth_header = request.headers.get("Authorization", "")
+    if auth_header.startswith("Bearer "):
+        token = auth_header[7:].strip()
+        secret = current_app.config.get("SECRET_KEY", Config.SECRET_KEY)
+        payload = verify_auth_token(token, secret_key=secret)
+        if payload and payload.get("user_id"):
+            return str(payload["user_id"])
+
     user_id = request.headers.get("X-User-ID")
     if user_id:
         return user_id
