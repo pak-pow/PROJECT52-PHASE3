@@ -1,7 +1,6 @@
 """Feature gatekeeping, subscription resolution, and entitlements engine."""
 
 import sqlite3
-from datetime import datetime, timezone
 from typing import Any, Dict, Optional, Tuple
 
 from app.models.schemas import Plan, Subscription, SubscriptionStatus
@@ -21,19 +20,12 @@ class EntitlementsService:
 
     def get_active_subscription(self, user_id: str) -> Optional[Subscription]:
         """Fetch the current active or grace-period subscription for a user."""
-        now = datetime.now(timezone.utc)
-        fmt = "%Y-%m-%d %H:%M:%S"
-        iso_now = now.strftime(fmt)
-
         cursor = self.conn.cursor()
         cursor.execute(
             """
             SELECT * FROM subscriptions
             WHERE user_id = ?
-              AND (
-                  status IN (?, ?)
-                  OR (status = ? AND current_period_end >= ?)
-              )
+              AND status IN (?, ?, ?)
             ORDER BY current_period_end DESC
             LIMIT 1;
             """,
@@ -41,8 +33,7 @@ class EntitlementsService:
                 user_id,
                 SubscriptionStatus.ACTIVE.value,
                 SubscriptionStatus.TRIALING.value,
-                SubscriptionStatus.CANCELED.value,
-                iso_now,
+                SubscriptionStatus.PAST_DUE.value,
             ),
         )
         row = cursor.fetchone()
