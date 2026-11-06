@@ -1,10 +1,17 @@
 import os
+import sys
+from pathlib import Path
 
 import pytest
 
-from app import create_app
-from app.config.settings import TestingConfig
-from app.db import init_db
+# Ensure backend package is on sys.path
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(BACKEND_DIR))
+
+from app import create_app  # noqa: E402
+from app.config.settings import TestingConfig  # noqa: E402
+from app.db import init_db  # noqa: E402
 
 
 @pytest.fixture(scope="session", autouse=True)
