@@ -1,4 +1,4 @@
-# 🛍️ Week 39: Production E-Commerce Platform v1 — ShopPulse
+# Week 39: Production E-Commerce Platform v1 - ShopPulse
 
 <div align="center">
 
@@ -17,21 +17,21 @@
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
-- [Overview](#-overview)
-- [System Architecture](#-system-architecture)
-- [Key Features](#-key-features)
-- [REST API Specification](#-rest-api-specification)
-- [Order Lifecycle State Machine](#-order-lifecycle-state-machine)
-- [Concurrency & Security Hardening](#-concurrency--security-hardening)
-- [Quality Gates & Test Suite](#-quality-gates--test-suite)
-- [Directory Structure](#-directory-structure)
-- [Quickstart Guide](#-quickstart-guide)
+- [Overview](#overview)
+- [System Architecture](#system-architecture)
+- [Key Features](#key-features)
+- [REST API Specification](#rest-api-specification)
+- [Order Lifecycle State Machine](#order-lifecycle-state-machine)
+- [Concurrency & Security Hardening](#concurrency--security-hardening)
+- [Quality Gates & Test Suite](#quality-gates--test-suite)
+- [Directory Structure](#directory-structure)
+- [Quickstart Guide](#quickstart-guide)
 
 ---
 
-## 🌟 Overview
+## Overview
 
 Week 39 of **Project 52: Phase 3 (Production)** delivers **ShopPulse**, a transactional, production-grade e-commerce application designed to prevent real-world e-commerce failure modes: race conditions leading to overselling, webhook replay attacks, inconsistent cart pricing, and database lock exhaustion under concurrent traffic.
 
@@ -44,7 +44,7 @@ Week 39 of **Project 52: Phase 3 (Production)** delivers **ShopPulse**, a transa
 
 ---
 
-## 🏗️ System Architecture
+## System Architecture
 
 ```mermaid
 graph TD
@@ -68,7 +68,7 @@ graph TD
 
 ---
 
-## 📦 Key Features
+## Key Features
 
 ### Backend Architecture
 - **Catalog Management**: Paginated product queries, category slug filtering, full-text search, and multi-field sorting (`price_asc`, `price_desc`, `name_asc`, `newest`).
@@ -88,7 +88,7 @@ graph TD
 
 ---
 
-## 📡 REST API Specification
+## REST API Specification
 
 All endpoints are versioned under `/api/v1`. Monetary values are represented in integer cents to eliminate floating-point rounding errors.
 
@@ -122,7 +122,7 @@ All endpoints are versioned under `/api/v1`. Monetary values are represented in 
 
 ---
 
-## 🔄 Order Lifecycle State Machine
+## Order Lifecycle State Machine
 
 Orders enforce strict lifecycle transitions to guarantee state consistency:
 
@@ -143,7 +143,7 @@ stateDiagram-v2
 
 ---
 
-## 🛡️ Concurrency & Security Hardening
+## Concurrency & Security Hardening
 
 | Protection | Implementation | Threat Mitigated |
 |:-----------|:---------------|:-----------------|
@@ -156,7 +156,7 @@ stateDiagram-v2
 
 ---
 
-## 🧪 Quality Gates & Test Suite
+## Quality Gates & Test Suite
 
 The test suite contains **52 automated unit and integration tests** providing **95.39% branch coverage**.
 
@@ -184,7 +184,7 @@ Summary: 5/5 checks passed.
 
 ---
 
-## 📁 Directory Structure
+## Directory Structure
 
 ```
 week39_ecommerce_store/
@@ -251,7 +251,7 @@ week39_ecommerce_store/
 
 ---
 
-## 🚀 Quickstart Guide
+## Quickstart Guide
 
 ### 1. Backend Setup
 ```bash
