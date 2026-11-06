@@ -19,11 +19,11 @@ export class BenchmarkCard {
         <div class="benchmark-header">
           <div>
             <div class="section-title">
-              <span>⚡</span> Speed Test: Fast Memory vs. Hard Drive
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:4px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg> Speed Test: Fast Memory vs. Hard Drive
             </div>
             <p class="benchmark-subtitle">See how much faster it is to fetch data from fast memory (Redis) compared to the hard drive (PostgreSQL).</p>
           </div>
-          <button class="btn btn-primary" id="btn-run-benchmark"><span>⚡</span> Run Speed Test</button>
+          <button class="btn btn-primary" id="btn-run-benchmark"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:4px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg> Run Speed Test</button>
         </div>
 
         <div id="benchmark-results" class="benchmark-results-container">
@@ -51,7 +51,7 @@ export class BenchmarkCard {
     const btn = this.container.querySelector('#btn-run-benchmark');
     const resultsArea = this.container.querySelector('#benchmark-results');
     btn.disabled = true;
-    btn.innerHTML = '<span>⏳</span> Testing Speed...';
+    btn.innerHTML = ' Testing Speed...';
 
     resultsArea.innerHTML = `
       <div class="benchmark-loading">
@@ -75,7 +75,7 @@ export class BenchmarkCard {
     } finally {
       this.running = false;
       btn.disabled = false;
-      btn.innerHTML = '<span>⚡</span> Run Speed Test';
+      btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:4px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg> Run Speed Test';
     }
   }
 
