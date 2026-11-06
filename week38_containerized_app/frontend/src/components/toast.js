@@ -21,7 +21,7 @@ export class Toast {
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
     toast.innerHTML = `
-      <span class="toast-icon">${type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ'}</span>
+      <span class="toast-icon">${type === 'success' ? 'OK' : type === 'error' ? 'ERR' : 'INFO'}</span>
       <span class="toast-text">${escapeHtml(message)}</span>
     `;
 
