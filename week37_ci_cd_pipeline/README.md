@@ -1,4 +1,4 @@
-# 🚀 Week 37: Automated CI/CD Pipeline Setup & Operations Mission Control
+# Week 37: Automated CI/CD Pipeline Setup & Operations Mission Control
 
 <div align="center">
 
@@ -17,22 +17,22 @@
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
-- [Overview](#-overview)
-- [System Architecture](#-system-architecture)
-- [The 5-Stage Automated Quality Gates](#-the-5-stage-automated-quality-gates)
-- [GitHub Actions Workflows](#-github-actions-workflows)
-- [Local Developer CLI Tooling](#-local-developer-cli-tooling)
-- [Interactive Web Dashboard](#-interactive-web-dashboard)
-- [REST API Reference](#-rest-api-reference)
-- [Automated Test Suite & Coverage](#-automated-test-suite--coverage)
-- [Quickstart & Usage Guide](#-quickstart--usage-guide)
-- [Project Structure](#-project-structure)
+- [Overview](#overview)
+- [System Architecture](#system-architecture)
+- [The 5-Stage Automated Quality Gates](#the-5-stage-automated-quality-gates)
+- [GitHub Actions Workflows](#github-actions-workflows)
+- [Local Developer CLI Tooling](#local-developer-cli-tooling)
+- [Interactive Web Dashboard](#interactive-web-dashboard)
+- [REST API Reference](#rest-api-reference)
+- [Automated Test Suite & Coverage](#automated-test-suite--coverage)
+- [Quickstart & Usage Guide](#quickstart--usage-guide)
+- [Project Structure](#project-structure)
 
 ---
 
-## 🌟 Overview
+## Overview
 
 Week 37 establishes the foundational DevOps and deployment infrastructure for **Project 52: Phase 3 (Production)**. Rather than relying on cloud CI/CD as an opaque "black box," this project creates an integrated two-tier pipeline architecture:
 
@@ -42,7 +42,7 @@ Week 37 establishes the foundational DevOps and deployment infrastructure for **
 
 ---
 
-## 🏗️ System Architecture
+## System Architecture
 
 ```mermaid
 graph TD
@@ -72,7 +72,7 @@ graph TD
 
 ---
 
-## 🛡️ The 5-Stage Automated Quality Gates
+## The 5-Stage Automated Quality Gates
 
 Every code change must pass five strict, sequential automated quality gates before it can be merged or deployed:
 
@@ -86,7 +86,7 @@ Every code change must pass five strict, sequential automated quality gates befo
 
 ---
 
-## ⚙️ GitHub Actions Workflows
+## GitHub Actions Workflows
 
 Located in [`.github/workflows/`](file:///c:/Users/User/Documents/Github/Personal/VSCODE_PROJECT52/PROJECT52-PHASE3/.github/workflows):
 
@@ -112,7 +112,7 @@ Located in [`.github/workflows/`](file:///c:/Users/User/Documents/Github/Persona
 
 ---
 
-## 💻 Local Developer CLI Tooling
+## Local Developer CLI Tooling
 
 All pipeline scripts are located in [`backend/scripts/`](file:///c:/Users/User/Documents/Github/Personal/VSCODE_PROJECT52/PROJECT52-PHASE3/week37_ci_cd_pipeline/backend/scripts):
 
@@ -150,7 +150,7 @@ python scripts/badge_generator.py --label coverage --message "97.5%" --color "#4
 
 ---
 
-## 🖥️ Interactive Web Dashboard
+## Interactive Web Dashboard
 
 Located in [`frontend/`](file:///c:/Users/User/Documents/Github/Personal/VSCODE_PROJECT52/PROJECT52-PHASE3/week37_ci_cd_pipeline/frontend):
 
@@ -164,7 +164,7 @@ Located in [`frontend/`](file:///c:/Users/User/Documents/Github/Personal/VSCODE_
 
 ---
 
-## 📡 REST API Reference
+## REST API Reference
 
 The Flask REST API runs on `http://127.0.0.1:5000`:
 
@@ -182,7 +182,7 @@ The Flask REST API runs on `http://127.0.0.1:5000`:
 
 ---
 
-## 🧪 Automated Test Suite & Coverage
+## Automated Test Suite & Coverage
 
 The test suite contains **48 automated unit tests** across 7 test modules:
 
@@ -216,7 +216,7 @@ Required test coverage of 90.0% reached. Total coverage: 97.51%
 
 ---
 
-## 🚀 Quickstart & Usage Guide
+## Quickstart & Usage Guide
 
 ### 1. Prerequisites
 - Python 3.10 or higher
@@ -257,7 +257,7 @@ python -m http.server 3000
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```text
 week37_ci_cd_pipeline/
@@ -301,5 +301,5 @@ week37_ci_cd_pipeline/
 
 ---
 
-## 📜 License
+## License
 This project is open-source under the [MIT License](LICENSE). Part of [Project 52: Phase 3](https://github.com/pak-pow/PROJECT52-PHASE3).
