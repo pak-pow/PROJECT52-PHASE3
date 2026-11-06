@@ -1,8 +1,8 @@
 """PulseInfer server entrypoint."""
 
 import os
-from pathlib import Path
 import sys
+from pathlib import Path
 
 # Ensure backend package is in python search path
 CURRENT_DIR = Path(__file__).resolve().parent
