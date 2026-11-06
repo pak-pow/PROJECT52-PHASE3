@@ -8,7 +8,6 @@ Executes:
 4. Pytest Suite with Coverage Threshold Enforcement
 """
 
-import os
 import subprocess
 import sys
 import time
