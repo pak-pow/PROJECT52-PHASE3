@@ -1,4 +1,4 @@
-# 🐳 Week 38: Containerized App with Docker — Docker Pulse Operations Hub
+# Week 38: Containerized App with Docker - Docker Pulse Operations Hub
 
 <div align="center">
 
@@ -18,12 +18,12 @@
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
-- [Overview](#-overview)
-- [System Architecture](#-system-architecture)
-- [The 4-Container Topology](#-the-4-container-topology)
-- [Master Command Reference](#-master-command-reference)
+- [Overview](#overview)
+- [System Architecture](#system-architecture)
+- [The 4-Container Topology](#the-4-container-topology)
+- [Master Command Reference](#master-command-reference)
   - [1. Starting and Building the Stack](#1-starting-and-building-the-stack)
   - [2. Inspecting and Monitoring Containers](#2-inspecting-and-monitoring-containers)
   - [3. Accessing Container Shells & CLIs](#3-accessing-container-shells--clis)
@@ -31,27 +31,27 @@
   - [5. Data Persistence & Canary Testing](#5-data-persistence--canary-testing)
   - [6. Development Hot-Reloading & Production Profiles](#6-development-hot-reloading--production-profiles)
   - [7. Local Backend Quality Gates (Without Docker)](#7-local-backend-quality-gates-without-docker)
-- [HTTP API & Health Probe Endpoints](#-http-api--health-probe-endpoints)
-- [Frontend Operations Dashboard](#-frontend-operations-dashboard)
-- [Automated Quality Gates & Test Suite](#-automated-quality-gates--test-suite)
-- [Directory Structure](#-directory-structure)
+- [HTTP API & Health Probe Endpoints](#http-api--health-probe-endpoints)
+- [Frontend Operations Dashboard](#frontend-operations-dashboard)
+- [Automated Quality Gates & Test Suite](#automated-quality-gates--test-suite)
+- [Directory Structure](#directory-structure)
 
 ---
 
-## 🌟 Overview
+## Overview
 
 Week 38 transitions **Project 52: Phase 3 (Production)** from standalone host runtimes into fully isolated, containerized microservice architectures using **Docker** and **Docker Compose**. 
 
 Rather than treating Docker as a simple wrapper, this project implements production container engineering best practices:
 1. **Zero Root Execution**: Python runs as an unprivileged non-root user (`appuser`, UID 1001) inside a hardened multi-stage container.
-2. **Dependency-Aware Boot Orchestration**: Containers boot in deterministic health-checked sequence (`db` & `cache` ➔ `api` ➔ `web`).
+2. **Dependency-Aware Boot Orchestration**: Containers boot in deterministic health-checked sequence (`db` & `cache` -> `api` -> `web`).
 3. **Disaster-Proof Data Durability**: Persistent named volumes ensure database rows and cache states survive container crashes and recreations.
 4. **Sub-Millisecond Read Acceleration**: Redis in-memory caching accelerates frequent reads by **15x to 25x** over disk queries.
 5. **Observability & Health Probes**: Automated readiness and liveness beacons continuously verify system vitality.
 
 ---
 
-## 🏗️ System Architecture
+## System Architecture
 
 ```mermaid
 graph TD
@@ -73,7 +73,7 @@ graph TD
 
 ---
 
-## 📦 The 4-Container Topology
+## The 4-Container Topology
 
 | Container | Service Name | Base Image | Port Mapping | Responsibility |
 | :--- | :--- | :--- | :--- | :--- |
@@ -84,7 +84,7 @@ graph TD
 
 ---
 
-## 💻 Master Command Reference
+## Master Command Reference
 
 All commands can be executed from the `week38_containerized_app/` directory (or by appending `-f week38_containerized_app/docker-compose.yml` from the repository root).
 
@@ -205,7 +205,7 @@ pytest tests/ -v --cov=app --cov-report=term-missing
 
 ---
 
-## 🌐 HTTP API & Health Probe Endpoints
+## HTTP API & Health Probe Endpoints
 
 Once the stack is running on `http://localhost:8080`, test the endpoints using your browser, Postman, or `curl`:
 
@@ -220,20 +220,20 @@ Once the stack is running on `http://localhost:8080`, test the endpoints using y
 
 ---
 
-## 🖥️ Frontend Operations Dashboard
+## Frontend Operations Dashboard
 
 Access the UI at: **[http://localhost:8080](http://localhost:8080)**
 
 - **Service Health Grid**: Displays live status beacons and ping latencies for all 4 containers.
 - **Speed Test Benchmark**: Compares disk query speeds (~3.5ms) against Redis in-memory hits (~0.2ms), displaying real-time speedup multipliers (**up to 20x faster**).
 - **Live Task Board**: 
-  - 1-click status progression buttons: `▶ Start` ➔ `✓ Done` ➔ `↺ Reset`.
-  - Cache hit indicators: `⚡ Loaded from Fast Memory (Redis)` vs. `💾 Loaded from Hard Drive (PostgreSQL)`.
+  - 1-click status progression buttons: `[Start]` -> `[Done]` -> `[Reset]`.
+  - Cache hit indicators: `Loaded from Fast Memory (Redis)` vs. `Loaded from Hard Drive (PostgreSQL)`.
 - **Zero Inline Styles / Scripts**: 100% modular vanilla ES6 JavaScript and pure CSS3 tokens.
 
 ---
 
-## 🛡️ Automated Quality Gates & Test Suite
+## Automated Quality Gates & Test Suite
 
 All Python code conforms strictly to the 5 enterprise quality gates:
 
@@ -252,7 +252,7 @@ All Python code conforms strictly to the 5 enterprise quality gates:
 
 ---
 
-## 📁 Directory Structure
+## Directory Structure
 
 ```text
 week38_containerized_app/
