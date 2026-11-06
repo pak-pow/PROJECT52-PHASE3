@@ -71,7 +71,10 @@ def run_smoke_tests(base_url, max_retries=5, retry_delay=2):
             if status == 200 and data and data.get("status") == "healthy":
                 connected = True
                 health_data = data
-                print(f"   [OK] Server responded in {latency}ms (Attempt {attempt}/{max_retries})")
+                print(
+                    f"   [OK] Server responded in {latency}ms "
+                    f"(Attempt {attempt}/{max_retries})"
+                )
                 break
             else:
                 print(f"   [WARN] Unexpected response ({status}): {data}. Retrying...")
@@ -87,7 +90,13 @@ def run_smoke_tests(base_url, max_retries=5, retry_delay=2):
 
     # Step 2: Health Payload Validation
     print(">> Validating Health Response Payload:")
-    required_health_keys = ["status", "service", "environment", "uptime_seconds", "version"]
+    required_health_keys = [
+        "status",
+        "service",
+        "environment",
+        "uptime_seconds",
+        "version",
+    ]
     for key in required_health_keys:
         val = health_data.get(key)
         assert val is not None, f"Missing key '{key}' in health payload"
