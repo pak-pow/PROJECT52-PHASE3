@@ -55,8 +55,8 @@ export function renderNavbar(container, props = {}) {
             <span>${escapeHtml(version)}</span> · <span>#${escapeHtml(commitHash.slice(0, 7))}</span>
           </div>
 
-          <button id="theme-toggle-btn" class="theme-toggle-btn" aria-label="Toggle Dark/Light Mode">
-            🌙
+          <button id="theme-toggle-btn" class="theme-toggle-btn" aria-label="Toggle Dark/Light Mode" title="Toggle Theme">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
           </button>
         </div>
       </div>
