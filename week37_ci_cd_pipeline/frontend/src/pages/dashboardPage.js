@@ -423,7 +423,7 @@ export class DashboardPage {
 
     if (this.terminal) {
       this.terminal.clear();
-      this.terminal.appendLog('system', `🚀 INITIATING LOCAL CI/CD PIPELINE (Target: ${targetStage.toUpperCase()} | Env: ${targetEnv.toUpperCase()})`, 'cmd');
+      this.terminal.appendLog('system', `>> INITIATING LOCAL CI/CD PIPELINE (Target: ${targetStage.toUpperCase()} | Env: ${targetEnv.toUpperCase()})`, 'cmd');
     }
 
     // Determine stages to run
@@ -469,7 +469,7 @@ export class DashboardPage {
         this.terminal.appendLog('system', `[OK] Local CI/CD pipeline completed successfully!`, 'ok');
         this.terminal.appendLog('system', `[BADGES] Badges generated in backend/badges/ (build, coverage, deploy)`, 'ok');
         this.terminal.appendLog('system', `[REPORT] Written to backend/reports/pipeline_report.json`, 'ok');
-        showToast('Pipeline execution finished successfully! 🎉', 'success');
+        showToast('Pipeline execution finished successfully!', 'success');
       } else {
         this.terminal.appendLog('system', `[FAILED] Pipeline run failed: ${res.error || 'Execution error'}`, 'fail');
         showToast('Pipeline execution reported an error.', 'error');
@@ -530,7 +530,7 @@ export class DashboardPage {
       }
 
       this.state.runningStage = null;
-      this.terminal.appendLog('system', `🏁 ALL TARGETED STAGES PASSED! 🎉`, 'ok');
+      this.terminal.appendLog('system', `[OK] ALL TARGETED STAGES PASSED!`, 'ok');
       showToast('All pipeline stages executed successfully!', 'success');
     }
 
