@@ -11,7 +11,6 @@ Executes the exact stages of the remote CI/CD pipeline locally:
 
 import argparse
 import json
-import os
 import subprocess
 import sys
 import tarfile
@@ -283,7 +282,7 @@ class PipelineRunner:
 
     def run(self):
         print("\n" + "#" * 65)
-        print("  🚀 EXECUTING LOCAL CI/CD PIPELINE")
+        print("  [EXEC] EXECUTING LOCAL CI/CD PIPELINE")
         print(f"  Target: {self.target_stage.upper()} | Environment: {self.env_name}")
         print("#" * 65)
 
@@ -314,7 +313,7 @@ class PipelineRunner:
         self.write_report(overall_success, total_duration)
 
         print("\n" + "=" * 65)
-        print("  🏁 PIPELINE EXECUTION SUMMARY")
+        print("  [SUMMARY] PIPELINE EXECUTION SUMMARY")
         print("=" * 65)
         for stage, data in self.results.items():
             st = "[OK] PASSED" if data["status"] == "passed" else "[X] FAILED"
@@ -322,10 +321,10 @@ class PipelineRunner:
         print("=" * 65)
 
         if overall_success:
-            print(f">> ALL TARGETED STAGES PASSED in {total_duration}s! 🎉\n")
+            print(f">> ALL TARGETED STAGES PASSED in {total_duration}s!\n")
             return 0
         else:
-            print(f">> PIPELINE FAILED in {total_duration}s! 🚨\n")
+            print(f">> PIPELINE FAILED in {total_duration}s!\n")
             return 1
 
 
