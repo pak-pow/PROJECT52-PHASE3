@@ -22,7 +22,7 @@ export class TaskManager {
         <div class="task-manager-header">
           <div>
             <div class="section-title">
-              <span>📋</span> Live Task Board
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:middle;margin-right:4px;"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg> Live Task Board
             </div>
             <p class="benchmark-subtitle">Add, start, and complete tasks to see your database and memory update in real time.</p>
           </div>
@@ -115,7 +115,7 @@ export class TaskManager {
 
       this.tasks = data.tasks || [];
       if (cacheIndicator) {
-        cacheIndicator.textContent = data.xCache === 'HIT' ? '⚡ Loaded from Fast Memory (Redis)' : '💾 Loaded from Hard Drive (PostgreSQL)';
+        cacheIndicator.textContent = data.xCache === 'HIT' ? '[CACHE HIT] Loaded from Fast Memory (Redis)' : '[CACHE MISS] Loaded from Hard Drive (PostgreSQL)';
         const parent = cacheIndicator.parentElement;
         parent.className = data.xCache === 'HIT' ? 'cache-badge badge-hit' : 'cache-badge badge-miss';
       }
@@ -134,7 +134,7 @@ export class TaskManager {
     if (this.tasks.length === 0) {
       tableContainer.innerHTML = `
         <div class="empty-state">
-          <span class="empty-icon">📂</span>
+          <svg class="empty-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
           <p>No tasks found in this view. Add a new task above!</p>
         </div>
       `;
@@ -149,14 +149,14 @@ export class TaskManager {
       let quickActionBtn = '';
 
       if (status === 'pending') {
-        statusBadge = '<span class="badge-status badge-status-pending">⏳ Pending</span>';
-        quickActionBtn = `<button class="btn-quick-action btn-action-start" data-action="quick-status" data-id="${task.id}" data-next-status="in_progress" title="Start Task">▶ Start</button>`;
+        statusBadge = '<span class="badge-status badge-status-pending">Pending</span>';
+        quickActionBtn = `<button class="btn-quick-action btn-action-start" data-action="quick-status" data-id="${task.id}" data-next-status="in_progress" title="Start Task">Start</button>`;
       } else if (status === 'in_progress') {
-        statusBadge = '<span class="badge-status badge-status-progress">⚙️ In Progress</span>';
-        quickActionBtn = `<button class="btn-quick-action btn-action-complete" data-action="quick-status" data-id="${task.id}" data-next-status="completed" title="Mark as Completed">✓ Done</button>`;
+        statusBadge = '<span class="badge-status badge-status-progress">In Progress</span>';
+        quickActionBtn = `<button class="btn-quick-action btn-action-complete" data-action="quick-status" data-id="${task.id}" data-next-status="completed" title="Mark as Completed">Done</button>`;
       } else {
-        statusBadge = '<span class="badge-status badge-status-completed">✓ Completed</span>';
-        quickActionBtn = `<button class="btn-quick-action btn-action-reopen" data-action="quick-status" data-id="${task.id}" data-next-status="pending" title="Reset to Pending">↺ Reset</button>`;
+        statusBadge = '<span class="badge-status badge-status-completed">Completed</span>';
+        quickActionBtn = `<button class="btn-quick-action btn-action-reopen" data-action="quick-status" data-id="${task.id}" data-next-status="pending" title="Reset to Pending">Reset</button>`;
       }
 
       return `
@@ -173,7 +173,7 @@ export class TaskManager {
           <div class="task-actions">
             ${statusBadge}
             ${quickActionBtn}
-            <button class="btn-delete" data-action="delete" data-id="${task.id}" title="Delete Task">✕</button>
+            <button class="btn-delete" data-action="delete" data-id="${task.id}" title="Delete Task">&times;</button>
           </div>
         </div>
       `;
