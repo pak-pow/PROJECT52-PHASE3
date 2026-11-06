@@ -1,4 +1,5 @@
 import os
+
 from app import create_app
 from data.seed import seed_database
 
