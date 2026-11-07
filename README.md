@@ -38,7 +38,7 @@ Phase 3 is where developers become production-ready. This phase covers DevOps pr
 | 43 | Video Streaming Platform (PulseStream) | Full Stack | RFC 7233 Range, ABR HLS, Transcoding Queue | 10h | [Completed](./week43_video_streaming) |
 | 44 | ML Model API (PulseInfer) | Backend | Dynamic Micro-Batching, Model Registry, Caching | 9h | [Completed](./week44_ml_model_api) |
 | 45 | PulseSub Mobile-First SaaS | Full Stack | Responsive Design, FSM Subscriptions, Webhooks | 10h | [Completed](./week45_mobile_first_saas) |
-| 46 | OAuth Provider Service | Backend | OAuth 2.0, Security Standards | 9h | Not Started |
+| 46 | [OAuth Provider Service (PulseAuth)](./week46_oauth_provider) | Backend | OAuth 2.0, Security Standards | 9h | In Progress |
 | 47 | Microservices Architecture | Backend + DevOps | Service Communication, Load Balancing | 10h | Not Started |
 | 48 | Full-Featured Blog Platform | Full Stack | SEO, Comments, Tags, Search | 10h | Not Started |
 | 49 | Real-time Stock Trading Dashboard | Full Stack | WebSockets, Live Data, Charts | 10h | Not Started |
