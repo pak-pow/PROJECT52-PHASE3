@@ -38,6 +38,12 @@ coverage.xml
 *.db-journal
 *.sqlite3
 
+# Certificates and Cryptographic Keys
+*.pem
+*.key
+*.crt
+
+
 # OS / Editor
 .DS_Store
 Thumbs.db
