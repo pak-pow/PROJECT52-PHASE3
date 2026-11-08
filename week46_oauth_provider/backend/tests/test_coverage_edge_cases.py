@@ -40,3 +40,44 @@ def test_database_connection_teardown(app):
         close_db()
         # Safe to call multiple times
         close_db()
+
+
+def test_auth_code_service_edge_cases(app, seeded_db):
+    """Verify unauthorized grant type and code issuance without state."""
+    from app.services.auth_code_service import AuthCodeService
+
+    with app.app_context():
+        conn = get_db()
+        # Client without authorization_code grant
+        ClientModel.create(
+            conn=conn,
+            client_id="credentials-only-client",
+            client_name="Credentials Only",
+            client_type="confidential",
+            client_secret="CredSecret123!",
+            redirect_uris=["http://127.0.0.1:3000/callback"],
+            grant_types=["client_credentials"],
+            scopes=["openid"],
+        )
+
+        valid, _, err, desc = AuthCodeService.validate_request(
+            conn,
+            "code",
+            "credentials-only-client",
+            "http://127.0.0.1:3000/callback",
+            "openid",
+        )
+        assert not valid
+        assert err == "unauthorized_client"
+
+        # Issue code without state
+        rec, url = AuthCodeService.issue_code(
+            conn=conn,
+            client_id="pulse-web-app",
+            user_id=1,
+            redirect_uri="http://127.0.0.1:3000/callback",
+            scope="openid",
+            state=None,
+        )
+        assert rec["code"] is not None
+        assert "state=" not in url
