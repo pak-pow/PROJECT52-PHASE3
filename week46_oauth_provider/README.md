@@ -100,9 +100,9 @@ flowchart TD
 
 | RFC / Standard | Title | Status in PulseAuth |
 |:---|:---|:---|
-| **RFC 6749** | The OAuth 2.0 Authorization Framework | Implemented (`authorization_code`, `client_credentials`, `refresh_token`) |
-| **RFC 7636** | Proof Key for Code Exchange (PKCE) | Implemented (`S256` SHA-256 challenge, `plain` fallback) |
-| **OpenID Connect** | Core 1.0 & Discovery Protocol | Implemented (ID Tokens, UserInfo, `/.well-known/openid-configuration`) |
+| **RFC 6749** | The OAuth 2.0 Authorization Framework | Implemented (`/oauth/authorize`, code grant, parameter validation) |
+| **RFC 7636** | Proof Key for Code Exchange (PKCE) | Implemented (`S256` SHA-256 challenge, `plain` fallback, 43-128 chars) |
+| **OpenID Connect** | Core 1.0 & Discovery Protocol | Implemented (Discovery metadata, JWKS, nonce propagation) |
 | **RFC 7517** | JSON Web Key (JWK / JWKS) | Implemented (`/.well-known/jwks.json` distributing RSA public keys) |
 | **RFC 7518** | JSON Web Algorithms (JWA) | Implemented (`RS256` signing, Base64urlUInt modulus/exponent) |
 | **RFC 7519** | JSON Web Token (JWT) | Implemented (`iss`, `sub`, `aud`, `exp`, `iat`, `jti`, `kid` headers) |
@@ -146,11 +146,21 @@ SQLite runs with Write-Ahead Logging (`PRAGMA journal_mode = WAL;`) and a 30-sec
 ### 2. OAuth 2.0 & OIDC Endpoints (Day 2 - Day 4)
 | Method | Endpoint | Description | Grant Type / RFC |
 |:---|:---|:---|:---|
-| `GET` / `POST` | `/oauth/authorize` | Authorization endpoint with scope consent & PKCE | Authorization Code |
+| `GET` / `POST` | `/oauth/authorize` | Authorization endpoint with scope consent, PKCE enforcement, HTML UI & JSON API | RFC 6749, RFC 7636 |
 | `POST` | `/oauth/token` | Token exchange & token rotation endpoint | RFC 6749 |
 | `GET` | `/oauth/userinfo` | OIDC UserInfo endpoint returning verified profile claims | OIDC Core 1.0 |
 | `POST` | `/oauth/revoke` | Token revocation endpoint | RFC 7009 |
 | `POST` | `/oauth/introspect` | Token introspection endpoint for resource servers | RFC 7662 |
+
+#### Authorization Endpoint Parameter Matrix (`/oauth/authorize`)
+- `response_type`: Must be strictly `code`.
+- `client_id`: Registered client identifier (`confidential` or `public`).
+- `redirect_uri`: Exact registered redirect target URL.
+- `scope`: Space-delimited requested permissions (subset of client's `allowed_scopes`).
+- `state`: Recommended opaque CSRF protection value, preserved verbatim in callbacks.
+- `code_challenge`: RFC 7636 PKCE verification challenge (mandatory for public clients).
+- `code_challenge_method`: `S256` (default & recommended) or `plain`.
+- `nonce`: OIDC replay protection token preserved into downstream ID tokens.
 
 ---
 
@@ -161,7 +171,7 @@ All Python code conforms strictly to the 5 enterprise quality gates:
 - **Black**: 100% compliant formatting.
 - **isort**: Deterministic import ordering.
 - **Bandit**: 0 security vulnerabilities identified (`-ll` severity).
-- **Pytest**: 20 unit and integration tests passing in 2.33s with **97.49% branch coverage**.
+- **Pytest**: 50 unit and integration tests passing with **97.54% branch coverage**.
 
 ### Running Quality Gates
 ```powershell
@@ -216,14 +226,22 @@ week46_oauth_provider/
 │   │   │   └── connection.py        # SQLite WAL connection manager
 │   │   ├── models/
 │   │   │   ├── __init__.py
+│   │   │   ├── auth_code_model.py   # Ephemeral authorization code persistence & TTL
 │   │   │   ├── client_model.py      # OAuth client registration & secret verification
+│   │   │   ├── consent_model.py     # User scope grants & consent records
 │   │   │   └── user_model.py        # User authentication & scrypt password hashing
 │   │   ├── routes/
 │   │   │   ├── __init__.py
+│   │   │   ├── auth_routes.py       # GET & POST /oauth/authorize controller
 │   │   │   └── discovery_routes.py  # /.well-known/openid-configuration & jwks.json
 │   │   ├── services/
-│   │   │   └── __init__.py
-│   │   └── __init__.py              # Application factory & error handlers
+│   │   │   ├── __init__.py
+│   │   │   ├── audit_service.py     # Structured security audit logging
+│   │   │   ├── auth_code_service.py # Authorization code lifecycle & request validator
+│   │   │   └── pkce_service.py      # RFC 7636 PKCE S256/plain verifier & challenge
+│   │   ├── templates/
+│   │   │   └── consent.html         # High-contrast interactive user consent screen
+│   │   └── __init__.py              # Application factory & blueprint registration
 │   ├── data/
 │   │   ├── schema.sql               # Relational SQLite database schema
 │   │   └── seed.py                  # Database seeding script with demo clients/users
@@ -231,9 +249,13 @@ week46_oauth_provider/
 │   │   └── run_quality_checks.py    # 5-stage automated quality gates CLI
 │   ├── tests/
 │   │   ├── conftest.py              # Pytest fixtures & isolated test app
+│   │   ├── test_auth_code_service.py # Code lifecycle, expiration & URL builder tests
+│   │   ├── test_authorize_routes.py  # Authorization endpoint integration tests
+│   │   ├── test_consent_model.py    # Consent model persistence unit tests
 │   │   ├── test_coverage_edge_cases.py
 │   │   ├── test_database_and_models.py
 │   │   ├── test_discovery_and_jwks.py
+│   │   ├── test_pkce_service.py     # RFC 7636 Appendix B test vector & syntax tests
 │   │   └── test_rsa_manager.py
 │   ├── .coveragerc                  # Pytest coverage thresholds (90%+)
 │   ├── .flake8                      # Flake8 configuration (88-char limit)
