@@ -8,7 +8,7 @@
 ![PKCE](https://img.shields.io/badge/pkce-RFC%207636-blueviolet.svg)
 ![Crypto](https://img.shields.io/badge/crypto-RS256%202048bit-red.svg)
 ![Quality Gates](https://img.shields.io/badge/quality--gates-5%20passed-brightgreen.svg)
-![Coverage](https://img.shields.io/badge/coverage-97.5%25-brightgreen.svg)
+![Coverage](https://img.shields.io/badge/coverage-96.2%25-brightgreen.svg)
 
 <p align="center">
   <strong>A production-grade, standards-compliant Identity Provider (IdP) and Authorization Server implementing OAuth 2.0 (RFC 6749), Proof Key for Code Exchange (PKCE - RFC 7636), OpenID Connect Core 1.0 (OIDC), Asymmetric RS256 JWT Issuance, JWKS Key Distribution (RFC 7517), Token Revocation (RFC 7009), Token Introspection (RFC 7662), and an Interactive OAuth Playground.</strong>
@@ -100,9 +100,9 @@ flowchart TD
 
 | RFC / Standard | Title | Status in PulseAuth |
 |:---|:---|:---|
-| **RFC 6749** | The OAuth 2.0 Authorization Framework | Implemented (`/oauth/authorize`, code grant, parameter validation) |
+| **RFC 6749** | The OAuth 2.0 Authorization Framework | Implemented (`/oauth/authorize`, `/oauth/token` for `authorization_code` & `client_credentials`) |
 | **RFC 7636** | Proof Key for Code Exchange (PKCE) | Implemented (`S256` SHA-256 challenge, `plain` fallback, 43-128 chars) |
-| **OpenID Connect** | Core 1.0 & Discovery Protocol | Implemented (Discovery metadata, JWKS, nonce propagation) |
+| **OpenID Connect** | Core 1.0 & Discovery Protocol | Implemented (ID Tokens, UserInfo `/oauth/userinfo`, `/.well-known/openid-configuration`) |
 | **RFC 7517** | JSON Web Key (JWK / JWKS) | Implemented (`/.well-known/jwks.json` distributing RSA public keys) |
 | **RFC 7518** | JSON Web Algorithms (JWA) | Implemented (`RS256` signing, Base64urlUInt modulus/exponent) |
 | **RFC 7519** | JSON Web Token (JWT) | Implemented (`iss`, `sub`, `aud`, `exp`, `iat`, `jti`, `kid` headers) |
@@ -147,12 +147,12 @@ SQLite runs with Write-Ahead Logging (`PRAGMA journal_mode = WAL;`) and a 30-sec
 | Method | Endpoint | Description | Grant Type / RFC |
 |:---|:---|:---|:---|
 | `GET` / `POST` | `/oauth/authorize` | Authorization endpoint with scope consent, PKCE enforcement, HTML UI & JSON API | RFC 6749, RFC 7636 |
-| `POST` | `/oauth/token` | Token exchange & token rotation endpoint | RFC 6749 |
-| `GET` | `/oauth/userinfo` | OIDC UserInfo endpoint returning verified profile claims | OIDC Core 1.0 |
+| `POST` | `/oauth/token` | Token issuance endpoint for code exchange, client credentials, and refresh | RFC 6749 |
+| `GET` / `POST` | `/oauth/userinfo` | OIDC UserInfo endpoint returning verified profile claims | OIDC Core 1.0 |
 | `POST` | `/oauth/revoke` | Token revocation endpoint | RFC 7009 |
 | `POST` | `/oauth/introspect` | Token introspection endpoint for resource servers | RFC 7662 |
 
-#### Authorization Endpoint Parameter Matrix (`/oauth/authorize`)
+#### Authorization Endpoint (`/oauth/authorize`)
 - `response_type`: Must be strictly `code`.
 - `client_id`: Registered client identifier (`confidential` or `public`).
 - `redirect_uri`: Exact registered redirect target URL.
@@ -161,6 +161,25 @@ SQLite runs with Write-Ahead Logging (`PRAGMA journal_mode = WAL;`) and a 30-sec
 - `code_challenge`: RFC 7636 PKCE verification challenge (mandatory for public clients).
 - `code_challenge_method`: `S256` (default & recommended) or `plain`.
 - `nonce`: OIDC replay protection token preserved into downstream ID tokens.
+
+#### Token Endpoint (`POST /oauth/token`)
+Accepts `application/x-www-form-urlencoded` or `application/json`. Client authentication via HTTP Basic Header (`client_secret_basic`), form body (`client_secret_post`), or public client identification (`none`).
+
+- **Grant Type: `authorization_code`**
+  - Required parameters: `grant_type=authorization_code`, `code`, `redirect_uri`, `client_id` (or Basic auth).
+  - PKCE parameter: `code_verifier` (mandatory if code challenge was present during authorization).
+  - Returns: `access_token` (RS256 JWT, 1-hour TTL), `token_type` (`Bearer`), `expires_in` (`3600`), `refresh_token` (opaque 32-byte hex, 30-day TTL), `scope`, and `id_token` (RS256 JWT containing OIDC claims and nonce, if `openid` scope requested).
+- **Grant Type: `client_credentials`**
+  - Required parameters: `grant_type=client_credentials`, `scope` (optional subset of allowed scopes). Client must be `confidential` and successfully authenticated.
+  - Returns: M2M service `access_token` (RS256 JWT, 1-hour TTL), `token_type` (`Bearer`), `expires_in` (`3600`), `scope`.
+
+#### UserInfo Endpoint (`GET` / `POST` `/oauth/userinfo`)
+- Header: `Authorization: Bearer <access_token>`.
+- Token Validation: Cryptographically verified RS256 signature, expiration check, active database verification, and validation that `openid` scope was granted.
+- Returns JSON claims:
+  - Base: `sub` (User ID).
+  - Scope `email`: `email`, `email_verified`.
+  - Scope `profile`: `name`, `preferred_username`.
 
 ---
 
@@ -171,7 +190,7 @@ All Python code conforms strictly to the 5 enterprise quality gates:
 - **Black**: 100% compliant formatting.
 - **isort**: Deterministic import ordering.
 - **Bandit**: 0 security vulnerabilities identified (`-ll` severity).
-- **Pytest**: 50 unit and integration tests passing with **97.54% branch coverage**.
+- **Pytest**: 84 unit and integration tests passing with **96.18% branch coverage**.
 
 ### Running Quality Gates
 ```powershell
@@ -229,16 +248,21 @@ week46_oauth_provider/
 │   │   │   ├── auth_code_model.py   # Ephemeral authorization code persistence & TTL
 │   │   │   ├── client_model.py      # OAuth client registration & secret verification
 │   │   │   ├── consent_model.py     # User scope grants & consent records
+│   │   │   ├── token_model.py       # Issued token persistence, SHA-256 hash & revocation
 │   │   │   └── user_model.py        # User authentication & scrypt password hashing
 │   │   ├── routes/
 │   │   │   ├── __init__.py
 │   │   │   ├── auth_routes.py       # GET & POST /oauth/authorize controller
-│   │   │   └── discovery_routes.py  # /.well-known/openid-configuration & jwks.json
+│   │   │   ├── discovery_routes.py  # /.well-known/openid-configuration & jwks.json
+│   │   │   ├── token_routes.py      # POST /oauth/token endpoint for code and credentials
+│   │   │   └── userinfo_routes.py   # GET & POST /oauth/userinfo OIDC user claims endpoint
 │   │   ├── services/
 │   │   │   ├── __init__.py
 │   │   │   ├── audit_service.py     # Structured security audit logging
 │   │   │   ├── auth_code_service.py # Authorization code lifecycle & request validator
-│   │   │   └── pkce_service.py      # RFC 7636 PKCE S256/plain verifier & challenge
+│   │   │   ├── client_auth_service.py # RFC 6749 client authentication (Basic, post, none)
+│   │   │   ├── pkce_service.py      # RFC 7636 PKCE S256/plain verifier & challenge
+│   │   │   └── token_service.py     # RS256 JWT access tokens, OIDC ID tokens, refresh tokens
 │   │   ├── templates/
 │   │   │   └── consent.html         # High-contrast interactive user consent screen
 │   │   └── __init__.py              # Application factory & blueprint registration
@@ -251,12 +275,17 @@ week46_oauth_provider/
 │   │   ├── conftest.py              # Pytest fixtures & isolated test app
 │   │   ├── test_auth_code_service.py # Code lifecycle, expiration & URL builder tests
 │   │   ├── test_authorize_routes.py  # Authorization endpoint integration tests
+│   │   ├── test_client_auth_service.py # Client authentication unit tests
 │   │   ├── test_consent_model.py    # Consent model persistence unit tests
 │   │   ├── test_coverage_edge_cases.py
 │   │   ├── test_database_and_models.py
 │   │   ├── test_discovery_and_jwks.py
 │   │   ├── test_pkce_service.py     # RFC 7636 Appendix B test vector & syntax tests
-│   │   └── test_rsa_manager.py
+│   │   ├── test_rsa_manager.py
+│   │   ├── test_token_model.py      # Token persistence & revocation tests
+│   │   ├── test_token_routes.py     # Token endpoint integration tests
+│   │   ├── test_token_service.py    # RS256 token generation & verification tests
+│   │   └── test_userinfo_routes.py  # OIDC UserInfo endpoint tests
 │   ├── .coveragerc                  # Pytest coverage thresholds (90%+)
 │   ├── .flake8                      # Flake8 configuration (88-char limit)
 │   ├── pyproject.toml               # Black, isort, and pytest settings
