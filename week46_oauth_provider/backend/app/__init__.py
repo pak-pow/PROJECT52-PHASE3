@@ -11,6 +11,8 @@ from app.crypto.rsa_manager import RSAKeyManager
 from app.db.connection import close_db, init_db
 from app.routes.auth_routes import auth_bp
 from app.routes.discovery_routes import discovery_bp
+from app.routes.token_routes import token_bp
+from app.routes.userinfo_routes import userinfo_bp
 
 
 def create_app(config_class: Optional[Type[Config]] = None) -> Flask:
@@ -48,6 +50,8 @@ def create_app(config_class: Optional[Type[Config]] = None) -> Flask:
     # Register blueprints
     app.register_blueprint(discovery_bp)
     app.register_blueprint(auth_bp)
+    app.register_blueprint(token_bp)
+    app.register_blueprint(userinfo_bp)
 
     # Global Error Handlers
     @app.errorhandler(400)
