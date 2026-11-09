@@ -26,6 +26,12 @@ class AuthCodeModel:
         now = datetime.now(timezone.utc)
         expires_at = now + timedelta(seconds=ttl_seconds)
 
+        method = None
+        if code_challenge_method:
+            method = (
+                "S256" if code_challenge_method.strip().upper() == "S256" else "plain"
+            )
+
         cur = conn.cursor()
         cur.execute(
             """
@@ -41,7 +47,7 @@ class AuthCodeModel:
                 redirect_uri,
                 scope,
                 code_challenge,
-                code_challenge_method.upper() if code_challenge_method else None,
+                method,
                 nonce,
                 expires_at.strftime("%Y-%m-%d %H:%M:%S"),
             ),
