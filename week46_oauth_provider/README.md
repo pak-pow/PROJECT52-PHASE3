@@ -100,14 +100,14 @@ flowchart TD
 
 | RFC / Standard | Title | Status in PulseAuth |
 |:---|:---|:---|
-| **RFC 6749** | The OAuth 2.0 Authorization Framework | Implemented (`/oauth/authorize`, `/oauth/token` for `authorization_code` & `client_credentials`) |
+| **RFC 6749** | The OAuth 2.0 Authorization Framework | Implemented (`/oauth/authorize`, `/oauth/token` for `authorization_code`, `client_credentials` & `refresh_token`) |
 | **RFC 7636** | Proof Key for Code Exchange (PKCE) | Implemented (`S256` SHA-256 challenge, `plain` fallback, 43-128 chars) |
 | **OpenID Connect** | Core 1.0 & Discovery Protocol | Implemented (ID Tokens, UserInfo `/oauth/userinfo`, `/.well-known/openid-configuration`) |
 | **RFC 7517** | JSON Web Key (JWK / JWKS) | Implemented (`/.well-known/jwks.json` distributing RSA public keys) |
 | **RFC 7518** | JSON Web Algorithms (JWA) | Implemented (`RS256` signing, Base64urlUInt modulus/exponent) |
 | **RFC 7519** | JSON Web Token (JWT) | Implemented (`iss`, `sub`, `aud`, `exp`, `iat`, `jti`, `kid` headers) |
-| **RFC 7009** | OAuth 2.0 Token Revocation | Planned (Day 4) |
-| **RFC 7662** | OAuth 2.0 Token Introspection | Planned (Day 4) |
+| **RFC 7009** | OAuth 2.0 Token Revocation | Implemented (`POST /oauth/revoke` with token family invalidation) |
+| **RFC 7662** | OAuth 2.0 Token Introspection | Implemented (`POST /oauth/introspect` with resource server auth) |
 
 ---
 
@@ -172,6 +172,11 @@ Accepts `application/x-www-form-urlencoded` or `application/json`. Client authen
 - **Grant Type: `client_credentials`**
   - Required parameters: `grant_type=client_credentials`, `scope` (optional subset of allowed scopes). Client must be `confidential` and successfully authenticated.
   - Returns: M2M service `access_token` (RS256 JWT, 1-hour TTL), `token_type` (`Bearer`), `expires_in` (`3600`), `scope`.
+- **Grant Type: `refresh_token`**
+  - Required parameters: `grant_type=refresh_token`, `refresh_token`, `client_id` (or Basic auth).
+  - Scope parameter: Optional downscoped permissions (must be a subset of original granted scopes; scope expansion is rejected).
+  - Refresh Token Rotation (RTR): Consumed refresh token is invalidated immediately; a new rotated refresh token and fresh RS256 access token are issued within the same `token_family_id`.
+  - Reuse Detection Defense: Replay of an already-consumed refresh token immediately triggers family revocation, invalidating all associated access and refresh tokens.
 
 #### UserInfo Endpoint (`GET` / `POST` `/oauth/userinfo`)
 - Header: `Authorization: Bearer <access_token>`.
@@ -180,6 +185,19 @@ Accepts `application/x-www-form-urlencoded` or `application/json`. Client authen
   - Base: `sub` (User ID).
   - Scope `email`: `email`, `email_verified`.
   - Scope `profile`: `name`, `preferred_username`.
+
+#### Token Revocation Endpoint (`POST /oauth/revoke`)
+- RFC 7009 compliant token revocation supporting access and refresh tokens.
+- Parameters: `token` (required), `token_type_hint` (`access_token` or `refresh_token`). Client authentication via Basic header, body, or public client ID.
+- Behavior: Revoking a refresh token cascades to invalidate all active tokens in that `token_family_id`. Responds with HTTP 200 OK for valid, unowned, or already-revoked tokens to prevent information leakage.
+
+#### Token Introspection Endpoint (`POST /oauth/introspect`)
+- RFC 7662 compliant token introspection for resource servers and confidential clients.
+- Authentication: Mandatory confidential client authentication (`client_secret_basic` or `client_secret_post`). Public clients are rejected.
+- Parameters: `token` (required), optional `token_type_hint`.
+- Returns:
+  - If active: `{ "active": true, "scope": "...", "client_id": "...", "sub": "...", "token_type": "Bearer", "exp": 1731234567, "iat": 1731230967, "iss": "..." }`.
+  - If invalid, expired, or revoked: `{ "active": false }`.
 
 ---
 
@@ -190,7 +208,7 @@ All Python code conforms strictly to the 5 enterprise quality gates:
 - **Black**: 100% compliant formatting.
 - **isort**: Deterministic import ordering.
 - **Bandit**: 0 security vulnerabilities identified (`-ll` severity).
-- **Pytest**: 84 unit and integration tests passing with **96.18% branch coverage**.
+- **Pytest**: 108 unit and integration tests passing with **96.19% branch coverage**.
 
 ### Running Quality Gates
 ```powershell
@@ -254,7 +272,9 @@ week46_oauth_provider/
 │   │   │   ├── __init__.py
 │   │   │   ├── auth_routes.py       # GET & POST /oauth/authorize controller
 │   │   │   ├── discovery_routes.py  # /.well-known/openid-configuration & jwks.json
-│   │   │   ├── token_routes.py      # POST /oauth/token endpoint for code and credentials
+│   │   │   ├── introspection_routes.py # POST /oauth/introspect RFC 7662 controller
+│   │   │   ├── revocation_routes.py # POST /oauth/revoke RFC 7009 controller
+│   │   │   ├── token_routes.py      # POST /oauth/token endpoint for code, m2m, refresh
 │   │   │   └── userinfo_routes.py   # GET & POST /oauth/userinfo OIDC user claims endpoint
 │   │   ├── services/
 │   │   │   ├── __init__.py
@@ -262,6 +282,7 @@ week46_oauth_provider/
 │   │   │   ├── auth_code_service.py # Authorization code lifecycle & request validator
 │   │   │   ├── client_auth_service.py # RFC 6749 client authentication (Basic, post, none)
 │   │   │   ├── pkce_service.py      # RFC 7636 PKCE S256/plain verifier & challenge
+│   │   │   ├── refresh_service.py   # Refresh token rotation & reuse detection (RFC 6749)
 │   │   │   └── token_service.py     # RS256 JWT access tokens, OIDC ID tokens, refresh tokens
 │   │   ├── templates/
 │   │   │   └── consent.html         # High-contrast interactive user consent screen
@@ -280,7 +301,10 @@ week46_oauth_provider/
 │   │   ├── test_coverage_edge_cases.py
 │   │   ├── test_database_and_models.py
 │   │   ├── test_discovery_and_jwks.py
+│   │   ├── test_introspection.py    # RFC 7662 token introspection tests
 │   │   ├── test_pkce_service.py     # RFC 7636 Appendix B test vector & syntax tests
+│   │   ├── test_refresh_rotation.py # Refresh token rotation & reuse detection tests
+│   │   ├── test_revocation.py       # RFC 7009 token revocation tests
 │   │   ├── test_rsa_manager.py
 │   │   ├── test_token_model.py      # Token persistence & revocation tests
 │   │   ├── test_token_routes.py     # Token endpoint integration tests
