@@ -11,6 +11,7 @@ from app.models.user_model import UserModel
 from app.services.audit_service import AuditService
 from app.services.client_auth_service import ClientAuthService
 from app.services.pkce_service import PKCEService
+from app.services.refresh_service import RefreshTokenService
 from app.services.token_service import TokenService
 
 token_bp = Blueprint("token", __name__)
@@ -236,6 +237,59 @@ def token_endpoint() -> Response:
         )
 
         resp = jsonify(tokens)
+        resp.headers["Cache-Control"] = "no-store"
+        resp.headers["Pragma"] = "no-cache"
+        return resp
+
+    # 3. Refresh Token Grant Flow
+    if grant_type == "refresh_token":
+        valid_auth, client, err_code, err_desc, status = ClientAuthService.authenticate(
+            conn, request, allow_public=True
+        )
+        if not valid_auth or client is None:
+            auth_headers = (
+                {"WWW-Authenticate": 'Basic realm="PulseAuth"'}
+                if status == 401
+                else None
+            )
+            return oauth_error(err_code, err_desc, status=status, headers=auth_headers)
+
+        if not ClientModel.validate_grant_type(
+            conn, client["client_id"], "refresh_token"
+        ):
+            return oauth_error(
+                "unauthorized_client",
+                "Client is not authorized to use the refresh_token grant type.",
+            )
+
+        refresh_token = data.get("refresh_token")
+        if not refresh_token:
+            return oauth_error(
+                "invalid_request", "Missing required 'refresh_token' parameter."
+            )
+
+        requested_scope = data.get("scope")
+        acc_ttl = current_app.config.get("ACCESS_TOKEN_TTL_SECONDS", 3600)
+        id_ttl = current_app.config.get("ID_TOKEN_TTL_SECONDS", 3600)
+        ref_ttl = current_app.config.get("REFRESH_TOKEN_TTL_SECONDS", 30 * 24 * 3600)
+
+        success, new_tokens, code, desc, st = RefreshTokenService.rotate_token(
+            conn=conn,
+            rsa_manager=rsa_manager,
+            issuer=issuer,
+            client=client,
+            refresh_token=refresh_token,
+            requested_scope=requested_scope,
+            ip_address=request.remote_addr,
+            access_token_ttl=acc_ttl,
+            id_token_ttl=id_ttl,
+            refresh_token_ttl=ref_ttl,
+        )
+
+        if not success or new_tokens is None:
+            return oauth_error(code, desc, status=st)
+
+        resp = jsonify(new_tokens)
         resp.headers["Cache-Control"] = "no-store"
         resp.headers["Pragma"] = "no-cache"
         return resp
