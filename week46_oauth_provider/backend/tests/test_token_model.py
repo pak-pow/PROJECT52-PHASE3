@@ -150,6 +150,11 @@ def test_token_family_revocation(app, seeded_db):
         # Empty family id returns 0
         assert TokenModel.revoke_family(conn, "") == 0
 
+        # Retrieve family tokens
+        family_tokens = TokenModel.get_family_tokens(conn, family_id)
+        assert len(family_tokens) == 2
+        assert TokenModel.get_family_tokens(conn, "") == []
+
 
 def test_token_model_invalid_type_raises(app, seeded_db):
     """Verify invalid token_type raises ValueError."""
@@ -164,3 +169,41 @@ def test_token_model_invalid_type_raises(app, seeded_db):
                 scope="openid",
                 expires_at=datetime.now(timezone.utc),
             )
+
+
+def test_token_model_datetime_and_find_token(app, seeded_db):
+    """Verify parse_datetime parsing variants and find_token fallback behavior."""
+    with app.app_context():
+        conn = get_db()
+        # Datetime parsing
+        assert TokenModel.parse_datetime(None) is None
+        assert TokenModel.parse_datetime("invalid-string") is None
+        now_dt = datetime.now()
+        parsed_dt = TokenModel.parse_datetime(now_dt)
+        assert parsed_dt.tzinfo == timezone.utc
+
+        # find_token
+        assert TokenModel.find_token(conn, "") is None
+        assert TokenModel.find_token(conn, "missing_raw_token") is None
+
+        # Create token with jti
+        now = datetime.now(timezone.utc)
+        exp = now + timedelta(hours=1)
+        rec = TokenModel.create(
+            conn=conn,
+            token_type="access_token",
+            raw_token="known_raw_access_token_123",
+            client_id="pulse-web-app",
+            scope="openid",
+            expires_at=exp,
+            user_id=1,
+            jti="sample_jti_456",
+        )
+        assert (
+            TokenModel.find_token(conn, "known_raw_access_token_123")["id"] == rec["id"]
+        )
+
+        # revoke_by_hash
+        assert TokenModel.revoke_by_hash(conn, rec["token_value_hash"]) is True
+        # already revoked
+        assert TokenModel.revoke_by_hash(conn, rec["token_value_hash"]) is False
