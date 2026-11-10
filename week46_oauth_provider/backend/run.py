@@ -24,7 +24,10 @@ if __name__ == "__main__":
     port = int(os.getenv("PORT", "5000"))
     print(f"[PulseAuth Identity Provider] Server listening on http://127.0.0.1:{port}")
     print(f"[PulseAuth Identity Provider] Issuer: {app.config.get('ISSUER')}")
-    print("[PulseAuth Identity Provider] OpenID Discovery: /.well-known/openid-configuration")
+    print(
+        "[PulseAuth Identity Provider] OpenID Discovery: "
+        "/.well-known/openid-configuration"
+    )
     print("[PulseAuth Identity Provider] JWKS Keyset: /.well-known/jwks.json")
 
     app.run(host="0.0.0.0", port=port, debug=config.DEBUG)
