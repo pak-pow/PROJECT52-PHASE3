@@ -3,7 +3,9 @@
 import hashlib
 import sqlite3
 from datetime import datetime, timezone
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
+
+import jwt
 
 
 class TokenModel:
@@ -118,6 +120,48 @@ class TokenModel:
         return dict(row)
 
     @staticmethod
+    def parse_datetime(dt_val: Any) -> Optional[datetime]:
+        """Parse sqlite datetime string or timestamp into timezone-aware datetime."""
+        if not dt_val:
+            return None
+        if isinstance(dt_val, datetime):
+            return (
+                dt_val.replace(tzinfo=timezone.utc) if dt_val.tzinfo is None else dt_val
+            )
+        if isinstance(dt_val, str):
+            for fmt in (
+                "%Y-%m-%d %H:%M:%S",
+                "%Y-%m-%dT%H:%M:%S",
+                "%Y-%m-%d %H:%M:%S.%f",
+            ):
+                try:
+                    return datetime.strptime(dt_val, fmt).replace(tzinfo=timezone.utc)
+                except ValueError:
+                    pass
+        return None
+
+    @staticmethod
+    def find_token(
+        conn: sqlite3.Connection, raw_token: str
+    ) -> Optional[Dict[str, Any]]:
+        """Lookup token by raw token value hash, or if JWT by jti claim."""
+        if not raw_token:
+            return None
+        record = TokenModel.get_by_raw_token(conn, raw_token)
+        if record:
+            return record
+
+        if raw_token.count(".") == 2:
+            try:
+                unverified = jwt.decode(raw_token, options={"verify_signature": False})
+                jti = unverified.get("jti")
+                if jti:
+                    return TokenModel.get_by_jti(conn, jti)
+            except Exception:
+                pass
+        return None
+
+    @staticmethod
     def is_valid(
         conn: sqlite3.Connection, raw_token: str
     ) -> Tuple[bool, Optional[Dict[str, Any]], str]:
@@ -129,30 +173,15 @@ class TokenModel:
         if record.get("revoked_at"):
             return False, record, "Token has been revoked."
 
-        expires_val = record.get("expires_at")
-        if expires_val:
-            if isinstance(expires_val, str):
-                expires_at = datetime.strptime(
-                    expires_val, "%Y-%m-%d %H:%M:%S"
-                ).replace(tzinfo=timezone.utc)
-            elif isinstance(expires_val, datetime):
-                expires_at = (
-                    expires_val.replace(tzinfo=timezone.utc)
-                    if expires_val.tzinfo is None
-                    else expires_val
-                )
-            else:
-                expires_at = None
-
-            if expires_at and datetime.now(timezone.utc) > expires_at:
-                return False, record, "Token has expired."
+        expires_at = TokenModel.parse_datetime(record.get("expires_at"))
+        if expires_at and datetime.now(timezone.utc) > expires_at:
+            return False, record, "Token has expired."
 
         return True, record, ""
 
     @staticmethod
-    def revoke(conn: sqlite3.Connection, raw_token: str) -> bool:
-        """Mark single token as revoked by timestamping revoked_at."""
-        token_hash = TokenModel.hash_token(raw_token)
+    def revoke_by_hash(conn: sqlite3.Connection, token_hash: str) -> bool:
+        """Mark single token as revoked by SHA-256 value hash."""
         now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
         cur = conn.cursor()
         cur.execute(
@@ -165,6 +194,12 @@ class TokenModel:
         )
         conn.commit()
         return cur.rowcount > 0
+
+    @staticmethod
+    def revoke(conn: sqlite3.Connection, raw_token: str) -> bool:
+        """Mark single token as revoked by raw token value."""
+        token_hash = TokenModel.hash_token(raw_token)
+        return TokenModel.revoke_by_hash(conn, token_hash)
 
     @staticmethod
     def revoke_family(conn: sqlite3.Connection, token_family_id: str) -> int:
@@ -183,3 +218,22 @@ class TokenModel:
         )
         conn.commit()
         return cur.rowcount
+
+    @staticmethod
+    def get_family_tokens(
+        conn: sqlite3.Connection, token_family_id: str
+    ) -> List[Dict[str, Any]]:
+        """Retrieve all tokens associated with a given family identifier."""
+        if not token_family_id:
+            return []
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT id, token_type, token_value_hash, jti, client_id, user_id,
+                   scope, token_family_id, expires_at, revoked_at, created_at
+            FROM tokens WHERE token_family_id = ?
+            ORDER BY created_at ASC
+            """,
+            (token_family_id,),
+        )
+        return [dict(r) for r in cur.fetchall()]
