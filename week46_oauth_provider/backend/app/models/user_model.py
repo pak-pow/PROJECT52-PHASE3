@@ -1,7 +1,7 @@
 """User entity model and credential management for PulseAuth."""
 
 import sqlite3
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -84,3 +84,13 @@ class UserModel:
             return safe_user
 
         return None
+
+    @staticmethod
+    def list_all(conn: sqlite3.Connection) -> List[Dict[str, Any]]:
+        """List all users omitting sensitive password hashes."""
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT id, email, full_name, is_active, created_at, updated_at
+            FROM users ORDER BY id ASC
+            """)
+        return [dict(r) for r in cur.fetchall()]
