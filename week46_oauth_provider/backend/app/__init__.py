@@ -10,10 +10,13 @@ from app.config.settings import Config, get_config
 from app.crypto.rsa_manager import RSAKeyManager
 from app.db.connection import close_db, init_db
 from app.routes.auth_routes import auth_bp
+from app.routes.client_routes import client_bp
 from app.routes.discovery_routes import discovery_bp
 from app.routes.introspection_routes import introspection_bp
+from app.routes.resource_routes import resource_bp
 from app.routes.revocation_routes import revocation_bp
 from app.routes.token_routes import token_bp
+from app.routes.user_auth_routes import user_auth_bp
 from app.routes.userinfo_routes import userinfo_bp
 
 
@@ -56,6 +59,9 @@ def create_app(config_class: Optional[Type[Config]] = None) -> Flask:
     app.register_blueprint(userinfo_bp)
     app.register_blueprint(revocation_bp)
     app.register_blueprint(introspection_bp)
+    app.register_blueprint(resource_bp)
+    app.register_blueprint(client_bp)
+    app.register_blueprint(user_auth_bp)
 
     # Global Error Handlers
     @app.errorhandler(400)
