@@ -142,3 +142,28 @@ class ClientModel:
             item["scopes"] = json.loads(item["scopes_json"])
             clients.append(item)
         return clients
+
+    @staticmethod
+    def rotate_secret(
+        conn: sqlite3.Connection, client_id: str, new_secret: str
+    ) -> bool:
+        """Update client secret with newly generated scrypt hash."""
+        client = ClientModel.get_by_client_id(conn, client_id)
+        if not client or client["client_type"] != "confidential":
+            return False
+        secret_hash = generate_password_hash(new_secret, method="scrypt")
+        cur = conn.cursor()
+        cur.execute(
+            "UPDATE clients SET client_secret_hash = ? WHERE client_id = ?",
+            (secret_hash, client_id),
+        )
+        conn.commit()
+        return cur.rowcount > 0
+
+    @staticmethod
+    def delete(conn: sqlite3.Connection, client_id: str) -> bool:
+        """Delete client record by client_id."""
+        cur = conn.cursor()
+        cur.execute("DELETE FROM clients WHERE client_id = ?", (client_id,))
+        conn.commit()
+        return cur.rowcount > 0
