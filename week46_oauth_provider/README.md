@@ -199,6 +199,27 @@ Accepts `application/x-www-form-urlencoded` or `application/json`. Client authen
   - If active: `{ "active": true, "scope": "...", "client_id": "...", "sub": "...", "token_type": "Bearer", "exp": 1731234567, "iat": 1731230967, "iss": "..." }`.
   - If invalid, expired, or revoked: `{ "active": false }`.
 
+### 3. Protected Resource Server Endpoints (Day 5)
+Protected by `@require_oauth_token` middleware validating RS256 Bearer JWTs, checking real-time database revocation, and enforcing granular scopes.
+
+| Method | Endpoint | Required Scope | Description |
+|:---|:---|:---|:---|
+| `GET` | `/api/v1/resource/profile` | `profile` / `read:profile` / `openid` | Returns authenticated user profile and authorized scopes |
+| `GET` | `/api/v1/resource/documents` | `read:documents` | Returns sensitive confidential documents for the user/client |
+| `POST` | `/api/v1/resource/documents` | `write:documents` | Creates a new document linked to caller's subject ID |
+
+### 4. Developer Client Management & User Auth Endpoints (Day 5)
+| Method | Endpoint | Description |
+|:---|:---|:---|
+| `GET` | `/api/v1/clients` | List all registered OAuth 2.0 clients (omits secret hashes) |
+| `POST` | `/api/v1/clients` | Register new OAuth 2.0 client application (RFC 7591) |
+| `GET` | `/api/v1/clients/<client_id>` | Fetch single client configuration details |
+| `POST` | `/api/v1/clients/<client_id>/rotate-secret` | Rotate confidential client secret |
+| `DELETE` | `/api/v1/clients/<client_id>` | Delete registered client record |
+| `POST` | `/api/v1/auth/login` | Authenticate user credentials and return profile |
+| `POST` | `/api/v1/auth/register` | Register new user account with scrypt password hashing |
+| `GET` | `/api/v1/auth/users` | List registered user profiles (omits password hashes) |
+
 ---
 
 ## Quality Gates & Automated Test Suite
@@ -208,7 +229,7 @@ All Python code conforms strictly to the 5 enterprise quality gates:
 - **Black**: 100% compliant formatting.
 - **isort**: Deterministic import ordering.
 - **Bandit**: 0 security vulnerabilities identified (`-ll` severity).
-- **Pytest**: 108 unit and integration tests passing with **96.19% branch coverage**.
+- **Pytest**: 126 unit and integration tests passing with **96.07% branch coverage**.
 
 ### Running Quality Gates
 ```powershell
@@ -271,10 +292,13 @@ week46_oauth_provider/
 │   │   ├── routes/
 │   │   │   ├── __init__.py
 │   │   │   ├── auth_routes.py       # GET & POST /oauth/authorize controller
+│   │   │   ├── client_routes.py     # Developer client registration & management API
 │   │   │   ├── discovery_routes.py  # /.well-known/openid-configuration & jwks.json
 │   │   │   ├── introspection_routes.py # POST /oauth/introspect RFC 7662 controller
+│   │   │   ├── resource_routes.py   # Protected demo resource server APIs
 │   │   │   ├── revocation_routes.py # POST /oauth/revoke RFC 7009 controller
 │   │   │   ├── token_routes.py      # POST /oauth/token endpoint for code, m2m, refresh
+│   │   │   ├── user_auth_routes.py  # User authentication and registration API
 │   │   │   └── userinfo_routes.py   # GET & POST /oauth/userinfo OIDC user claims endpoint
 │   │   ├── services/
 │   │   │   ├── __init__.py
@@ -283,6 +307,7 @@ week46_oauth_provider/
 │   │   │   ├── client_auth_service.py # RFC 6749 client authentication (Basic, post, none)
 │   │   │   ├── pkce_service.py      # RFC 7636 PKCE S256/plain verifier & challenge
 │   │   │   ├── refresh_service.py   # Refresh token rotation & reuse detection (RFC 6749)
+│   │   │   ├── token_guard.py       # @require_oauth_token security middleware
 │   │   │   └── token_service.py     # RS256 JWT access tokens, OIDC ID tokens, refresh tokens
 │   │   ├── templates/
 │   │   │   └── consent.html         # High-contrast interactive user consent screen
@@ -297,6 +322,7 @@ week46_oauth_provider/
 │   │   ├── test_auth_code_service.py # Code lifecycle, expiration & URL builder tests
 │   │   ├── test_authorize_routes.py  # Authorization endpoint integration tests
 │   │   ├── test_client_auth_service.py # Client authentication unit tests
+│   │   ├── test_client_routes.py    # Client registration and management tests
 │   │   ├── test_consent_model.py    # Consent model persistence unit tests
 │   │   ├── test_coverage_edge_cases.py
 │   │   ├── test_database_and_models.py
@@ -304,11 +330,14 @@ week46_oauth_provider/
 │   │   ├── test_introspection.py    # RFC 7662 token introspection tests
 │   │   ├── test_pkce_service.py     # RFC 7636 Appendix B test vector & syntax tests
 │   │   ├── test_refresh_rotation.py # Refresh token rotation & reuse detection tests
+│   │   ├── test_resource_routes.py  # Protected resource server endpoint tests
 │   │   ├── test_revocation.py       # RFC 7009 token revocation tests
 │   │   ├── test_rsa_manager.py
+│   │   ├── test_token_guard.py      # @require_oauth_token middleware unit tests
 │   │   ├── test_token_model.py      # Token persistence & revocation tests
 │   │   ├── test_token_routes.py     # Token endpoint integration tests
 │   │   ├── test_token_service.py    # RS256 token generation & verification tests
+│   │   ├── test_user_auth_routes.py # User authentication API tests
 │   │   └── test_userinfo_routes.py  # OIDC UserInfo endpoint tests
 │   ├── .coveragerc                  # Pytest coverage thresholds (90%+)
 │   ├── .flake8                      # Flake8 configuration (88-char limit)
