@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>PulseAuth - OAuth 2.0 & OpenID Connect Provider</title>
+    <link rel="stylesheet" href="/css/base.css">
+</head>
+<body>
+    <!-- Top Application Bar -->
+    <header class="app-header">
+        <div class="header-container">
+            <div class="brand-section">
+                <span class="brand-badge">[PULSEAUTH]</span>
+                <span class="brand-title">Identity & Access Management</span>
+                <span class="brand-subtitle">- RFC 6749 / OIDC Provider Console</span>
+            </div>
+            <div class="header-actions">
+                <div id="backend-status-badge" class="status-badge">
+                    <span class="status-dot"></span>
+                    <span id="backend-status-text">CONNECTING...</span>
+                </div>
+                <button id="theme-toggle-btn" class="btn btn-sm btn-secondary" aria-label="Toggle visual theme">[LIGHT MODE]</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="app-nav" aria-label="Application navigation">
+        <div class="nav-container">
+            <button class="nav-tab active" data-tab="playground">
+                <span class="tab-index">01</span>
+                <span>OAuth 2.0 Playground</span>
+            </button>
+            <button class="nav-tab" data-tab="clients">
+                <span class="tab-index">02</span>
+                <span>Developer Clients</span>
+            </button>
+            <button class="nav-tab" data-tab="users">
+                <span class="tab-index">03</span>
+                <span>User Accounts</span>
+            </button>
+            <button class="nav-tab" data-tab="metadata">
+                <span class="tab-index">04</span>
+                <span>Discovery & Keys</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+        <!-- ========================================== -->
+        <!-- TAB 1: OAUTH 2.0 & OIDC PLAYGROUND CONSOLE -->
+        <!-- ========================================== -->
+        <section id="tab-playground" class="tab-panel active">
+            <div class="section-header">
+                <h2 class="section-title">Interactive OAuth 2.0 & OIDC Playground</h2>
+                <p class="section-desc">Test authorization code with PKCE, client credentials, refresh token rotation, RS256 JWT claim inspection, and resource API execution.</p>
+            </div>
+
+            <!-- STEP 1: CONFIGURATION -->
+            <div class="card step-card">
+                <div class="step-header">
+                    <span class="step-num">1</span>
+                    <h3 class="card-title">Client Selection & Grant Protocol Setup</h3>
+                </div>
+
+                <div class="grid-2">
+                    <div>
+                        <div class="form-group">
+                            <label for="pg-client-select" class="form-label">Client Application Preset</label>
+                            <select id="pg-client-select" class="form-select">
+                                <option value="pulse-web-app">pulse-web-app (Confidential Client - Web App)</option>
+                                <option value="pulse-mobile-app">pulse-mobile-app (Public Client - Native Mobile / SPA)</option>
+                                <option value="pulse-m2m-service">pulse-m2m-service (Confidential Client - M2M Daemon)</option>
+                                <option value="custom">Custom Client Configuration</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="pg-client-id" class="form-label">Client ID</label>
+                            <input type="text" id="pg-client-id" class="form-control" placeholder="client_id">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="pg-client-secret" class="form-label">Client Secret (Leave blank for public clients)</label>
+                            <input type="password" id="pg-client-secret" class="form-control" placeholder="client_secret">
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="form-group">
+                            <label for="pg-grant-type" class="form-label">OAuth 2.0 Grant Type</label>
+                            <select id="pg-grant-type" class="form-select">
+                                <option value="authorization_code" selected>authorization_code (RFC 6749 + RFC 7636 PKCE)</option>
+                                <option value="client_credentials">client_credentials (Machine-to-Machine)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="pg-redirect-uri" class="form-label">Redirect URI</label>
+                            <input type="text" id="pg-redirect-uri" class="form-control" value="http://127.0.0.1:5000/callback">
+                        </div>
+
+                        <div class="grid-2">
+                            <div class="form-group">
+                                <label for="pg-state" class="form-label">State Parameter (CSRF Protection)</label>
+                                <input type="text" id="pg-state" class="form-control" value="pulse_state_demo_xyz">
+                            </div>
+                            <div class="form-group">
+                                <label for="pg-nonce" class="form-label">OIDC Nonce (Replay Mitigation)</label>
+                                <input type="text" id="pg-nonce" class="form-control" value="pulse_nonce_demo_abc">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scope Selection -->
+                <div class="form-group" style="margin-top: 0.5rem;">
+                    <label class="form-label">Requested Scopes</label>
+                    <div class="form-check-group">
+                        <label class="form-check"><input type="checkbox" name="pg-scope" value="openid" checked> openid</label>
+                        <label class="form-check"><input type="checkbox" name="pg-scope" value="profile" checked> profile</label>
+                        <label class="form-check"><input type="checkbox" name="pg-scope" value="email" checked> email</label>
+                        <label class="form-check"><input type="checkbox" name="pg-scope" value="offline_access" checked> offline_access (Refresh Token)</label>
+                        <label class="form-check"><input type="checkbox" name="pg-scope" value="read:documents" checked> read:documents</label>
+                        <label class="form-check"><input type="checkbox" name="pg-scope" value="write:documents" checked> write:documents</label>
+                    </div>
+                </div>
+
+                <!-- PKCE Controls -->
+                <div id="step-pkce-container" style="margin-top: 0.5rem; padding-top: 0.75rem; border-top: 1px solid var(--border-color);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <label class="form-check" style="font-weight: 600;">
+                            <input type="checkbox" id="pg-use-pkce" checked>
+                            <span>Enable RFC 7636 PKCE (Proof Key for Code Exchange)</span>
+                        </label>
+                        <button id="pg-regen-pkce-btn" class="btn btn-sm btn-secondary">[REGENERATE PKCE]</button>
+                    </div>
+
+                    <div class="grid-3">
+                        <div class="form-group">
+                            <label for="pg-challenge-method" class="form-label">Code Challenge Method</label>
+                            <select id="pg-challenge-method" class="form-select">
+                                <option value="S256" selected>S256 (SHA-256 Hash - Recommended)</option>
+                                <option value="plain">plain (Un-hashed)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="pg-code-verifier" class="form-label">Code Verifier (Client Secret Cryptographic Salt)</label>
+                            <input type="text" id="pg-code-verifier" class="form-control" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="pg-code-challenge" class="form-label">Code Challenge (Transmitted in /authorize)</label>
+                            <input type="text" id="pg-code-challenge" class="form-control" readonly>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 2: AUTHORIZE & CONSENT -->
+            <div id="step-auth-code-container" class="card step-card">
+                <div class="step-header">
+                    <span class="step-num">2</span>
+                    <h3 class="card-title">User Authorization & Consent Screen</h3>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Generated Authorization URL (/oauth/authorize)</label>
+                    <div class="code-box" style="margin-bottom: 0.75rem;">
+                        <pre id="pg-auth-url-display">http://127.0.0.1:5000/oauth/authorize?...</pre>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
+                    <button id="pg-launch-auth-btn" class="btn btn-primary">[LAUNCH CONSENT POPUP]</button>
+                    <button id="pg-simulate-auth-btn" class="btn btn-success">[FAST SIMULATE: LOGIN & APPROVE]</button>
+                    <button id="pg-copy-auth-url-btn" class="btn btn-secondary">[COPY AUTH URL]</button>
+                </div>
+
+                <div class="form-group">
+                    <label for="pg-auth-code-input" class="form-label">Captured Authorization Code (Single-use, 60s TTL)</label>
+                    <input type="text" id="pg-auth-code-input" class="form-control" placeholder="Authorization code will appear here after consent...">
+                </div>
+            </div>
+
+            <!-- STEP 3: TOKEN EXCHANGE -->
+            <div class="card step-card">
+                <div class="step-header">
+                    <span class="step-num">3</span>
+                    <h3 class="card-title">Token Exchange (POST /oauth/token)</h3>
+                </div>
+
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="pg-auth-method" class="form-label">Client Authentication Scheme</label>
+                        <select id="pg-auth-method" class="form-select">
+                            <option value="post" selected>client_secret_post (Credentials in POST body)</option>
+                            <option value="basic">client_secret_basic (HTTP Authorization: Basic)</option>
+                            <option value="none">none (Public Client with PKCE only)</option>
+                        </select>
+                    </div>
+
+                    <div id="exchange-code-inputs" class="grid-2">
+                        <div class="form-group">
+                            <label for="pg-exchange-code" class="form-label">Authorization Code</label>
+                            <input type="text" id="pg-exchange-code" class="form-control" placeholder="Paste or capture code">
+                        </div>
+                        <div class="form-group">
+                            <label for="pg-exchange-verifier" class="form-label">PKCE Code Verifier</label>
+                            <input type="text" id="pg-exchange-verifier" class="form-control" placeholder="Code verifier">
+                        </div>
+                    </div>
+                </div>
+
+                <button id="pg-exchange-token-btn" class="btn btn-primary" style="margin-top: 0.5rem;">[EXECUTE TOKEN EXCHANGE: POST /oauth/token]</button>
+
+                <!-- Token Exchange Response Inspector -->
+                <div id="pg-token-response-inspector" class="response-inspector" style="display: none; margin-top: 1rem;">
+                    <div class="response-bar">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span class="badge badge-info">[POST /oauth/token]</span>
+                            <span id="pg-token-status-pill" class="badge badge-success">200 OK</span>
+                            <span id="pg-token-latency-pill" class="badge badge-info">32ms</span>
+                        </div>
+                        <span style="font-size: 0.75rem; color: var(--text-secondary);">Live Response Body</span>
+                    </div>
+                    <div class="code-box">
+                        <pre id="pg-token-raw-json">// Token response payload</pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 4: RS256 JWT CLAIM INSPECTOR -->
+            <div id="jwt-inspector-container" class="card step-card" style="display: none;">
+                <div class="step-header">
+                    <span class="step-num">4</span>
+                    <h3 class="card-title">Cryptographic RS256 JWT Claim Inspector</h3>
+                </div>
+
+                <!-- Access Token Inspection -->
+                <div style="margin-bottom: 1.5rem;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <h4 style="font-size: 0.95rem; font-weight: 700;">OAuth 2.0 Access Token (RS256)</h4>
+                        <span id="jwt-access-token-exp-badge" class="badge badge-success">[ACTIVE]</span>
+                    </div>
+                    <div id="jwt-access-token-raw" class="jwt-raw-display"></div>
+                    <div class="jwt-decoded-grid">
+                        <div class="jwt-section-card">
+                            <div class="jwt-section-header header-title">
+                                <span>Token Header (Base64URL)</span>
+                                <span>RS256</span>
+                            </div>
+                            <div class="code-box"><pre id="jwt-access-token-header"></pre></div>
+                        </div>
+                        <div class="jwt-section-card">
+                            <div class="jwt-section-header payload-title">
+                                <span>Token Payload Claims</span>
+                                <span>Decoded Claims</span>
+                            </div>
+                            <div class="code-box"><pre id="jwt-access-token-payload"></pre></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ID Token Inspection -->
+                <div id="jwt-id-token-section" style="display: none;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <h4 style="font-size: 0.95rem; font-weight: 700;">OpenID Connect ID Token (RS256)</h4>
+                        <span id="jwt-id-token-exp-badge" class="badge badge-success">[ACTIVE]</span>
+                    </div>
+                    <div id="jwt-id-token-raw" class="jwt-raw-display"></div>
+                    <div class="jwt-decoded-grid">
+                        <div class="jwt-section-card">
+                            <div class="jwt-section-header header-title">
+                                <span>ID Token Header</span>
+                                <span>RS256</span>
+                            </div>
+                            <div class="code-box"><pre id="jwt-id-token-header"></pre></div>
+                        </div>
+                        <div class="jwt-section-card">
+                            <div class="jwt-section-header payload-title">
+                                <span>ID Token User Claims</span>
+                                <span>OIDC Core 1.0</span>
+                            </div>
+                            <div class="code-box"><pre id="jwt-id-token-payload"></pre></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 5: RESOURCE SERVER & LIFECYCLE ACTION RUNNER -->
+            <div class="card step-card">
+                <div class="step-header">
+                    <span class="step-num">5</span>
+                    <h3 class="card-title">Protected Resource Server & Lifecycle Action Center</h3>
+                </div>
+
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+                    Execute live authorized API calls against protected endpoints using the issued Bearer access token or verify revocation and introspection:
+                </p>
+
+                <div class="action-bar">
+                    <button id="action-userinfo" class="btn btn-secondary btn-sm">[GET] /oauth/userinfo</button>
+                    <button id="action-profile" class="btn btn-secondary btn-sm">[GET] /api/v1/resource/profile</button>
+                    <button id="action-get-docs" class="btn btn-secondary btn-sm">[GET] /api/v1/resource/documents</button>
+                    <button id="action-post-doc" class="btn btn-secondary btn-sm">[POST] /api/v1/resource/documents</button>
+                    <button id="action-introspect" class="btn btn-secondary btn-sm">[POST] /oauth/introspect</button>
+                    <button id="action-refresh" class="btn btn-success btn-sm">[POST] /oauth/token (REFRESH ROTATION)</button>
+                    <button id="action-revoke" class="btn btn-danger btn-sm">[POST] /oauth/revoke</button>
+                </div>
+
+                <div id="pg-resource-response-inspector" class="response-inspector" style="display: none;">
+                    <div class="response-bar">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span id="pg-res-method-pill" class="badge badge-info">GET</span>
+                            <span id="pg-res-url-text" style="font-family: var(--font-mono); font-weight: 600;">/oauth/userinfo</span>
+                            <span id="pg-res-status-pill" class="badge badge-success">200 OK</span>
+                            <span id="pg-res-latency-pill" class="badge badge-info">18ms</span>
+                        </div>
+                        <span style="font-size: 0.75rem; color: var(--text-secondary);">API Execution Log</span>
+                    </div>
+                    <div class="grid-2" style="padding: 0.5rem; gap: 0.5rem;">
+                        <div>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.25rem;">REQUEST HEADERS:</div>
+                            <div class="code-box" style="max-height: 180px;"><pre id="pg-res-headers-display"></pre></div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.25rem;">RESPONSE BODY:</div>
+                            <div class="code-box" style="max-height: 180px;"><pre id="pg-res-body-display"></pre></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- TAB 2: DEVELOPER CLIENT MANAGEMENT PORTAL  -->
+        <!-- ========================================== -->
+        <section id="tab-clients" class="tab-panel">
+            <div class="section-header">
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+                    <div>
+                        <h2 class="section-title">Developer Client Management Portal</h2>
+                        <p class="section-desc">Register and administer OAuth 2.0 applications, configure allowed redirect URIs, scopes, and rotate client credentials.</p>
+                    </div>
+                    <button id="portal-refresh-clients-btn" class="btn btn-secondary btn-sm">[REFRESH CLIENTS]</button>
+                </div>
+            </div>
+
+            <!-- New Client Credentials Modal/Card -->
+            <div id="portal-new-credentials-card" class="card" style="display: none; border-left: 4px solid var(--accent-emerald);">
+                <div class="card-header">
+                    <span class="card-title" style="color: var(--accent-emerald);">[APPLICATION CREATED SUCCESSFULLY]</span>
+                </div>
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+                    Record these credentials securely. The Client Secret is hashed with scrypt and cannot be recovered if lost.
+                </p>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="form-label">Client ID</label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input type="text" id="new-cred-client-id" class="form-control" readonly>
+                            <button id="new-cred-copy-id-btn" class="btn btn-sm btn-secondary">[COPY]</button>
+                        </div>
+                    </div>
+                    <div id="new-cred-secret-row" class="form-group">
+                        <label class="form-label">Plaintext Client Secret</label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input type="text" id="new-cred-client-secret" class="form-control" readonly style="color: var(--accent-emerald); font-weight: 700;">
+                            <button id="new-cred-copy-secret-btn" class="btn btn-sm btn-secondary">[COPY]</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Client Registration Form -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Register New OAuth 2.0 Client Application</h3>
+                </div>
+                <form id="portal-client-form">
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label for="reg-client-name" class="form-label">Application Name</label>
+                            <input type="text" id="reg-client-name" class="form-control" placeholder="e.g. Analytics Dashboard" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="reg-client-type" class="form-label">Client Type</label>
+                            <select id="reg-client-type" class="form-select">
+                                <option value="confidential" selected>Confidential Client (Server-side web app or API service with secret)</option>
+                                <option value="public">Public Client (SPA, mobile app without secret - PKCE required)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reg-redirect-uris" class="form-label">Allowed Redirect URIs (One per line or comma-separated)</label>
+                        <textarea id="reg-redirect-uris" class="form-control" rows="2" placeholder="http://127.0.0.1:5000/callback&#10;http://localhost:3000/callback" required></textarea>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label class="form-label">Allowed Grant Types</label>
+                            <div class="form-check-group">
+                                <label class="form-check"><input type="checkbox" name="reg-grant-type" value="authorization_code" checked> authorization_code</label>
+                                <label class="form-check"><input type="checkbox" name="reg-grant-type" value="refresh_token" checked> refresh_token</label>
+                                <label class="form-check"><input type="checkbox" name="reg-grant-type" value="client_credentials"> client_credentials</label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Allowed Scopes</label>
+                            <div class="form-check-group">
+                                <label class="form-check"><input type="checkbox" name="reg-scope" value="openid" checked> openid</label>
+                                <label class="form-check"><input type="checkbox" name="reg-scope" value="profile" checked> profile</label>
+                                <label class="form-check"><input type="checkbox" name="reg-scope" value="email" checked> email</label>
+                                <label class="form-check"><input type="checkbox" name="reg-scope" value="offline_access" checked> offline_access</label>
+                                <label class="form-check"><input type="checkbox" name="reg-scope" value="read:documents" checked> read:documents</label>
+                                <label class="form-check"><input type="checkbox" name="reg-scope" value="write:documents"> write:documents</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="portal-register-submit-btn" class="btn btn-primary" style="margin-top: 0.5rem;">[REGISTER APPLICATION]</button>
+                </form>
+            </div>
+
+            <!-- Registered Clients List -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Registered Applications Registry</h3>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Application Name & ID</th>
+                                <th>Type</th>
+                                <th>Allowed Scopes</th>
+                                <th>Redirect URIs</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="portal-clients-table-body">
+                            <tr><td colspan="6" class="text-muted" style="text-align: center;">Loading client registry...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- TAB 3: USER ACCOUNTS & AUTHENTICATION      -->
+        <!-- ========================================== -->
+        <section id="tab-users" class="tab-panel">
+            <div class="section-header">
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+                    <div>
+                        <h2 class="section-title">User Accounts & Authentication Directory</h2>
+                        <p class="section-desc">Manage registered user identities, test scrypt password verification, and inspect identity profiles.</p>
+                    </div>
+                    <button id="users-refresh-btn" class="btn btn-secondary btn-sm">[REFRESH DIRECTORY]</button>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <!-- User Registration Form -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Create New User Account</h3>
+                    </div>
+                    <form id="users-reg-form">
+                        <div class="form-group">
+                            <label for="usr-reg-email" class="form-label">Email Address</label>
+                            <input type="email" id="usr-reg-email" class="form-control" placeholder="user@example.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="usr-reg-name" class="form-label">Full Name</label>
+                            <input type="text" id="usr-reg-name" class="form-control" placeholder="Jane Doe" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="usr-reg-password" class="form-label">Password (Min 8 characters)</label>
+                            <input type="password" id="usr-reg-password" class="form-control" placeholder="••••••••" minlength="8" required>
+                        </div>
+                        <button type="submit" id="users-reg-submit-btn" class="btn btn-primary">[CREATE USER ACCOUNT]</button>
+                    </form>
+                </div>
+
+                <!-- Credential Verification Test -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Test Credential Login (/api/v1/auth/login)</h3>
+                    </div>
+                    <div style="margin-bottom: 0.75rem; display: flex; gap: 0.35rem; flex-wrap: wrap;">
+                        <span style="font-size: 0.75rem; color: var(--text-secondary); width: 100%;">Seed Presets:</span>
+                        <button id="preset-dev-btn" class="btn btn-sm btn-secondary">[PRESET: DEVELOPER]</button>
+                        <button id="preset-admin-btn" class="btn btn-sm btn-secondary">[PRESET: ADMIN]</button>
+                        <button id="preset-user-btn" class="btn btn-sm btn-secondary">[PRESET: USER]</button>
+                    </div>
+                    <form id="users-login-form">
+                        <div class="form-group">
+                            <label for="usr-login-email" class="form-label">Email</label>
+                            <input type="email" id="usr-login-email" class="form-control" value="developer@pulseauth.dev" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="usr-login-password" class="form-label">Password</label>
+                            <input type="password" id="usr-login-password" class="form-control" value="DevPass2026!" required>
+                        </div>
+                        <button type="submit" id="users-login-submit-btn" class="btn btn-secondary">[TEST CREDENTIAL LOGIN]</button>
+                    </form>
+
+                    <div id="users-login-result-box" class="response-inspector" style="display: none; margin-top: 0.75rem;">
+                        <div class="code-box" style="max-height: 140px;">
+                            <pre id="users-login-result-json"></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Users Directory Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Registered User Directory</h3>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Subject UUID</th>
+                                <th>Email Address</th>
+                                <th>Full Name</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table-body">
+                            <tr><td colspan="5" class="text-muted" style="text-align: center;">Loading user directory...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- TAB 4: DISCOVERY & CRYPTOGRAPHIC KEYS      -->
+        <!-- ========================================== -->
+        <section id="tab-metadata" class="tab-panel">
+            <div class="section-header">
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+                    <div>
+                        <h2 class="section-title">OpenID Discovery & Cryptographic Keyset</h2>
+                        <p class="section-desc">Public configuration endpoints and RSA JWKS key material for decentralized asymmetric signature verification.</p>
+                    </div>
+                    <button id="meta-refresh-btn" class="btn btn-secondary btn-sm">[REFRESH METADATA]</button>
+                </div>
+            </div>
+
+            <!-- Quick Metrics Grid -->
+            <div class="grid-3" style="margin-bottom: 1.25rem;">
+                <div class="card" style="margin-bottom: 0;">
+                    <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 0.25rem;">Provider Issuer URI</div>
+                    <div id="meta-issuer-display" style="font-family: var(--font-mono); font-weight: 700; font-size: 0.9rem; word-break: break-all;">-</div>
+                </div>
+                <div class="card" style="margin-bottom: 0;">
+                    <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 0.25rem;">Active RSA Key ID (kid)</div>
+                    <div id="meta-active-kid-display" style="font-family: var(--font-mono); font-weight: 700; font-size: 0.9rem; color: var(--accent-emerald); word-break: break-all;">-</div>
+                </div>
+                <div class="card" style="margin-bottom: 0;">
+                    <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 0.25rem;">Signing Algorithm</div>
+                    <div style="font-family: var(--font-mono); font-weight: 700; font-size: 0.9rem; color: var(--accent-blue);">RS256 (2048-bit RSA)</div>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <!-- OpenID Discovery Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">OpenID Provider Configuration</h3>
+                        <div style="display: flex; gap: 0.35rem;">
+                            <a href="/.well-known/openid-configuration" target="_blank" class="btn btn-sm btn-secondary">[OPEN]</a>
+                            <button id="meta-copy-discovery-btn" class="btn btn-sm btn-secondary">[COPY]</button>
+                        </div>
+                    </div>
+                    <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                        RFC 8414 OAuth 2.0 Authorization Server Metadata: <code>/.well-known/openid-configuration</code>
+                    </p>
+                    <div class="code-box" style="max-height: 400px;">
+                        <pre id="meta-discovery-json">Loading discovery metadata...</pre>
+                    </div>
+                </div>
+
+                <!-- JWKS Keyset Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">JSON Web Key Set (JWKS)</h3>
+                        <div style="display: flex; gap: 0.35rem;">
+                            <a href="/.well-known/jwks.json" target="_blank" class="btn btn-sm btn-secondary">[OPEN]</a>
+                            <button id="meta-copy-jwks-btn" class="btn btn-sm btn-secondary">[COPY]</button>
+                        </div>
+                    </div>
+                    <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                        RFC 7517 JSON Web Key (JWK) Keyset: <code>/.well-known/jwks.json</code>
+                    </p>
+                    <div class="code-box" style="max-height: 400px;">
+                        <pre id="meta-jwks-json">Loading JWKS keyset...</pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Global Toast Container -->
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+    <!-- Application Footer -->
+    <footer class="app-footer">
+        <p>PulseAuth OAuth 2.0 & OpenID Connect Provider - Production Identity Architecture</p>
+        <p style="margin-top: 0.25rem;">Compliant with RFC 6749, RFC 7636 (PKCE), RFC 7519 (JWT), RFC 7517 (JWKS), RFC 7009 (Revocation), RFC 7662 (Introspection), OpenID Connect Core 1.0</p>
+    </footer>
+
+    <!-- Master Application Script -->
+    <script type="module" src="/js/app.js"></script>
+</body>
+</html>
