@@ -30,6 +30,9 @@ class Config:
     RSA_PRIVATE_KEY_PATH = str(KEYS_DIR / "rsa_private.pem")
     RSA_PUBLIC_KEY_PATH = str(KEYS_DIR / "rsa_public.pem")
 
+    # Frontend Assets Directory
+    FRONTEND_DIR = BACKEND_DIR.parent / "frontend"
+
     # OAuth 2.0 / OIDC Expiration Windows (in seconds)
     AUTH_CODE_TTL_SECONDS = int(os.getenv("AUTH_CODE_TTL_SECONDS", "60"))
     ACCESS_TOKEN_TTL_SECONDS = int(os.getenv("ACCESS_TOKEN_TTL_SECONDS", "3600"))
