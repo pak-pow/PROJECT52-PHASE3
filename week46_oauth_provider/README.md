@@ -9,6 +9,7 @@
 ![Crypto](https://img.shields.io/badge/crypto-RS256%202048bit-red.svg)
 ![Quality Gates](https://img.shields.io/badge/quality--gates-5%20passed-brightgreen.svg)
 ![Coverage](https://img.shields.io/badge/coverage-96.2%25-brightgreen.svg)
+![Tests](https://img.shields.io/badge/tests-135%20passed-brightgreen.svg)
 
 <p align="center">
   <strong>A production-grade, standards-compliant Identity Provider (IdP) and Authorization Server implementing OAuth 2.0 (RFC 6749), Proof Key for Code Exchange (PKCE - RFC 7636), OpenID Connect Core 1.0 (OIDC), Asymmetric RS256 JWT Issuance, JWKS Key Distribution (RFC 7517), Token Revocation (RFC 7009), Token Introspection (RFC 7662), and an Interactive OAuth Playground.</strong>
@@ -26,6 +27,7 @@
 - [Cryptographic Engine & Key Architecture](#cryptographic-engine--key-architecture)
 - [Database Schema & Persistence](#database-schema--persistence)
 - [REST API Reference](#rest-api-reference)
+- [Interactive Playground & Frontend Console](#interactive-playground--frontend-console)
 - [Quality Gates & Automated Test Suite](#quality-gates--automated-test-suite)
 - [Quickstart Guide](#quickstart-guide)
 - [Project Structure](#project-structure)
@@ -222,6 +224,54 @@ Protected by `@require_oauth_token` middleware validating RS256 Bearer JWTs, che
 
 ---
 
+## Interactive Playground & Frontend Console
+
+PulseAuth includes a responsive, mobile-first frontend application console in `frontend/` served directly by the backend at `http://127.0.0.1:5000/`:
+
+```text
++-----------------------------------------------------------------------------------+
+| [PULSEAUTH] Identity & Access Management - RFC 6749 / OIDC Console  [CONNECTED]   |
++-----------------------------------------------------------------------------------+
+| [01] OAuth Playground | [02] Developer Clients | [03] User Accounts | [04] Keys   |
++-----------------------------------------------------------------------------------+
+```
+
+### 1. OAuth 2.0 & OIDC Playground (`sandbox_playground.js`)
+- **Visual Client Selector**: Preset configurations for `pulse-web-app` (Confidential), `pulse-mobile-app` (Public with PKCE), `pulse-m2m-service` (Client Credentials), or custom applications.
+- **Client-Side PKCE Engine**: Cryptographic random generation of `code_verifier` (64 bytes) and SHA-256 base64url-encoded `code_challenge` using browser `crypto.subtle`.
+- **Authorization & Consent Flow**:
+  - Live authorization URL generator with query parameter inspection.
+  - Interactive popup consent prompt or single-click simulated login and consent issuance.
+  - Cross-window communication (`window.postMessage`) automatically capturing authorization codes.
+- **Token Exchange**: Real-time `POST /oauth/token` execution supporting `client_secret_post`, `client_secret_basic`, or public client PKCE verification with latency tracking.
+- **Cryptographic RS256 JWT Claim Inspector**:
+  - Tripartite visualizer styling token Header (rose), Payload Claims (cyan), and Signature (mint).
+  - Live expiration status indicator calculating remaining lifetime in seconds.
+  - Algorithm and Key ID (`kid`) matching against JWKS keys.
+- **Resource Server & Lifecycle Action Runner**:
+  - Interactive triggers for `GET /oauth/userinfo`, `GET /api/v1/resource/profile`, `GET /api/v1/resource/documents`, and `POST /api/v1/resource/documents`.
+  - Token Introspection (`POST /oauth/introspect`) and Token Revocation (`POST /oauth/revoke`).
+  - Refresh Token Rotation test with automatic token replacement and lineage tracking.
+
+### 2. Developer Client Management Portal (`client_portal.js`)
+- Register new public and confidential client applications.
+- Dynamic generation of unique client identifiers and scrypt-hashed secrets.
+- Secure display card for newly issued plaintext secrets with one-click clipboard copying.
+- Registered applications directory with secret rotation and deletion controls.
+- One-click "Load in Playground" button for immediate protocol testing.
+
+### 3. User Accounts & Identity Directory (`user_manager.js`)
+- User account registration with scrypt password hashing and validation rules.
+- Live credential authentication tester with pre-seeded demo user credentials.
+- Registered users directory displaying subject UUIDs, email verification statuses, and timestamps.
+
+### 4. Discovery & Cryptographic Keyset Viewer (`metadata_viewer.js`)
+- Live query and display of `GET /.well-known/openid-configuration` (RFC 8414).
+- Live query and display of `GET /.well-known/jwks.json` (RFC 7517).
+- Summary cards for Provider Issuer URI, Active RSA Key ID, and Supported Capabilities.
+
+---
+
 ## Quality Gates & Automated Test Suite
 
 All Python code conforms strictly to the 5 enterprise quality gates:
@@ -229,7 +279,7 @@ All Python code conforms strictly to the 5 enterprise quality gates:
 - **Black**: 100% compliant formatting.
 - **isort**: Deterministic import ordering.
 - **Bandit**: 0 security vulnerabilities identified (`-ll` severity).
-- **Pytest**: 126 unit and integration tests passing with **96.07% branch coverage**.
+- **Pytest**: 135 unit and integration tests passing with **96.17% branch coverage**.
 
 ### Running Quality Gates
 ```powershell
@@ -297,6 +347,7 @@ week46_oauth_provider/
 │   │   │   ├── introspection_routes.py # POST /oauth/introspect RFC 7662 controller
 │   │   │   ├── resource_routes.py   # Protected demo resource server APIs
 │   │   │   ├── revocation_routes.py # POST /oauth/revoke RFC 7009 controller
+│   │   │   ├── static_routes.py     # Frontend shell & OAuth callback handler
 │   │   │   ├── token_routes.py      # POST /oauth/token endpoint for code, m2m, refresh
 │   │   │   ├── user_auth_routes.py  # User authentication and registration API
 │   │   │   └── userinfo_routes.py   # GET & POST /oauth/userinfo OIDC user claims endpoint
@@ -310,6 +361,7 @@ week46_oauth_provider/
 │   │   │   ├── token_guard.py       # @require_oauth_token security middleware
 │   │   │   └── token_service.py     # RS256 JWT access tokens, OIDC ID tokens, refresh tokens
 │   │   ├── templates/
+│   │   │   ├── callback.html        # OAuth 2.0 authorization code capture callback
 │   │   │   └── consent.html         # High-contrast interactive user consent screen
 │   │   └── __init__.py              # Application factory & blueprint registration
 │   ├── data/
@@ -333,6 +385,7 @@ week46_oauth_provider/
 │   │   ├── test_resource_routes.py  # Protected resource server endpoint tests
 │   │   ├── test_revocation.py       # RFC 7009 token revocation tests
 │   │   ├── test_rsa_manager.py
+│   │   ├── test_static_routes.py    # Static asset and frontend delivery tests
 │   │   ├── test_token_guard.py      # @require_oauth_token middleware unit tests
 │   │   ├── test_token_model.py      # Token persistence & revocation tests
 │   │   ├── test_token_routes.py     # Token endpoint integration tests
@@ -345,8 +398,17 @@ week46_oauth_provider/
 │   ├── requirements.txt             # Production & development dependencies
 │   └── run.py                       # Standalone server runner
 ├── frontend/
-│   ├── public/                      # Static entry points
-│   └── src/                         # Modular vanilla ES6 components & styles
+│   ├── public/
+│   │   └── index.html               # Responsive HTML5 shell with 4-tab console
+│   └── src/
+│       ├── css/
+│       │   └── base.css             # High-contrast zero-emoji dark/light design system
+│       └── js/
+│           ├── app.js               # Application coordinator & navigation router
+│           ├── client_portal.js     # Developer client registration & secret management
+│           ├── metadata_viewer.js   # OpenID discovery & JWKS keyset explorer
+│           ├── sandbox_playground.js # In-browser OAuth/OIDC playground & JWT inspector
+│           └── user_manager.js      # User accounts & credential authentication
 └── README.md                        # Master project documentation
 ```
 
