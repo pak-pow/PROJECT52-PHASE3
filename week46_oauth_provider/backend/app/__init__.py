@@ -15,6 +15,7 @@ from app.routes.discovery_routes import discovery_bp
 from app.routes.introspection_routes import introspection_bp
 from app.routes.resource_routes import resource_bp
 from app.routes.revocation_routes import revocation_bp
+from app.routes.static_routes import static_bp
 from app.routes.token_routes import token_bp
 from app.routes.user_auth_routes import user_auth_bp
 from app.routes.userinfo_routes import userinfo_bp
@@ -53,6 +54,7 @@ def create_app(config_class: Optional[Type[Config]] = None) -> Flask:
         init_db(app.config.get("DATABASE_PATH"))
 
     # Register blueprints
+    app.register_blueprint(static_bp)
     app.register_blueprint(discovery_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(token_bp)
