@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PulseAuth - Authorization Callback</title>
+    <link rel="stylesheet" href="/css/base.css">
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 1rem;
+        }
+        .callback-card {
+            max-width: 600px;
+            width: 100%;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            box-shadow: var(--shadow-lg);
+        }
+    </style>
+</head>
+<body data-theme="dark">
+    <div class="callback-card">
+        <div class="badge badge-info" style="margin-bottom: 0.75rem;">[OAUTH CALLBACK]</div>
+        <h2 style="margin-bottom: 0.5rem;">Authorization Response Received</h2>
+        {% if error %}
+            <div style="margin: 1rem 0; padding: 0.75rem; border-left: 4px solid var(--accent-rose); background: var(--bg-surface-elevated);">
+                <strong style="color: var(--accent-rose);">Error:</strong> {{ error }}<br>
+                <small style="color: var(--text-secondary);">{{ error_description }}</small>
+            </div>
+        {% else %}
+            <p style="color: var(--text-secondary); font-size: 0.9rem;">An authorization code has been issued by PulseAuth:</p>
+            <div class="code-box" style="margin: 1rem 0;">
+                <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.25rem;">AUTHORIZATION CODE:</div>
+                <pre id="auth-code" style="color: var(--accent-emerald);">{{ code }}</pre>
+            </div>
+            {% if state %}
+            <div class="code-box" style="margin: 1rem 0;">
+                <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.25rem;">STATE PARAMETER:</div>
+                <pre>{{ state }}</pre>
+            </div>
+            {% endif %}
+            <p style="font-size: 0.8rem; color: var(--text-muted);">
+                If this window was opened by the playground console, the code has been transferred automatically.
+            </p>
+        {% endif %}
+        <div style="margin-top: 1.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <a href="/#playground" class="btn btn-primary">Return to Playground</a>
+            <button class="btn btn-secondary" onclick="window.close()">Close Window</button>
+        </div>
+    </div>
+    <script>
+        (function() {
+            const code = "{{ code }}";
+            const state = "{{ state }}";
+            const error = "{{ error }}";
+            const errorDesc = "{{ error_description }}";
+
+            if (window.opener && !window.opener.closed) {
+                window.opener.postMessage({
+                    type: "PULSEAUTH_CALLBACK",
+                    code: code || null,
+                    state: state || null,
+                    error: error || null,
+                    error_description: errorDesc || null
+                }, "*");
+            }
+        })();
+    </script>
+</body>
+</html>
