@@ -60,6 +60,7 @@ class TokenService:
         expires_at = now + timedelta(seconds=ttl_seconds)
         scopes: List[str] = scope.split() if scope else []
 
+        jti = secrets.token_hex(16)
         payload: Dict[str, Any] = {
             "iss": issuer,
             "sub": str(user["id"]),
@@ -67,6 +68,7 @@ class TokenService:
             "iat": int(now.timestamp()),
             "exp": int(expires_at.timestamp()),
             "auth_time": int(now.timestamp()),
+            "jti": jti,
         }
 
         if nonce:
