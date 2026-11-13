@@ -28,7 +28,7 @@ def has_emoji(text: str):
 
 
 def main():
-    """Scan key Day 6 files for zero emoji compliance."""
+    """Scan key files for zero emoji compliance."""
     base_dir = Path(__file__).resolve().parent.parent
     frontend_dir = base_dir.parent / "frontend"
     doc_dir = (
@@ -49,12 +49,22 @@ def main():
         frontend_dir / "src" / "js" / "metadata_viewer.js",
         base_dir / "app" / "routes" / "static_routes.py",
         base_dir / "app" / "templates" / "callback.html",
+        base_dir / "app" / "services" / "token_service.py",
         base_dir / "tests" / "test_static_routes.py",
+        base_dir / "tests" / "test_e2e_oauth_lifecycle.py",
+        base_dir / "tests" / "test_concurrency.py",
+        base_dir / "scripts" / "run_benchmarks.py",
+        base_dir / "scripts" / "audit_emojis.py",
         base_dir.parent / "README.md",
         doc_dir
         / (
             "Dev log Day 6 - Mobile-First Frontend, "
             "Scope Consent UI & Interactive OAuth Playground.md"
+        ),
+        doc_dir
+        / (
+            "Dev log Day 7 - Concurrency Benchmarks, Chaos Testing, "
+            "Quality Gates & Handover.md"
         ),
     ]
 
