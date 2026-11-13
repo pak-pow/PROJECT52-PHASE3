@@ -38,7 +38,7 @@ Phase 3 is where developers become production-ready. This phase covers DevOps pr
 | 43 | Video Streaming Platform (PulseStream) | Full Stack | RFC 7233 Range, ABR HLS, Transcoding Queue | 10h | [Completed](./week43_video_streaming) |
 | 44 | ML Model API (PulseInfer) | Backend | Dynamic Micro-Batching, Model Registry, Caching | 9h | [Completed](./week44_ml_model_api) |
 | 45 | PulseSub Mobile-First SaaS | Full Stack | Responsive Design, FSM Subscriptions, Webhooks | 10h | [Completed](./week45_mobile_first_saas) |
-| 46 | [OAuth Provider Service (PulseAuth)](./week46_oauth_provider) | Backend | OAuth 2.0, Security Standards | 9h | In Progress |
+| 46 | [OAuth Provider Service (PulseAuth)](./week46_oauth_provider) | Backend | OAuth 2.0, Security Standards | 9h | [Completed](./week46_oauth_provider) |
 | 47 | Microservices Architecture | Backend + DevOps | Service Communication, Load Balancing | 10h | Not Started |
 | 48 | Full-Featured Blog Platform | Full Stack | SEO, Comments, Tags, Search | 10h | Not Started |
 | 49 | Real-time Stock Trading Dashboard | Full Stack | WebSockets, Live Data, Charts | 10h | Not Started |
@@ -227,6 +227,27 @@ Phase 3 is where developers become production-ready. This phase covers DevOps pr
 - Embedded viewport frame simulator for iPhone 15, Pixel 8, iPad, and fluid responsive desktop view
 - SQLite WAL concurrency benchmarked across 50 simultaneous worker threads with zero lockouts
 - 5/5 quality gates passing with 128 automated tests and 96% statement coverage across unit, integration, and E2E chaos suites
+
+---
+
+### Week 46: PulseAuth OAuth 2.0 & OpenID Connect Provider Service
+**Goal:** Build a production-grade, standards-compliant Identity Provider (IdP) and Authorization Server implementing OAuth 2.0 (RFC 6749), PKCE (RFC 7636), and OpenID Connect Core 1.0
+
+**Learning Objectives:**
+- Authorization Code Flow with mandatory PKCE (RFC 7636) for public clients (SPAs/mobile) and basic auth for confidential clients
+- Machine-to-Machine (M2M) Client Credentials Flow for daemon and microservice workloads
+- OpenID Connect (OIDC) Core 1.0 with RS256-signed ID tokens and claims-scoped `/oauth/userinfo`
+- Decentralized token verification via OpenID Discovery (`/.well-known/openid-configuration`) and JWKS (`/.well-known/jwks.json`)
+- Secure token lifecycle: Refresh Token Rotation (RTR) with reuse detection family revocation cascade, Token Introspection (RFC 7662), and Token Revocation (RFC 7009)
+- High-concurrency SQLite storage with Write-Ahead Logging (WAL) and 30-second busy timeout locks
+
+**Key Features:**
+- Complete standards implementation covering RFC 6749, RFC 7636, RFC 7517, RFC 7519, RFC 7009, RFC 7662, and RFC 8414
+- Interactive frontend console with 4 modules: In-Browser OAuth Playground & JWT Inspector, Developer Client Management Portal, User Accounts Directory, and Discovery Keyset Viewer
+- High-contrast, mobile-first responsive consent screen and OAuth callback capture handler
+- Concurrency benchmarked across 50 simultaneous worker threads (500 requests, 100% success rate, 0 database lockouts, 41.55 req/s)
+- Security chaos test suite validating defense against PKCE tampering, auth code replay attacks, refresh token reuse, and JWT signature modification
+- 5/5 quality gates passing with 144 automated tests and 96.28% branch coverage across unit, integration, and E2E chaos/concurrency suites
 
 ---
 
