@@ -416,7 +416,6 @@ week46_oauth_provider/
 │   │   ├── schema.sql               # Relational SQLite database schema
 │   │   └── seed.py                  # Database seeding script with demo clients/users
 │   ├── scripts/
-│   │   ├── audit_emojis.py          # Zero-Emoji compliance scanner
 │   │   ├── run_benchmarks.py        # 50-worker multi-threaded concurrency benchmark runner
 │   │   └── run_quality_checks.py    # 5-stage automated quality gates CLI
 │   ├── tests/
