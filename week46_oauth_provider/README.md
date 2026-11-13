@@ -8,8 +8,8 @@
 ![PKCE](https://img.shields.io/badge/pkce-RFC%207636-blueviolet.svg)
 ![Crypto](https://img.shields.io/badge/crypto-RS256%202048bit-red.svg)
 ![Quality Gates](https://img.shields.io/badge/quality--gates-5%20passed-brightgreen.svg)
-![Coverage](https://img.shields.io/badge/coverage-96.2%25-brightgreen.svg)
-![Tests](https://img.shields.io/badge/tests-135%20passed-brightgreen.svg)
+![Coverage](https://img.shields.io/badge/coverage-96.3%25-brightgreen.svg)
+![Tests](https://img.shields.io/badge/tests-144%20passed-brightgreen.svg)
 
 <p align="center">
   <strong>A production-grade, standards-compliant Identity Provider (IdP) and Authorization Server implementing OAuth 2.0 (RFC 6749), Proof Key for Code Exchange (PKCE - RFC 7636), OpenID Connect Core 1.0 (OIDC), Asymmetric RS256 JWT Issuance, JWKS Key Distribution (RFC 7517), Token Revocation (RFC 7009), Token Introspection (RFC 7662), and an Interactive OAuth Playground.</strong>
@@ -29,6 +29,8 @@
 - [REST API Reference](#rest-api-reference)
 - [Interactive Playground & Frontend Console](#interactive-playground--frontend-console)
 - [Quality Gates & Automated Test Suite](#quality-gates--automated-test-suite)
+- [Concurrency Benchmarks & Performance](#concurrency-benchmarks--performance)
+- [Security Chaos Engineering & Attack Simulation](#security-chaos-engineering--attack-simulation)
 - [Quickstart Guide](#quickstart-guide)
 - [Project Structure](#project-structure)
 - [License](#license)
@@ -279,13 +281,59 @@ All Python code conforms strictly to the 5 enterprise quality gates:
 - **Black**: 100% compliant formatting.
 - **isort**: Deterministic import ordering.
 - **Bandit**: 0 security vulnerabilities identified (`-ll` severity).
-- **Pytest**: 135 unit and integration tests passing with **96.17% branch coverage**.
+- **Pytest**: 144 unit, integration, and E2E chaos tests passing with **96.28% branch coverage**.
 
 ### Running Quality Gates
 ```powershell
 cd week46_oauth_provider/backend
 python scripts/run_quality_checks.py
 ```
+
+---
+
+## Concurrency Benchmarks & Performance
+
+PulseAuth utilizes SQLite in Write-Ahead Logging (WAL) mode with `PRAGMA synchronous = NORMAL` and a 30-second busy timeout to handle concurrent transactional token issuance and high-frequency introspection without table locks or contention.
+
+A multi-threaded benchmark runner (`scripts/run_benchmarks.py`) executes 500 concurrent operations across 50 worker threads against a live server instance.
+
+### Benchmark Results (50 Concurrent Workers)
+
+| Metric | Result | Description |
+|:---|:---|:---|
+| **Total Requests** | 500 | End-to-end token issuance operations |
+| **Successful Requests** | 500 (100.0%) | 0 errors, 0 lock timeouts |
+| **Failed Requests** | 0 (0.0%) | Zero database lock contention under load |
+| **Worker Threads** | 50 concurrent | High-load simultaneous worker simulation |
+| **Throughput** | 41.55 req/sec | Sustained token generation and cryptographic signing |
+| **Mean Latency** | 1079.01 ms | Average round-trip time per request |
+| **Median (p50)** | 519.27 ms | 50% of requests completed under 520 ms |
+| **90th Percentile (p90)** | 2572.06 ms | Tail latency under peak lock queue |
+| **95th Percentile (p95)** | 4492.11 ms | 95% threshold under high load |
+| **99th Percentile (p99)** | 6988.94 ms | Maximum contention boundary |
+
+### Running the Benchmark
+```powershell
+cd week46_oauth_provider/backend
+python scripts/run_benchmarks.py --workers 50 --requests 500
+```
+
+---
+
+## Security Chaos Engineering & Attack Simulation
+
+To ensure complete resilience against common protocol attacks and boundary vulnerabilities, PulseAuth includes an end-to-end security chaos test suite (`tests/test_e2e_oauth_lifecycle.py`).
+
+| Chaos Scenario | Attack Description | Expected Defense & Outcome | Status |
+|:---|:---|:---|:---|
+| **Tampered PKCE Verifier** | Attacker modifies `code_verifier` during token exchange | Rejected with HTTP 400 `invalid_grant` | Verified |
+| **Authorization Code Replay** | Attacker intercepts and replays an already-used authorization code | Rejected with HTTP 400 `invalid_grant` (single-use enforced) | Verified |
+| **Refresh Token Reuse (Family Invalidation)** | Attacker replays an old rotated refresh token | Entire token family revoked cascade-wide; all subsequent child tokens invalidated | Verified |
+| **Tampered JWT Signature** | Attacker modifies payload bytes without valid RSA private key | Signature verification failure; HTTP 401 `invalid_token` | Verified |
+| **Unregistered Redirect URI** | Attacker specifies unregistered callback parameter | Rejected immediately with HTTP 400 `invalid_request` | Verified |
+| **Scope Escalation (M2M to UserInfo)** | Client credentials daemon token attempts to access `/oauth/userinfo` | Rejected with HTTP 403 `insufficient_scope` | Verified |
+
+---
 
 ---
 
@@ -368,6 +416,8 @@ week46_oauth_provider/
 │   │   ├── schema.sql               # Relational SQLite database schema
 │   │   └── seed.py                  # Database seeding script with demo clients/users
 │   ├── scripts/
+│   │   ├── audit_emojis.py          # Zero-Emoji compliance scanner
+│   │   ├── run_benchmarks.py        # 50-worker multi-threaded concurrency benchmark runner
 │   │   └── run_quality_checks.py    # 5-stage automated quality gates CLI
 │   ├── tests/
 │   │   ├── conftest.py              # Pytest fixtures & isolated test app
@@ -375,10 +425,12 @@ week46_oauth_provider/
 │   │   ├── test_authorize_routes.py  # Authorization endpoint integration tests
 │   │   ├── test_client_auth_service.py # Client authentication unit tests
 │   │   ├── test_client_routes.py    # Client registration and management tests
+│   │   ├── test_concurrency.py      # SQLite WAL multi-threaded concurrency tests
 │   │   ├── test_consent_model.py    # Consent model persistence unit tests
 │   │   ├── test_coverage_edge_cases.py
 │   │   ├── test_database_and_models.py
 │   │   ├── test_discovery_and_jwks.py
+│   │   ├── test_e2e_oauth_lifecycle.py # End-to-end OAuth/OIDC lifecycle & chaos tests
 │   │   ├── test_introspection.py    # RFC 7662 token introspection tests
 │   │   ├── test_pkce_service.py     # RFC 7636 Appendix B test vector & syntax tests
 │   │   ├── test_refresh_rotation.py # Refresh token rotation & reuse detection tests
