@@ -8,11 +8,11 @@
 ![PKCE](https://img.shields.io/badge/pkce-RFC%207636-blueviolet.svg)
 ![Crypto](https://img.shields.io/badge/crypto-RS256%202048bit-red.svg)
 ![Quality Gates](https://img.shields.io/badge/quality--gates-5%20passed-brightgreen.svg)
-![Coverage](https://img.shields.io/badge/coverage-96.3%25-brightgreen.svg)
-![Tests](https://img.shields.io/badge/tests-144%20passed-brightgreen.svg)
+![Coverage](https://img.shields.io/badge/coverage-96.0%25-brightgreen.svg)
+![Tests](https://img.shields.io/badge/tests-161%20passed-brightgreen.svg)
 
 <p align="center">
-  <strong>A production-grade, standards-compliant Identity Provider (IdP) and Authorization Server implementing OAuth 2.0 (RFC 6749), Proof Key for Code Exchange (PKCE - RFC 7636), OpenID Connect Core 1.0 (OIDC), Asymmetric RS256 JWT Issuance, JWKS Key Distribution (RFC 7517), Token Revocation (RFC 7009), Token Introspection (RFC 7662), and an Interactive OAuth Playground.</strong>
+  <strong>A production-grade, standards-compliant Identity Provider (IdP) and Authorization Server implementing OAuth 2.0 (RFC 6749), Proof Key for Code Exchange (PKCE - RFC 7636), OpenID Connect Core 1.0 (OIDC), OpenID Connect RP-Initiated Logout 1.0, RFC 8707 Resource Indicators, Asymmetric RS256 JWT Issuance, JWKS Key Distribution (RFC 7517), Token Revocation (RFC 7009), Token Introspection (RFC 7662), and an Interactive OAuth Playground.</strong>
 </p>
 
 </div>
@@ -27,6 +27,8 @@
 - [Cryptographic Engine & Key Architecture](#cryptographic-engine--key-architecture)
 - [Database Schema & Persistence](#database-schema--persistence)
 - [REST API Reference](#rest-api-reference)
+- [OpenID Connect RP-Initiated Logout 1.0](#openid-connect-rp-initiated-logout-10)
+- [RFC 8707 Resource Indicators for OAuth 2.0](#rfc-8707-resource-indicators-for-oauth-20)
 - [Interactive Playground & Frontend Console](#interactive-playground--frontend-console)
 - [Quality Gates & Automated Test Suite](#quality-gates--automated-test-suite)
 - [Concurrency Benchmarks & Performance](#concurrency-benchmarks--performance)
@@ -112,6 +114,8 @@ flowchart TD
 | **RFC 7519** | JSON Web Token (JWT) | Implemented (`iss`, `sub`, `aud`, `exp`, `iat`, `jti`, `kid` headers) |
 | **RFC 7009** | OAuth 2.0 Token Revocation | Implemented (`POST /oauth/revoke` with token family invalidation) |
 | **RFC 7662** | OAuth 2.0 Token Introspection | Implemented (`POST /oauth/introspect` with resource server auth) |
+| **OIDC RP Logout** | OpenID Connect RP-Initiated Logout 1.0 | Implemented (`/oauth/logout`, `id_token_hint`, client validation, user confirmation & token revocation) |
+| **RFC 8707** | Resource Indicators for OAuth 2.0 | Implemented (`resource` parameter target audience binding & verification in TokenGuard) |
 
 ---
 
@@ -143,18 +147,19 @@ SQLite runs with Write-Ahead Logging (`PRAGMA journal_mode = WAL;`) and a 30-sec
 ### 1. Discovery & Key Distribution
 | Method | Endpoint | Description | Status Codes |
 |:---|:---|:---|:---|
-| `GET` | `/.well-known/openid-configuration` | RFC 8414 / OIDC discovery metadata document | `200 OK` |
+| `GET` | `/.well-known/openid-configuration` | RFC 8414 / OIDC discovery metadata document (advertises endpoints, including `end_session_endpoint`) | `200 OK` |
 | `GET` | `/.well-known/jwks.json` | RFC 7517 JSON Web Key Set distributing public signing keys | `200 OK` |
 | `GET` | `/api/v1/health` | Service vitality probe reporting issuer and active `kid` | `200 OK` |
 
-### 2. OAuth 2.0 & OIDC Endpoints (Day 2 - Day 4)
+### 2. OAuth 2.0 & OIDC Endpoints (Day 2 - Day 4, Day 8)
 | Method | Endpoint | Description | Grant Type / RFC |
 |:---|:---|:---|:---|
-| `GET` / `POST` | `/oauth/authorize` | Authorization endpoint with scope consent, PKCE enforcement, HTML UI & JSON API | RFC 6749, RFC 7636 |
-| `POST` | `/oauth/token` | Token issuance endpoint for code exchange, client credentials, and refresh | RFC 6749 |
+| `GET` / `POST` | `/oauth/authorize` | Authorization endpoint with scope consent, PKCE enforcement, resource indicator binding, HTML UI & JSON API | RFC 6749, RFC 7636, RFC 8707 |
+| `POST` | `/oauth/token` | Token issuance endpoint for code exchange, client credentials, and refresh | RFC 6749, RFC 8707 |
 | `GET` / `POST` | `/oauth/userinfo` | OIDC UserInfo endpoint returning verified profile claims | OIDC Core 1.0 |
 | `POST` | `/oauth/revoke` | Token revocation endpoint | RFC 7009 |
 | `POST` | `/oauth/introspect` | Token introspection endpoint for resource servers | RFC 7662 |
+| `GET` / `POST` | `/oauth/logout` | RP-Initiated Logout endpoint with id_token_hint validation and token revocation | OIDC RP-Initiated Logout 1.0 |
 
 #### Authorization Endpoint (`/oauth/authorize`)
 - `response_type`: Must be strictly `code`.
@@ -226,6 +231,57 @@ Protected by `@require_oauth_token` middleware validating RS256 Bearer JWTs, che
 
 ---
 
+## OpenID Connect RP-Initiated Logout 1.0
+
+PulseAuth implements the OpenID Connect RP-Initiated Logout 1.0 specification via `/oauth/logout` (`GET` and `POST`), enabling Relying Parties (RPs) to programmatically trigger end-session workflows and session invalidation:
+
+### Protocol Flow & Parameters
+- **`id_token_hint`**: The OP-issued ID token previously obtained during authentication. PulseAuth cryptographically verifies the RS256 signature against the active RSA keypair, extracts the `sub` (User ID) and `aud` (Client ID) claims, and prevents forged logout attempts.
+- **`client_id`**: Identifies the requesting client. If omitted, the client identity is automatically derived from the validated `id_token_hint` audience.
+- **`post_logout_redirect_uri`**: Registered redirect URI to which the user agent is returned following session termination. PulseAuth strictly verifies that this URI matches the client's registered redirect URIs to defend against open redirector attacks.
+- **`state`**: Optional client state parameter preserved and appended to the post-logout redirect URL.
+
+### Session Invalidation & Token Revocation
+Upon user confirmation:
+1. `TokenModel.revoke_user_tokens(conn, user_id, client_id)` cascades across SQLite, marking all active access tokens and refresh tokens associated with the user session as revoked.
+2. The user session is terminated.
+3. If a valid `post_logout_redirect_uri` was supplied, the user agent is redirected via HTTP 302 to the RP callback with the preserved `state`. Otherwise, a high-contrast session terminated confirmation view is displayed.
+
+### Discovery Metadata
+The logout endpoint is advertised in `/.well-known/openid-configuration`:
+```json
+{
+  "end_session_endpoint": "http://127.0.0.1:5000/oauth/logout"
+}
+```
+
+---
+
+## RFC 8707 Resource Indicators for OAuth 2.0
+
+To prevent token substitution vulnerabilities and unauthorized token forwarding across heterogeneous microservice domains, PulseAuth implements RFC 8707 (Resource Indicators for OAuth 2.0).
+
+### Core Concepts & Mechanics
+- **`resource` Parameter**: An absolute URI (e.g. `https://api.pulseauth.dev/v1`) specifying the target audience for the requested access token.
+- **URI Syntax Rules**: The resource parameter MUST be an absolute URI without a fragment (`#`) component. Non-conforming URIs are rejected with RFC 8707 error code `invalid_target`.
+- **Audience Binding**: When requested, the `resource` URI is embedded as the `aud` claim (and explicit `resource` claim) in the RS256 JWT access token.
+- **Consent Screen Display**: The requested target resource URI is surfaced to the end user on the authorization consent screen.
+- **Lineage Preservation**: During Refresh Token Rotation (RTR), the original target `resource` parameter is automatically preserved in all newly issued child tokens.
+
+### Resource Server Enforcement
+Resource servers protect their endpoints using the `@require_oauth_token` middleware with audience constraints:
+```python
+@resource_bp.route("/api/v1/protected-data", methods=["GET"])
+@require_oauth_token(required_scope="read:data", expected_resource="https://api.pulseauth.dev/v1")
+def get_protected_data():
+    return jsonify({"status": "authorized", "data": "confidential_payload"})
+```
+If an access token issued for `https://billing.pulseauth.dev` is presented to `https://api.pulseauth.dev/v1`, the `TokenGuard` rejects the request with HTTP 403 `Forbidden` (`token_forbidden: Target resource mismatch`).
+
+---
+
+---
+
 ## Interactive Playground & Frontend Console
 
 PulseAuth includes a responsive, mobile-first frontend application console in `frontend/` served directly by the backend at `http://127.0.0.1:5000/`:
@@ -281,7 +337,7 @@ All Python code conforms strictly to the 5 enterprise quality gates:
 - **Black**: 100% compliant formatting.
 - **isort**: Deterministic import ordering.
 - **Bandit**: 0 security vulnerabilities identified (`-ll` severity).
-- **Pytest**: 144 unit, integration, and E2E chaos tests passing with **96.28% branch coverage**.
+- **Pytest**: 161 unit, integration, and E2E chaos tests passing with **96.00% branch coverage**.
 
 ### Running Quality Gates
 ```powershell
@@ -393,6 +449,7 @@ week46_oauth_provider/
 │   │   │   ├── client_routes.py     # Developer client registration & management API
 │   │   │   ├── discovery_routes.py  # /.well-known/openid-configuration & jwks.json
 │   │   │   ├── introspection_routes.py # POST /oauth/introspect RFC 7662 controller
+│   │   │   ├── logout_routes.py     # GET & POST /oauth/logout OIDC RP-initiated logout
 │   │   │   ├── resource_routes.py   # Protected demo resource server APIs
 │   │   │   ├── revocation_routes.py # POST /oauth/revoke RFC 7009 controller
 │   │   │   ├── static_routes.py     # Frontend shell & OAuth callback handler
@@ -410,7 +467,8 @@ week46_oauth_provider/
 │   │   │   └── token_service.py     # RS256 JWT access tokens, OIDC ID tokens, refresh tokens
 │   │   ├── templates/
 │   │   │   ├── callback.html        # OAuth 2.0 authorization code capture callback
-│   │   │   └── consent.html         # High-contrast interactive user consent screen
+│   │   │   ├── consent.html         # High-contrast interactive user consent screen
+│   │   │   └── logout.html          # High-contrast user session logout confirmation screen
 │   │   └── __init__.py              # Application factory & blueprint registration
 │   ├── data/
 │   │   ├── schema.sql               # Relational SQLite database schema
@@ -431,8 +489,10 @@ week46_oauth_provider/
 │   │   ├── test_discovery_and_jwks.py
 │   │   ├── test_e2e_oauth_lifecycle.py # End-to-end OAuth/OIDC lifecycle & chaos tests
 │   │   ├── test_introspection.py    # RFC 7662 token introspection tests
+│   │   ├── test_logout_routes.py    # OIDC RP-Initiated Logout endpoint integration tests
 │   │   ├── test_pkce_service.py     # RFC 7636 Appendix B test vector & syntax tests
 │   │   ├── test_refresh_rotation.py # Refresh token rotation & reuse detection tests
+│   │   ├── test_resource_indicators.py # RFC 8707 Resource Indicators unit & integration tests
 │   │   ├── test_resource_routes.py  # Protected resource server endpoint tests
 │   │   ├── test_revocation.py       # RFC 7009 token revocation tests
 │   │   ├── test_rsa_manager.py
