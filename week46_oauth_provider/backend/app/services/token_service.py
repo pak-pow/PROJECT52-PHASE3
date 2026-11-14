@@ -23,6 +23,7 @@ class TokenService:
         scope: str,
         user_id: Optional[int] = None,
         ttl_seconds: int = 3600,
+        resource: Optional[str] = None,
     ) -> Tuple[str, str, datetime]:
         """Sign and issue an asymmetric RS256 JWT access token."""
         now = datetime.now(timezone.utc)
@@ -30,10 +31,11 @@ class TokenService:
         jti = uuid.uuid4().hex
         sub = str(user_id) if user_id is not None else client_id
 
+        aud: Any = [client_id, resource] if resource else client_id
         payload = {
             "iss": issuer,
             "sub": sub,
-            "aud": client_id,
+            "aud": aud,
             "client_id": client_id,
             "scope": scope,
             "token_type": "Bearer",
@@ -41,6 +43,8 @@ class TokenService:
             "exp": int(expires_at.timestamp()),
             "jti": jti,
         }
+        if resource:
+            payload["resource"] = resource
 
         token = rsa_manager.sign_jwt(payload)
         return token, jti, expires_at
@@ -110,6 +114,7 @@ class TokenService:
         refresh_token_ttl: int = 30 * 24 * 3600,
         token_family_id: Optional[str] = None,
         include_refresh: bool = False,
+        resource: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Issue, persist, and return RFC 6749 compliant token response payload."""
         family_id = token_family_id or uuid.uuid4().hex
@@ -124,6 +129,7 @@ class TokenService:
             scope=scope,
             user_id=user_id,
             ttl_seconds=access_token_ttl,
+            resource=resource,
         )
         TokenModel.create(
             conn=conn,
@@ -135,6 +141,7 @@ class TokenService:
             user_id=user_id,
             jti=jti,
             token_family_id=family_id,
+            resource=resource,
         )
 
         response: Dict[str, Any] = {
@@ -182,6 +189,7 @@ class TokenService:
                 expires_at=ref_exp,
                 user_id=user_id,
                 token_family_id=family_id,
+                resource=resource,
             )
             response["refresh_token"] = ref_token
 
