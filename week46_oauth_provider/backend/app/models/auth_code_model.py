@@ -20,6 +20,7 @@ class AuthCodeModel:
         code_challenge: Optional[str] = None,
         code_challenge_method: Optional[str] = None,
         nonce: Optional[str] = None,
+        resource: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Issue a new cryptographically random authorization code with TTL."""
         code = secrets.token_urlsafe(32)
@@ -37,8 +38,8 @@ class AuthCodeModel:
             """
             INSERT INTO authorization_codes (
                 code, client_id, user_id, redirect_uri, scope,
-                code_challenge, code_challenge_method, nonce, expires_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                code_challenge, code_challenge_method, nonce, resource, expires_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 code,
@@ -49,6 +50,7 @@ class AuthCodeModel:
                 code_challenge,
                 method,
                 nonce,
+                resource,
                 expires_at.strftime("%Y-%m-%d %H:%M:%S"),
             ),
         )
@@ -62,7 +64,7 @@ class AuthCodeModel:
         cur.execute(
             """
             SELECT id, code, client_id, user_id, redirect_uri, scope,
-                   code_challenge, code_challenge_method, nonce,
+                   code_challenge, code_challenge_method, nonce, resource,
                    expires_at, used_at, created_at
             FROM authorization_codes WHERE code = ?
             """,
