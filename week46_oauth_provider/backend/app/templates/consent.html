@@ -155,6 +155,9 @@
       {% for s in scopes %}
       <div class="scope-item"><span class="scope-tag">{{ s }}</span> Access granted for {{ s }}</div>
       {% endfor %}
+      {% if resource %}
+      <div class="scope-item"><span class="scope-tag">resource</span> {{ resource }}</div>
+      {% endif %}
     </div>
 
     <form method="POST" action="/oauth/authorize">
@@ -166,6 +169,7 @@
       <input type="hidden" name="code_challenge" value="{{ code_challenge or '' }}">
       <input type="hidden" name="code_challenge_method" value="{{ code_challenge_method or '' }}">
       <input type="hidden" name="nonce" value="{{ nonce or '' }}">
+      <input type="hidden" name="resource" value="{{ resource or '' }}">
 
       <div class="form-group">
         <label for="email">Account Email</label>
