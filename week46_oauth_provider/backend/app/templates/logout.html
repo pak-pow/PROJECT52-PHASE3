@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PulseAuth - End Session & Logout</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #0f172a;
+      color: #f8fafc;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      max-width: 480px;
+      width: 100%;
+      padding: 2rem;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+    .badge {
+      display: inline-block;
+      background: #0284c7;
+      color: white;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-weight: 600;
+      font-size: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    .badge-success {
+      background: #059669;
+    }
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      color: #ffffff;
+    }
+    p {
+      color: #94a3b8;
+      font-size: 0.925rem;
+      line-height: 1.5;
+      margin-bottom: 1.5rem;
+    }
+    .info-box {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+      font-size: 0.875rem;
+    }
+    .info-row:last-child {
+      margin-bottom: 0;
+    }
+    .info-label {
+      color: #64748b;
+    }
+    .info-value {
+      color: #f1f5f9;
+      font-weight: 500;
+      font-family: monospace;
+    }
+    .btn-group {
+      display: flex;
+      gap: 1rem;
+    }
+    .btn {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      text-align: center;
+      text-decoration: none;
+      transition: background 0.15s ease-in-out;
+    }
+    .btn-logout {
+      background: #dc2626;
+      color: white;
+    }
+    .btn-logout:hover {
+      background: #b91c1c;
+    }
+    .btn-cancel {
+      background: #334155;
+      color: #94a3b8;
+    }
+    .btn-cancel:hover {
+      background: #475569;
+      color: white;
+    }
+    .btn-home {
+      background: #0284c7;
+      color: white;
+      display: block;
+      width: 100%;
+    }
+    .btn-home:hover {
+      background: #0369a1;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    {% if completed %}
+      <div class="badge badge-success">[LOGGED OUT]</div>
+      <h1>Session Terminated</h1>
+      <p>You have successfully logged out from PulseAuth Identity Provider. Your active access and refresh tokens have been revoked.</p>
+      <a href="/" class="btn btn-home">Return to Home</a>
+    {% else %}
+      <div class="badge">[PULSEAUTH RP-INITIATED LOGOUT]</div>
+      <h1>Confirm Logout</h1>
+      <p>Are you sure you want to end your active session and log out?</p>
+
+      {% if user or client %}
+      <div class="info-box">
+        {% if user %}
+        <div class="info-row">
+          <span class="info-label">Account</span>
+          <span class="info-value">{{ user.email }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Name</span>
+          <span class="info-value">{{ user.full_name }}</span>
+        </div>
+        {% endif %}
+        {% if client %}
+        <div class="info-row">
+          <span class="info-label">Client Application</span>
+          <span class="info-value">{{ client.client_name }}</span>
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <form method="POST" action="/oauth/logout">
+        <input type="hidden" name="id_token_hint" value="{{ id_token_hint or '' }}">
+        <input type="hidden" name="client_id" value="{{ client_id or '' }}">
+        <input type="hidden" name="post_logout_redirect_uri" value="{{ post_logout_redirect_uri or '' }}">
+        <input type="hidden" name="state" value="{{ state or '' }}">
+        <input type="hidden" name="confirm" value="true">
+
+        <div class="btn-group">
+          <a href="{{ post_logout_redirect_uri or '/' }}" class="btn btn-cancel">Cancel</a>
+          <button type="submit" class="btn btn-logout">Log Out</button>
+        </div>
+      </form>
+    {% endif %}
+  </div>
+</body>
+</html>
