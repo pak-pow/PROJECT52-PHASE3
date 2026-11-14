@@ -248,6 +248,7 @@ function buildAuthorizationUrl() {
     const scopes = getSelectedScopes();
     const state = document.getElementById("pg-state").value.trim() || "state_demo_" + Math.random().toString(36).substring(7);
     const nonce = document.getElementById("pg-nonce").value.trim() || "nonce_demo_" + Math.random().toString(36).substring(7);
+    const resource = document.getElementById("pg-resource")?.value.trim();
 
     const params = new URLSearchParams();
     params.set("response_type", "code");
@@ -256,6 +257,9 @@ function buildAuthorizationUrl() {
     params.set("scope", scopes);
     params.set("state", state);
     params.set("nonce", nonce);
+    if (resource) {
+        params.set("resource", resource);
+    }
 
     const usePkce = document.getElementById("pg-use-pkce").checked;
     if (usePkce) {
@@ -279,7 +283,7 @@ function setupAuthorizeActions() {
     }
 
     // Update url on input change
-    ["pg-client-id", "pg-redirect-uri", "pg-state", "pg-nonce"].forEach(id => {
+    ["pg-client-id", "pg-redirect-uri", "pg-state", "pg-nonce", "pg-resource"].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.addEventListener("input", refreshAuthUrlDisplay);
     });
@@ -349,6 +353,11 @@ function setupAuthorizeActions() {
                 if (usePkceVal) {
                     authPayload.code_challenge = playgroundState.codeChallenge;
                     authPayload.code_challenge_method = playgroundState.codeChallengeMethod;
+                }
+
+                const resourceVal = document.getElementById("pg-resource")?.value.trim();
+                if (resourceVal) {
+                    authPayload.resource = resourceVal;
                 }
 
                 const authRes = await fetch("/oauth/authorize", {
@@ -448,6 +457,11 @@ function setupTokenExchange() {
             if (scopes) {
                 bodyParams.set("scope", scopes);
             }
+        }
+
+        const resourceVal = document.getElementById("pg-resource")?.value.trim();
+        if (resourceVal) {
+            bodyParams.set("resource", resourceVal);
         }
 
         // Apply Client Authentication
@@ -600,6 +614,12 @@ function setupResourceActions() {
             url: "/oauth/token",
             auth: "client_post",
             isRefresh: true
+        },
+        {
+            id: "action-logout",
+            method: "POST",
+            url: "/oauth/logout",
+            isLogout: true
         }
     ];
 
@@ -654,6 +674,18 @@ async function executeResourceCall(action) {
         if (action.isRefresh) {
             formParams.set("grant_type", "refresh_token");
             formParams.set("refresh_token", refreshToken);
+        }
+
+        if (action.isLogout) {
+            if (playgroundState.tokens.id_token) {
+                formParams.set("id_token_hint", playgroundState.tokens.id_token);
+            }
+            const clientId = document.getElementById("pg-client-id").value.trim();
+            const redirectUri = document.getElementById("pg-redirect-uri").value.trim();
+            if (clientId) formParams.set("client_id", clientId);
+            if (redirectUri) formParams.set("post_logout_redirect_uri", redirectUri);
+            formParams.set("confirm", "true");
+            headers["Accept"] = "application/json";
         }
 
         if (action.auth === "client_post") {
@@ -713,6 +745,18 @@ async function executeResourceCall(action) {
             }
             inspectTokens(responseData.access_token, responseData.id_token);
             showToast(`[OK] Token refreshed & rotated in ${duration}ms!`, "success");
+        } else if (action.isLogout && res.ok) {
+            playgroundState.tokens = {
+                access_token: null,
+                id_token: null,
+                refresh_token: null,
+                token_type: null,
+                expires_in: null,
+                scope: null
+            };
+            const inspectorBox = document.getElementById("pg-token-response-inspector");
+            if (inspectorBox) inspectorBox.style.display = "none";
+            showToast("[OK] Session terminated via RP-Initiated Logout. Active tokens revoked.", "success");
         } else {
             showToast(`[${action.method}] ${action.url} -> ${res.status} (${duration}ms)`, res.ok ? "success" : "error");
         }
