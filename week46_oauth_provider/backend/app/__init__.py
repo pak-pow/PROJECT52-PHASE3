@@ -13,6 +13,7 @@ from app.routes.auth_routes import auth_bp
 from app.routes.client_routes import client_bp
 from app.routes.discovery_routes import discovery_bp
 from app.routes.introspection_routes import introspection_bp
+from app.routes.logout_routes import logout_bp
 from app.routes.resource_routes import resource_bp
 from app.routes.revocation_routes import revocation_bp
 from app.routes.static_routes import static_bp
@@ -60,6 +61,7 @@ def create_app(config_class: Optional[Type[Config]] = None) -> Flask:
     app.register_blueprint(token_bp)
     app.register_blueprint(userinfo_bp)
     app.register_blueprint(revocation_bp)
+    app.register_blueprint(logout_bp)
     app.register_blueprint(introspection_bp)
     app.register_blueprint(resource_bp)
     app.register_blueprint(client_bp)
