@@ -31,6 +31,7 @@ def authorize_get():
     code_challenge = request.args.get("code_challenge")
     code_challenge_method = request.args.get("code_challenge_method")
     nonce = request.args.get("nonce")
+    resource = request.args.get("resource")
     simulated_user_id = request.args.get("user_id")
 
     valid, client, err_code, err_desc = AuthCodeService.validate_request(
@@ -41,6 +42,7 @@ def authorize_get():
         scope=scope,
         code_challenge=code_challenge,
         code_challenge_method=code_challenge_method,
+        resource=resource,
     )
 
     if not valid:
@@ -93,6 +95,7 @@ def authorize_get():
                     code_challenge_method=code_challenge_method,
                     nonce=nonce,
                     state=state,
+                    resource=resource,
                 )
                 AuditService.log(
                     conn=conn,
@@ -148,6 +151,7 @@ def authorize_get():
         code_challenge=code_challenge,
         code_challenge_method=code_challenge_method,
         nonce=nonce,
+        resource=resource,
         error=None,
     )
 
@@ -166,6 +170,7 @@ def authorize_post():
     code_challenge = data.get("code_challenge")
     code_challenge_method = data.get("code_challenge_method")
     nonce = data.get("nonce")
+    resource = data.get("resource")
     action = data.get("action", "approve").lower()
     email = data.get("email", "")
     password = data.get("password", "")
@@ -179,6 +184,7 @@ def authorize_post():
         scope=scope,
         code_challenge=code_challenge,
         code_challenge_method=code_challenge_method,
+        resource=resource,
     )
 
     if not valid:
@@ -258,6 +264,7 @@ def authorize_post():
             code_challenge=code_challenge,
             code_challenge_method=code_challenge_method,
             nonce=nonce,
+            resource=resource,
             email=email,
             error="Invalid email or password. Please try again.",
         )
@@ -281,6 +288,7 @@ def authorize_post():
         code_challenge_method=code_challenge_method,
         nonce=nonce,
         state=state,
+        resource=resource,
     )
 
     AuditService.log(
