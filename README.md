@@ -242,12 +242,12 @@ Phase 3 is where developers become production-ready. This phase covers DevOps pr
 - High-concurrency SQLite storage with Write-Ahead Logging (WAL) and 30-second busy timeout locks
 
 **Key Features:**
-- Complete standards implementation covering RFC 6749, RFC 7636, RFC 7517, RFC 7519, RFC 7009, RFC 7662, and RFC 8414
-- Interactive frontend console with 4 modules: In-Browser OAuth Playground & JWT Inspector, Developer Client Management Portal, User Accounts Directory, and Discovery Keyset Viewer
-- High-contrast, mobile-first responsive consent screen and OAuth callback capture handler
+- Complete standards implementation covering RFC 6749, RFC 7636, RFC 7517, RFC 7519, RFC 7009, RFC 7662, RFC 8414, OpenID Connect RP-Initiated Logout 1.0, and RFC 8707 Resource Indicators
+- Interactive frontend console with 4 modules: In-Browser OAuth Playground & JWT Inspector (supporting RP logout & resource indicators), Developer Client Management Portal, User Accounts Directory, and Discovery Keyset Viewer
+- High-contrast, mobile-first responsive consent screen, RP logout confirmation prompt, and OAuth callback capture handler
 - Concurrency benchmarked across 50 simultaneous worker threads (500 requests, 100% success rate, 0 database lockouts, 41.55 req/s)
 - Security chaos test suite validating defense against PKCE tampering, auth code replay attacks, refresh token reuse, and JWT signature modification
-- 5/5 quality gates passing with 144 automated tests and 96.28% branch coverage across unit, integration, and E2E chaos/concurrency suites
+- 5/5 quality gates passing with 161 automated tests and 96.00% branch coverage across unit, integration, and E2E chaos/concurrency suites
 
 ---
 
