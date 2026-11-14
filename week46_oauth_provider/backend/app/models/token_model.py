@@ -27,6 +27,7 @@ class TokenModel:
         user_id: Optional[int] = None,
         jti: Optional[str] = None,
         token_family_id: Optional[str] = None,
+        resource: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Insert a newly issued token into the database using value hashing."""
         if token_type not in ("access_token", "refresh_token", "id_token"):
@@ -40,8 +41,8 @@ class TokenModel:
             """
             INSERT INTO tokens (
                 token_type, token_value_hash, jti, client_id, user_id,
-                scope, token_family_id, expires_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                scope, token_family_id, expires_at, resource
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 token_type,
@@ -52,6 +53,7 @@ class TokenModel:
                 scope,
                 token_family_id,
                 expires_str,
+                resource,
             ),
         )
         conn.commit()
@@ -65,7 +67,7 @@ class TokenModel:
         cur.execute(
             """
             SELECT id, token_type, token_value_hash, jti, client_id, user_id,
-                   scope, token_family_id, expires_at, revoked_at, created_at
+                   scope, token_family_id, expires_at, revoked_at, created_at, resource
             FROM tokens WHERE id = ?
             """,
             (token_id,),
@@ -84,7 +86,7 @@ class TokenModel:
         cur.execute(
             """
             SELECT id, token_type, token_value_hash, jti, client_id, user_id,
-                   scope, token_family_id, expires_at, revoked_at, created_at
+                   scope, token_family_id, expires_at, revoked_at, created_at, resource
             FROM tokens WHERE token_value_hash = ?
             """,
             (token_hash,),
@@ -109,7 +111,7 @@ class TokenModel:
         cur.execute(
             """
             SELECT id, token_type, token_value_hash, jti, client_id, user_id,
-                   scope, token_family_id, expires_at, revoked_at, created_at
+                   scope, token_family_id, expires_at, revoked_at, created_at, resource
             FROM tokens WHERE jti = ?
             """,
             (jti,),
@@ -220,6 +222,34 @@ class TokenModel:
         return cur.rowcount
 
     @staticmethod
+    def revoke_user_tokens(
+        conn: sqlite3.Connection, user_id: int, client_id: Optional[str] = None
+    ) -> int:
+        """Revoke all active tokens for a specific user (and optionally client)."""
+        now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+        cur = conn.cursor()
+        if client_id:
+            cur.execute(
+                """
+                UPDATE tokens
+                SET revoked_at = ?
+                WHERE user_id = ? AND client_id = ? AND revoked_at IS NULL
+                """,
+                (now_str, user_id, client_id),
+            )
+        else:
+            cur.execute(
+                """
+                UPDATE tokens
+                SET revoked_at = ?
+                WHERE user_id = ? AND revoked_at IS NULL
+                """,
+                (now_str, user_id),
+            )
+        conn.commit()
+        return cur.rowcount
+
+    @staticmethod
     def get_family_tokens(
         conn: sqlite3.Connection, token_family_id: str
     ) -> List[Dict[str, Any]]:
@@ -230,7 +260,7 @@ class TokenModel:
         cur.execute(
             """
             SELECT id, token_type, token_value_hash, jti, client_id, user_id,
-                   scope, token_family_id, expires_at, revoked_at, created_at
+                   scope, token_family_id, expires_at, revoked_at, created_at, resource
             FROM tokens WHERE token_family_id = ?
             ORDER BY created_at ASC
             """,
