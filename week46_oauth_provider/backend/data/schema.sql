@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS authorization_codes (
     code_challenge TEXT,
     code_challenge_method TEXT CHECK(code_challenge_method IN ('S256', 'plain') OR code_challenge_method IS NULL),
     nonce TEXT,
+    resource TEXT,
     expires_at TIMESTAMP NOT NULL,
     used_at TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -59,6 +60,7 @@ CREATE TABLE IF NOT EXISTS tokens (
     client_id TEXT NOT NULL REFERENCES clients(client_id) ON DELETE CASCADE,
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     scope TEXT NOT NULL,
+    resource TEXT,
     token_family_id TEXT,
     expires_at TIMESTAMP NOT NULL,
     revoked_at TIMESTAMP,
