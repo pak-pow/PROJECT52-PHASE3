@@ -37,6 +37,21 @@ class AuthCodeService:
         )
 
     @staticmethod
+    def validate_resource(resource: Optional[str]) -> Tuple[bool, str]:
+        """Validate RFC 8707 Resource Indicator URI.
+
+        Must be an absolute URI without a fragment component.
+        """
+        if not resource:
+            return True, ""
+        parsed = urllib.parse.urlparse(resource)
+        if not (parsed.scheme in ("https", "http") and bool(parsed.netloc)):
+            return False, "Resource parameter must be an absolute URI (http/https)."
+        if parsed.fragment:
+            return False, "Resource parameter must not include a fragment component."
+        return True, ""
+
+    @staticmethod
     def validate_request(
         conn: sqlite3.Connection,
         response_type: Optional[str],
@@ -45,6 +60,7 @@ class AuthCodeService:
         scope: Optional[str],
         code_challenge: Optional[str] = None,
         code_challenge_method: Optional[str] = None,
+        resource: Optional[str] = None,
     ) -> Tuple[bool, Optional[Dict[str, Any]], str, str]:
         """Validate OAuth 2.0 authorization parameters per RFC 6749 and RFC 7636.
 
@@ -122,6 +138,11 @@ class AuthCodeService:
                     ),
                 )
 
+        if resource:
+            valid_res, res_err = AuthCodeService.validate_resource(resource)
+            if not valid_res:
+                return False, client, "invalid_target", res_err
+
         return True, client, "", ""
 
     @staticmethod
@@ -136,6 +157,7 @@ class AuthCodeService:
         code_challenge_method: Optional[str] = None,
         nonce: Optional[str] = None,
         state: Optional[str] = None,
+        resource: Optional[str] = None,
     ) -> Tuple[Dict[str, Any], str]:
         """Issue authorization code record and build standard redirection URL."""
         code_record = AuthCodeModel.create(
@@ -148,6 +170,7 @@ class AuthCodeService:
             code_challenge=code_challenge,
             code_challenge_method=code_challenge_method,
             nonce=nonce,
+            resource=resource,
         )
 
         redirect_params = {"code": code_record["code"]}
