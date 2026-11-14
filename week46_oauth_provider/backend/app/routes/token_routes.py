@@ -9,6 +9,7 @@ from app.models.auth_code_model import AuthCodeModel
 from app.models.client_model import ClientModel
 from app.models.user_model import UserModel
 from app.services.audit_service import AuditService
+from app.services.auth_code_service import AuthCodeService
 from app.services.client_auth_service import ClientAuthService
 from app.services.pkce_service import PKCEService
 from app.services.refresh_service import RefreshTokenService
@@ -144,6 +145,19 @@ def token_endpoint() -> Response:
         if not user:
             return oauth_error("invalid_grant", "User associated with code not found.")
 
+        # Resource indicator validation (RFC 8707)
+        req_resource = data.get("resource")
+        if req_resource:
+            valid_res, res_err = AuthCodeService.validate_resource(req_resource)
+            if not valid_res:
+                return oauth_error("invalid_target", res_err)
+            if code_rec.get("resource") and code_rec.get("resource") != req_resource:
+                return oauth_error(
+                    "invalid_target",
+                    "Resource parameter does not match authorization code target.",
+                )
+        bound_resource = req_resource or code_rec.get("resource")
+
         # Issue tokens
         acc_ttl = current_app.config.get("ACCESS_TOKEN_TTL_SECONDS", 3600)
         id_ttl = current_app.config.get("ID_TOKEN_TTL_SECONDS", 3600)
@@ -160,6 +174,7 @@ def token_endpoint() -> Response:
             access_token_ttl=acc_ttl,
             id_token_ttl=id_ttl,
             refresh_token_ttl=ref_ttl,
+            resource=bound_resource,
         )
 
         AuditService.log(
@@ -213,6 +228,13 @@ def token_endpoint() -> Response:
         else:
             effective_scope = " ".join(client.get("scopes", []))
 
+        # Resource indicator validation (RFC 8707)
+        req_resource = data.get("resource")
+        if req_resource:
+            valid_res, res_err = AuthCodeService.validate_resource(req_resource)
+            if not valid_res:
+                return oauth_error("invalid_target", res_err)
+
         acc_ttl = current_app.config.get("ACCESS_TOKEN_TTL_SECONDS", 3600)
         tokens = TokenService.issue_tokens(
             conn=conn,
@@ -222,6 +244,7 @@ def token_endpoint() -> Response:
             scope=effective_scope,
             user=None,
             access_token_ttl=acc_ttl,
+            resource=req_resource,
         )
 
         AuditService.log(
