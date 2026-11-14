@@ -157,6 +157,7 @@ class RefreshTokenService:
             id_token_ttl=id_token_ttl,
             refresh_token_ttl=refresh_token_ttl,
             include_refresh=True,
+            resource=record.get("resource"),
         )
 
         AuditService.log(
