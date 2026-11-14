@@ -101,6 +101,10 @@
                             <label for="pg-redirect-uri" class="form-label">Redirect URI</label>
                             <input type="text" id="pg-redirect-uri" class="form-control" value="http://127.0.0.1:5000/callback">
                         </div>
+                        <div class="form-group">
+                            <label for="pg-resource" class="form-label">Resource Indicator (RFC 8707 Target Audience)</label>
+                            <input type="text" id="pg-resource" class="form-control" placeholder="e.g. http://127.0.0.1:5000/api/v1/resource/documents">
+                        </div>
 
                         <div class="grid-2">
                             <div class="form-group">
@@ -308,6 +312,7 @@
                     <button id="action-introspect" class="btn btn-secondary btn-sm">[POST] /oauth/introspect</button>
                     <button id="action-refresh" class="btn btn-success btn-sm">[POST] /oauth/token (REFRESH ROTATION)</button>
                     <button id="action-revoke" class="btn btn-danger btn-sm">[POST] /oauth/revoke</button>
+                    <button id="action-logout" class="btn btn-danger btn-sm">[POST] /oauth/logout (RP LOGOUT)</button>
                 </div>
 
                 <div id="pg-resource-response-inspector" class="response-inspector" style="display: none;">
