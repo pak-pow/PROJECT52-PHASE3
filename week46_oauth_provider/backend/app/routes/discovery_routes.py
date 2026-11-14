@@ -49,6 +49,7 @@ def openid_configuration():
             "client_secret_basic",
             "client_secret_post",
         ],
+        "end_session_endpoint": f"{issuer}/oauth/logout",
         "code_challenge_methods_supported": ["S256", "plain"],
         "id_token_signing_alg_values_supported": ["RS256"],
         "subject_types_supported": ["public"],
