@@ -13,6 +13,7 @@ from app.services.token_service import TokenService
 def require_oauth_token(
     required_scopes: Optional[List[str]] = None,
     any_of_scopes: Optional[List[str]] = None,
+    expected_resource: Optional[str] = None,
 ) -> Callable:
     """
     Decorator enforcing OAuth 2.0 Bearer token validation and scope authorization.
@@ -122,6 +123,35 @@ def require_oauth_token(
                     resp.headers["WWW-Authenticate"] = (
                         f'Bearer error="insufficient_scope", scope="{scope_str}", '
                         f'error_description="{desc}"'
+                    )
+                    return resp
+
+            # Verify expected resource indicator / audience (RFC 8707)
+            if expected_resource:
+                aud = payload.get("aud")
+                resource_claim = payload.get("resource")
+                matched = False
+                if resource_claim and resource_claim == expected_resource:
+                    matched = True
+                elif isinstance(aud, list) and expected_resource in aud:
+                    matched = True
+                elif isinstance(aud, str) and aud == expected_resource:
+                    matched = True
+
+                if not matched:
+                    desc = (
+                        "Token audience does not match target resource: "
+                        f"{expected_resource}."
+                    )
+                    resp = jsonify(
+                        {
+                            "error": "invalid_token",
+                            "error_description": desc,
+                        }
+                    )
+                    resp.status_code = 401
+                    resp.headers["WWW-Authenticate"] = (
+                        'Bearer error="invalid_token", ' f'error_description="{desc}"'
                     )
                     return resp
 
