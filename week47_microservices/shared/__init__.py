@@ -30,6 +30,7 @@ from shared.models import (
     ServiceInstance,
     ServiceRegistration,
 )
+from shared.registration import ServiceRegistrar
 
 __all__ = [
     "HealthStatus",
@@ -56,4 +57,5 @@ __all__ = [
     "RandomStrategy",
     "PulseClient",
     "PulseResponse",
+    "ServiceRegistrar",
 ]
