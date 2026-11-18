@@ -23,6 +23,12 @@ from shared.load_balancer import (
     RoundRobinStrategy,
 )
 from shared.logging import StructuredJsonFormatter, setup_mesh_logger
+from shared.message_broker import (
+    DeadLetterMessage,
+    MessageBroker,
+    Subscription,
+    get_message_broker,
+)
 from shared.models import (
     CloudEvent,
     CorrelationContext,
@@ -58,4 +64,8 @@ __all__ = [
     "PulseClient",
     "PulseResponse",
     "ServiceRegistrar",
+    "MessageBroker",
+    "DeadLetterMessage",
+    "Subscription",
+    "get_message_broker",
 ]
