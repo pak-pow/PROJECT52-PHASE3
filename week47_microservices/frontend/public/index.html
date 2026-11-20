@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PulseMesh // Microservices Architecture & Chaos Console</title>
+  <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+  <!-- Header Bar -->
+  <header class="mesh-header">
+    <div class="header-left">
+      <div class="logo-mark">PM</div>
+      <div class="header-title-group">
+        <h1 class="header-title">PULSEMESH // DISTRIBUTED ARCHITECTURE</h1>
+        <p class="header-subtitle">Dynamic Service Mesh, Distributed Saga Coordinator & Chaos Console</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="header-metric">
+        <span class="metric-label">CLUSTER STATUS</span>
+        <span id="cluster-status-badge" class="badge badge-healthy">HEALTHY</span>
+      </div>
+      <div class="header-metric">
+        <span class="metric-label">ACTIVE REPLICAS</span>
+        <span id="cluster-instance-count" class="metric-val">--</span>
+      </div>
+      <div class="header-metric">
+        <span class="metric-label">RATE LIMIT</span>
+        <span id="gateway-rate-metric" class="metric-val">-- req/s</span>
+      </div>
+      <button id="btn-refresh-all" class="btn btn-secondary btn-sm" onclick="app.refreshAll()">REFRESH</button>
+    </div>
+  </header>
+
+  <!-- Main Navigation Tabs -->
+  <nav class="mesh-nav">
+    <button class="nav-tab active" data-tab="tab-topology" onclick="app.switchTab('tab-topology')">1. MESH TOPOLOGY</button>
+    <button class="nav-tab" data-tab="tab-registry" onclick="app.switchTab('tab-registry')">2. REGISTRY &amp; SCALE</button>
+    <button class="nav-tab" data-tab="tab-loadbalancer" onclick="app.switchTab('tab-loadbalancer')">3. LOAD BALANCER SANDBOX</button>
+    <button class="nav-tab" data-tab="tab-chaos" onclick="app.switchTab('tab-chaos')">4. CHAOS &amp; CIRCUIT BREAKER</button>
+    <button class="nav-tab" data-tab="tab-saga" onclick="app.switchTab('tab-saga')">5. SAGA WATERFALL</button>
+    <button class="nav-tab" data-tab="tab-broker" onclick="app.switchTab('tab-broker')">6. BROKER &amp; DLQ</button>
+  </nav>
+
+  <!-- Tab Content Area -->
+  <main class="mesh-main">
+
+    <!-- TAB 1: MESH TOPOLOGY GRAPH -->
+    <section id="tab-topology" class="tab-pane active">
+      <div class="pane-header">
+        <div>
+          <h2 class="pane-title">LIVE SERVICE MESH TOPOLOGY</h2>
+          <p class="pane-desc">Real-time vector topology of API Gateway, Service Registry, active microservice nodes, and CloudEvents message bus.</p>
+        </div>
+        <div class="topology-legend">
+          <span class="legend-item"><span class="legend-dot dot-healthy"></span> HEALTHY</span>
+          <span class="legend-item"><span class="legend-dot dot-degraded"></span> DEGRADED</span>
+          <span class="legend-item"><span class="legend-dot dot-down"></span> DOWN</span>
+          <span class="legend-item"><span class="legend-dot dot-circuit"></span> CIRCUIT OPEN</span>
+        </div>
+      </div>
+
+      <div class="topology-wrapper">
+        <div class="topology-canvas-container">
+          <svg id="mesh-topology-svg" viewBox="0 0 960 520" class="topology-svg"></svg>
+        </div>
+        <div class="node-inspector" id="node-inspector">
+          <h3 class="inspector-title">NODE INSPECTOR</h3>
+          <p class="inspector-prompt" id="inspector-placeholder">Click any topology node to inspect live metadata, port bindings, and health metrics.</p>
+          <div id="inspector-content" style="display: none;">
+            <div class="inspector-field">
+              <span class="field-label">NODE NAME:</span>
+              <span class="field-val" id="insp-name">--</span>
+            </div>
+            <div class="inspector-field">
+              <span class="field-label">INSTANCE ID:</span>
+              <span class="field-val" id="insp-id">--</span>
+            </div>
+            <div class="inspector-field">
+              <span class="field-label">ADDRESS:</span>
+              <span class="field-val" id="insp-addr">--</span>
+            </div>
+            <div class="inspector-field">
+              <span class="field-label">HEALTH STATUS:</span>
+              <span class="field-val" id="insp-status">--</span>
+            </div>
+            <div class="inspector-field">
+              <span class="field-label">CIRCUIT BREAKER:</span>
+              <span class="field-val" id="insp-cb">--</span>
+            </div>
+            <div class="inspector-field">
+              <span class="field-label">AVG LATENCY:</span>
+              <span class="field-val" id="insp-latency">--</span>
+            </div>
+            <div class="inspector-actions">
+              <button class="btn btn-sm btn-danger" onclick="app.chaosTripSelected()">TRIP CIRCUIT</button>
+              <button class="btn btn-sm btn-success" onclick="app.chaosResetSelected()">RESET CIRCUIT</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: SERVICE REGISTRY & SCALE MANAGER -->
+    <section id="tab-registry" class="tab-pane">
+      <div class="pane-header">
+        <div>
+          <h2 class="pane-title">SERVICE REGISTRY &amp; INSTANCE MANAGER</h2>
+          <p class="pane-desc">Manage service discovery leases, scale simulated microservice replicas, and toggle node health states.</p>
+        </div>
+        <div class="pane-actions">
+          <button class="btn btn-primary btn-sm" onclick="app.showScaleModal()">SCALE NEW REPLICA</button>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>SERVICE NAME</th>
+              <th>INSTANCE ID</th>
+              <th>HOST:PORT</th>
+              <th>STATUS</th>
+              <th>WEIGHT</th>
+              <th>LAST HEARTBEAT</th>
+              <th>ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody id="registry-table-body">
+            <tr><td colspan="7" class="text-center text-muted">Loading registry instances...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- TAB 3: LOAD BALANCER SANDBOX -->
+    <section id="tab-loadbalancer" class="tab-pane">
+      <div class="pane-header">
+        <div>
+          <h2 class="pane-title">TRAFFIC ROUTER &amp; LOAD BALANCER SANDBOX</h2>
+          <p class="pane-desc">Dispatch synthetic HTTP traffic bursts through API Gateway and evaluate distribution algorithms across replicas.</p>
+        </div>
+      </div>
+
+      <div class="grid-2-col">
+        <!-- Control Panel -->
+        <div class="card">
+          <h3 class="card-title">DISPATCH CONTROLS</h3>
+          <div class="form-group">
+            <label class="form-label" for="lb-strategy-select">LOAD BALANCING ALGORITHM:</label>
+            <select id="lb-strategy-select" class="form-control" onchange="app.changeLbStrategy(this.value)">
+              <option value="ROUND_ROBIN">ROUND_ROBIN (Cyclic Sequential)</option>
+              <option value="LEAST_CONNECTIONS">LEAST_CONNECTIONS (Fewest Active)</option>
+              <option value="LATENCY_WEIGHTED">LATENCY_WEIGHTED (Fastest Historical)</option>
+              <option value="RANDOM">RANDOM (Uniform Stochastic)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="lb-target-path">GATEWAY TARGET ROUTE:</label>
+            <select id="lb-target-path" class="form-control">
+              <option value="/api/v1/users">GET /api/v1/users (User Service)</option>
+              <option value="/api/v1/products">GET /api/v1/products (Catalog Service)</option>
+              <option value="/api/v1/orders">GET /api/v1/orders (Order Service)</option>
+              <option value="/api/v1/notifications">GET /api/v1/notifications (Notification Service)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="lb-burst-count">REQUEST BURST COUNT: <span id="lb-burst-val">5</span></label>
+            <input type="range" id="lb-burst-count" min="1" max="20" value="5" class="form-range" oninput="document.getElementById('lb-burst-val').innerText = this.value">
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-primary" onclick="app.sendTrafficBurst()">SEND TRAFFIC BURST</button>
+            <button class="btn btn-secondary" onclick="app.clearTrafficCounters()">RESET COUNTERS</button>
+          </div>
+        </div>
+
+        <!-- Distribution Chart -->
+        <div class="card">
+          <h3 class="card-title">INSTANCE TRAFFIC DISTRIBUTION</h3>
+          <div id="lb-distribution-bars" class="distribution-container">
+            <p class="text-muted text-center" style="margin-top: 40px;">Send a traffic burst to observe replica node distributions.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Traffic Log -->
+      <div class="card" style="margin-top: 16px;">
+        <h3 class="card-title">RECENT PROXIED REQUESTS</h3>
+        <div class="table-container" style="max-height: 240px; overflow-y: auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>TIMESTAMP</th>
+                <th>METHOD / ROUTE</th>
+                <th>STATUS</th>
+                <th>LATENCY</th>
+                <th>UPSTREAM INSTANCE</th>
+                <th>CORRELATION ID</th>
+              </tr>
+            </thead>
+            <tbody id="traffic-log-body">
+              <tr><td colspan="6" class="text-center text-muted">No proxied traffic recorded yet.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: CHAOS & CIRCUIT BREAKER -->
+    <section id="tab-chaos" class="tab-pane">
+      <div class="pane-header">
+        <div>
+          <h2 class="pane-title">CHAOS ENGINEERING &amp; CIRCUIT BREAKER TESTER</h2>
+          <p class="pane-desc">Inject simulated cascading failures, observe breaker state transitions (CLOSED -> OPEN -> HALF-OPEN), and test failover resilience.</p>
+        </div>
+      </div>
+
+      <div class="grid-3-col" id="cb-cards-container">
+        <!-- User Service Card -->
+        <div class="card cb-card" id="cb-card-user-service">
+          <div class="cb-card-header">
+            <h3 class="cb-service-name">USER-SERVICE</h3>
+            <span class="badge badge-healthy cb-state-pill" id="cb-state-user-service">CLOSED</span>
+          </div>
+          <div class="cb-metrics">
+            <div class="cb-metric-row"><span>Failure Count:</span><span id="cb-fail-user-service">0 / 5</span></div>
+            <div class="cb-metric-row"><span>Recovery Cooldown:</span><span id="cb-cooldown-user-service">0.0s</span></div>
+            <div class="cb-metric-row"><span>Consecutive Success:</span><span id="cb-success-user-service">0</span></div>
+          </div>
+          <div class="cb-actions">
+            <button class="btn btn-sm btn-danger" onclick="app.chaosTrip('user-service')">TRIP BREAKER</button>
+            <button class="btn btn-sm btn-success" onclick="app.chaosReset('user-service')">RESET BREAKER</button>
+          </div>
+        </div>
+
+        <!-- Catalog Service Card -->
+        <div class="card cb-card" id="cb-card-catalog-service">
+          <div class="cb-card-header">
+            <h3 class="cb-service-name">CATALOG-SERVICE</h3>
+            <span class="badge badge-healthy cb-state-pill" id="cb-state-catalog-service">CLOSED</span>
+          </div>
+          <div class="cb-metrics">
+            <div class="cb-metric-row"><span>Failure Count:</span><span id="cb-fail-catalog-service">0 / 5</span></div>
+            <div class="cb-metric-row"><span>Recovery Cooldown:</span><span id="cb-cooldown-catalog-service">0.0s</span></div>
+            <div class="cb-metric-row"><span>Consecutive Success:</span><span id="cb-success-catalog-service">0</span></div>
+          </div>
+          <div class="cb-actions">
+            <button class="btn btn-sm btn-danger" onclick="app.chaosTrip('catalog-service')">TRIP BREAKER</button>
+            <button class="btn btn-sm btn-success" onclick="app.chaosReset('catalog-service')">RESET BREAKER</button>
+          </div>
+        </div>
+
+        <!-- Order Service Card -->
+        <div class="card cb-card" id="cb-card-order-service">
+          <div class="cb-card-header">
+            <h3 class="cb-service-name">ORDER-SERVICE</h3>
+            <span class="badge badge-healthy cb-state-pill" id="cb-state-order-service">CLOSED</span>
+          </div>
+          <div class="cb-metrics">
+            <div class="cb-metric-row"><span>Failure Count:</span><span id="cb-fail-order-service">0 / 5</span></div>
+            <div class="cb-metric-row"><span>Recovery Cooldown:</span><span id="cb-cooldown-order-service">0.0s</span></div>
+            <div class="cb-metric-row"><span>Consecutive Success:</span><span id="cb-success-order-service">0</span></div>
+          </div>
+          <div class="cb-actions">
+            <button class="btn btn-sm btn-danger" onclick="app.chaosTrip('order-service')">TRIP BREAKER</button>
+            <button class="btn btn-sm btn-success" onclick="app.chaosReset('order-service')">RESET BREAKER</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 5: SAGA WATERFALL -->
+    <section id="tab-saga" class="tab-pane">
+      <div class="pane-header">
+        <div>
+          <h2 class="pane-title">DISTRIBUTED SAGA WATERFALL VISUALIZER</h2>
+          <p class="pane-desc">Step-by-step transaction orchestration trace across User, Catalog, and Payment services with automated compensating rollback on failure.</p>
+        </div>
+      </div>
+
+      <div class="grid-2-col">
+        <!-- Order Trigger Form -->
+        <div class="card">
+          <h3 class="card-title">CHECKOUT SAGA TRIGGER</h3>
+          <div class="form-group">
+            <label class="form-label" for="saga-user-id">CUSTOMER USER ID:</label>
+            <input type="text" id="saga-user-id" class="form-control" value="usr_default">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="saga-sku">PRODUCT SKU / ID:</label>
+            <input type="text" id="saga-sku" class="form-control" value="SKU-MICRO-01">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="saga-quantity">ORDER QUANTITY:</label>
+            <input type="number" id="saga-quantity" class="form-control" value="2" min="1" max="10">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="saga-price">ITEM PRICE (CENTS):</label>
+            <input type="number" id="saga-price" class="form-control" value="1500" min="100">
+          </div>
+          <div class="form-group checkbox-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="saga-sim-failure">
+              <span class="checkbox-text">SIMULATE PAYMENT FAILURE (Triggers Stock Release Compensation)</span>
+            </label>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-primary" onclick="app.executeSaga()">EXECUTE CHECKOUT SAGA</button>
+          </div>
+        </div>
+
+        <!-- Waterfall Steps Display -->
+        <div class="card">
+          <h3 class="card-title">EXECUTION WATERFALL</h3>
+          <div id="saga-waterfall-container" class="waterfall-container">
+            <p class="text-muted text-center" style="margin-top: 40px;">Execute a checkout saga to view step-by-step distributed transaction trace.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 6: BROKER & DLQ -->
+    <section id="tab-broker" class="tab-pane">
+      <div class="pane-header">
+        <div>
+          <h2 class="pane-title">CLOUDEVENTS BROKER &amp; DEAD-LETTER QUEUE</h2>
+          <p class="pane-desc">Monitor distributed domain events, inspect CloudEvents payloads, and quarantine or replay poisoned messages from the Dead-Letter Queue.</p>
+        </div>
+        <div class="pane-actions">
+          <button class="btn btn-danger btn-sm" onclick="app.clearDlq()">PURGE DLQ</button>
+          <button class="btn btn-secondary btn-sm" onclick="app.loadBrokerData()">REFRESH EVENTS</button>
+        </div>
+      </div>
+
+      <!-- DLQ Section -->
+      <div class="card" style="margin-bottom: 16px;">
+        <h3 class="card-title">DEAD-LETTER QUEUE (POISONED MESSAGES)</h3>
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>DLQ ID</th>
+                <th>TOPIC</th>
+                <th>TARGET CONSUMER</th>
+                <th>RETRY COUNT</th>
+                <th>FAILED AT</th>
+                <th>ERROR REASON</th>
+                <th>ACTION</th>
+              </tr>
+            </thead>
+            <tbody id="dlq-table-body">
+              <tr><td colspan="7" class="text-center text-muted">Dead-Letter Queue is empty. No poisoned messages.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- CloudEvents History -->
+      <div class="card">
+        <h3 class="card-title">TOPIC EVENT HISTORY (TOPIC: orders.events)</h3>
+        <div class="table-container" style="max-height: 280px; overflow-y: auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>EVENT ID</th>
+                <th>TYPE</th>
+                <th>SOURCE</th>
+                <th>TIMESTAMP</th>
+                <th>CORRELATION ID</th>
+                <th>PAYLOAD</th>
+              </tr>
+            </thead>
+            <tbody id="broker-events-body">
+              <tr><td colspan="6" class="text-center text-muted">No published domain events recorded.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Scale Instance Modal Dialog -->
+  <div class="modal-backdrop" id="scale-modal" style="display: none;">
+    <div class="modal-dialog">
+      <h3 class="modal-title">SCALE SIMULATED REPLICA</h3>
+      <div class="form-group">
+        <label class="form-label" for="scale-svc-name">TARGET SERVICE:</label>
+        <select id="scale-svc-name" class="form-control">
+          <option value="user-service">user-service</option>
+          <option value="catalog-service">catalog-service</option>
+          <option value="order-service">order-service</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="scale-inst-port">REPLICA PORT:</label>
+        <input type="number" id="scale-inst-port" class="form-control" value="8022">
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="app.submitScaleReplica()">REGISTER NODE</button>
+        <button class="btn btn-secondary" onclick="app.hideScaleModal()">CANCEL</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
