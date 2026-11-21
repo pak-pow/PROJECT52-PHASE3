@@ -14,6 +14,7 @@ exclude =
     *.db
 per-file-ignores =
     __init__.py: F401
+    scripts/*: E402
 count = True
 show-source = True
 statistics = True
