@@ -2,6 +2,7 @@
 
 import secrets
 import sqlite3
+import threading
 from datetime import datetime, timezone
 from typing import Any
 
@@ -15,6 +16,8 @@ def utc_now() -> str:
 
 class InventoryEngine:
     """Manages transactional stock reservations, commits, and compensating releases."""
+
+    _lock = threading.RLock()
 
     @classmethod
     def reserve(
@@ -35,7 +38,7 @@ class InventoryEngine:
 
         clean_order_id = order_id.strip()
 
-        with conn:
+        with cls._lock, conn:
             # Check if this order is already reserved (idempotency check)
             cursor = conn.cursor()
             cursor.execute(
@@ -111,7 +114,7 @@ class InventoryEngine:
         clean_order_id = order_id.strip()
         now = utc_now()
 
-        with conn:
+        with cls._lock, conn:
             cursor = conn.cursor()
             cursor.execute(
                 """
@@ -144,7 +147,7 @@ class InventoryEngine:
         clean_order_id = order_id.strip()
         now = utc_now()
 
-        with conn:
+        with cls._lock, conn:
             cursor = conn.cursor()
             cursor.execute(
                 """
