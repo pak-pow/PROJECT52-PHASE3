@@ -39,7 +39,7 @@ Phase 3 is where developers become production-ready. This phase covers DevOps pr
 | 44 | ML Model API (PulseInfer) | Backend | Dynamic Micro-Batching, Model Registry, Caching | 9h | [Completed](./week44_ml_model_api) |
 | 45 | PulseSub Mobile-First SaaS | Full Stack | Responsive Design, FSM Subscriptions, Webhooks | 10h | [Completed](./week45_mobile_first_saas) |
 | 46 | [OAuth Provider Service (PulseAuth)](./week46_oauth_provider) | Backend | OAuth 2.0, Security Standards | 9h | [Completed](./week46_oauth_provider) |
-| 47 | Microservices Architecture | Backend + DevOps | Service Communication, Load Balancing | 10h | Not Started |
+| 47 | [Microservices Architecture (PulseMesh)](./week47_microservices) | Backend + DevOps | Service Discovery, Saga, Circuit Breaker, Gateway | 10h | [Completed](./week47_microservices) |
 | 48 | Full-Featured Blog Platform | Full Stack | SEO, Comments, Tags, Search | 10h | Not Started |
 | 49 | Real-time Stock Trading Dashboard | Full Stack | WebSockets, Live Data, Charts | 10h | Not Started |
 | 50 | Automated Testing Suite | DevOps | Unit/Integration/E2E Tests | 8h | Not Started |
@@ -251,20 +251,26 @@ Phase 3 is where developers become production-ready. This phase covers DevOps pr
 
 ---
 
-### Week 47: Microservices Architecture
-**Goal:** Build a system with multiple independent services
+### Week 47: PulseMesh Microservices Architecture & Distributed Systems Platform
+**Goal:** Build an enterprise-grade distributed microservices platform implementing dynamic service discovery, resilient inter-service communication, distributed saga transactions with compensating rollbacks, CloudEvents pub/sub, API gateway ingress, and an interactive chaos engineering dashboard
 
 **Learning Objectives:**
-- Service decomposition
-- API Gateway patterns
-- Service-to-service communication
-- Load balancing
+- Dynamic service registration, heartbeat renewal, and lease-based stale node eviction
+- Multi-strategy load balancing (Round-Robin, Least-Connections, Latency-Weighted, Random) with circuit breaker state machines (Closed, Open, Half-Open)
+- Database-per-service isolation with SQLite WAL mode and atomic inventory reservation locks
+- Orchestrated distributed saga workflows with automated compensating rollback on failure
+- Asynchronous CloudEvents v1.0 pub/sub message broker with Dead-Letter Queue (DLQ) quarantine and replay
+- API Gateway dynamic reverse proxy routing, token bucket rate limiting, and distributed correlation ID tracing
+- Interactive browser console with SVG mesh topology graph, chaos fault injection, and saga waterfall visualizer
 
 **Key Features:**
-- Multiple independent services
-- Message queue (RabbitMQ/Redis)
-- Service discovery
-- API Gateway
+- Complete microservices ecosystem: API Gateway (8000), Service Registry (8001), User Service (8002/8012), Catalog Service (8003/8013), Order Service (8004/8014), and Notification Service (8005)
+- Automated node self-registration and heartbeat watchdog pruning stale leases
+- Atomic inventory reservation engine with compensating release preventing overselling under race conditions
+- Distributed saga orchestrator coordinating user verification, stock reservation, payment processing, stock commit, and event publishing
+- High-performance concurrency benchmarked across 50 simultaneous worker threads (500 requests, 100% success rate, 0 lockouts, 1411.63 req/s)
+- Security and chaos test suite validating node failover, stock concurrency safety, circuit breaker isolation, DLQ replay, and DDoS rate limiting
+- 5/5 quality gates passing with 109 automated tests and 95.18% branch coverage across unit, integration, and E2E chaos/concurrency suites
 
 ---
 
@@ -352,7 +358,7 @@ PROJECT52-PHASE3/
 - Completed - Project finished and documented
 - Deployed - Project live and accessible online
 
-**Current Progress:** 9/16 Projects Completed (Weeks 37-45 finished)
+**Current Progress:** 11/16 Projects Completed (Weeks 37-47 finished)
 
 ---
 
