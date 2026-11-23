@@ -1,0 +1,41 @@
+/* PulsePress Syntax Highlighting Code Theme */
+
+pre, code {
+  font-family: var(--font-mono);
+}
+
+code {
+  font-size: 0.88em;
+  padding: 0.2em 0.4em;
+  border-radius: var(--radius-sm);
+  background-color: var(--code-bg);
+  border: 1px solid var(--code-border);
+  color: var(--text-primary);
+}
+
+pre {
+  background-color: var(--code-bg);
+  border: 1px solid var(--code-border);
+  border-radius: var(--radius-md);
+  padding: 1.2rem;
+  overflow-x: auto;
+  margin: 1.5em 0;
+  line-height: 1.5;
+}
+
+pre code {
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-size: 0.9rem;
+  color: inherit;
+}
+
+/* Pygments Token Colors */
+.highlight .k, .highlight .kd, .highlight .kn, .highlight .kp, .highlight .kr { color: #ff7b72; font-weight: 600; }
+.highlight .s, .highlight .sa, .highlight .sb, .highlight .sc, .highlight .s1, .highlight .s2 { color: #a5d6ff; }
+.highlight .nb, .highlight .nc, .highlight .nd, .highlight .nf { color: #d2a8ff; }
+.highlight .mi, .highlight .mf, .highlight .mh, .highlight .mo { color: #79c0ff; }
+.highlight .c, .highlight .ch, .highlight .cm, .highlight .cp, .highlight .c1 { color: #8b949e; font-style: italic; }
+.highlight .o, .highlight .ow { color: #ff7b72; }
+.highlight .na, .highlight .nt { color: #7ee787; }
