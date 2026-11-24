@@ -3,32 +3,44 @@
 import re
 import sqlite3
 import unicodedata
-from typing import Optional, Sequence
+from typing import Optional, Sequence, Union
 
 
-def generate_slug(text: str, max_length: int = 80) -> str:
+def generate_slug(
+    text: str,
+    separator: Union[str, int] = "-",
+    max_length: int = 80,
+) -> str:
     """Transform raw text into a clean, URL-safe slug."""
     if not text:
         return "untitled"
+
+    # Support callers passing max_length as second positional argument
+    sep = "-"
+    if isinstance(separator, int):
+        max_len = separator
+    else:
+        sep = str(separator) or "-"
+        max_len = max_length
 
     # Normalize unicode characters to NFKD representation
     normalized = unicodedata.normalize("NFKD", text)
     # Strip non-ASCII characters
     ascii_text = normalized.encode("ascii", "ignore").decode("utf-8")
 
-    # Lowercase and replace non-alphanumeric characters with hyphens
+    # Lowercase and replace non-alphanumeric characters with separators
     clean = re.sub(r"[^a-zA-Z0-9\s-]", "", ascii_text).lower()
-    slug = re.sub(r"[-\s]+", "-", clean).strip("-")
+    slug = re.sub(r"[-\s]+", sep, clean).strip(sep)
 
     if not slug:
         return "untitled"
 
-    # Truncate to max_length at hyphen boundary if possible
-    if len(slug) > max_length:
-        truncated = slug[:max_length].rstrip("-")
-        last_hyphen = truncated.rfind("-")
-        if last_hyphen > max_length // 2:
-            slug = truncated[:last_hyphen]
+    # Truncate to max_len at separator boundary if possible
+    if len(slug) > max_len:
+        truncated = slug[:max_len].rstrip(sep)
+        last_sep = truncated.rfind(sep)
+        if last_sep > max_len // 2:
+            slug = truncated[:last_sep]
         else:
             slug = truncated
 

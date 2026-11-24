@@ -299,7 +299,22 @@ def seed_database(conn: sqlite3.Connection) -> None:
         )
 
     # 3. Seed Posts and Post-Tag Junction
+    from app.content.markdown_engine import MarkdownEngine
+    from app.services.search_engine import SearchEngine
+
+    md_engine = MarkdownEngine()
+    search_engine = SearchEngine()
+
+    tag_id_to_name = {t["id"]: t["name"] for t in DEFAULT_TAGS}
+
     for p in DEFAULT_POSTS:
+        # Pre-render Markdown content
+        processed = md_engine.process(p["body_markdown"])
+        body_html = processed["body_html"]
+        toc_json = p.get("toc_json") or processed["toc_json"]
+        reading_time = processed["reading_time_minutes"]
+        excerpt = p.get("excerpt") or processed["excerpt"]
+
         cursor.execute(
             """
             INSERT OR REPLACE INTO posts (
@@ -313,18 +328,19 @@ def seed_database(conn: sqlite3.Connection) -> None:
                 p["slug"],
                 p["title"],
                 p["body_markdown"],
-                p["body_html"],
-                p["excerpt"],
+                body_html,
+                excerpt,
                 p["featured_image"],
                 p["status"],
-                p["reading_time_minutes"],
-                p["toc_json"],
+                reading_time,
+                toc_json,
                 p["published_at"],
             ),
         )
 
         # Clear existing tags for this post before inserting
         cursor.execute("DELETE FROM post_tags WHERE post_id = ?;", (p["id"],))
+        tag_names: List[str] = []
         for tag_id in p.get("tags", []):
             cursor.execute(
                 """
@@ -333,6 +349,13 @@ def seed_database(conn: sqlite3.Connection) -> None:
                 """,
                 (p["id"], tag_id),
             )
+            if tag_id in tag_id_to_name:
+                tag_names.append(tag_id_to_name[tag_id])
+
+        # Index post terms into inverted search index
+        search_engine.index_post(
+            conn, p["id"], p["title"], p["body_markdown"], tag_names
+        )
 
     # 4. Update Tag Post Counts
     cursor.execute("""
