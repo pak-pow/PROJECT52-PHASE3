@@ -2,8 +2,9 @@
 
 from pathlib import Path
 
-from app.config.settings import Config
 from flask import Blueprint, current_app, send_from_directory
+
+from app.config.settings import Config
 
 static_bp = Blueprint("static_routes", __name__)
 
