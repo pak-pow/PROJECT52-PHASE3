@@ -2,7 +2,7 @@
 
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
-from xml.sax.saxutils import escape
+from xml.sax.saxutils import escape  # nosec B406
 
 
 class RSSFeedGenerator:
