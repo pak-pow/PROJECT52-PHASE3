@@ -29,7 +29,7 @@ def sitemap_xml() -> Response:
     generator = SitemapGenerator(base_url=base_url)
 
     with get_db_connection(current_app.config["DB_PATH"]) as conn:
-        posts = PostDAO.list_posts(conn, status="published", limit=1000)
+        posts, _ = PostDAO.list_posts(conn, status="published", page_size=1000)
         tags = TagDAO.list_all(conn)
 
     xml_content = generator.generate(posts=posts, tags=tags)
@@ -53,7 +53,7 @@ def rss_xml() -> Response:
     )
 
     with get_db_connection(current_app.config["DB_PATH"]) as conn:
-        posts = PostDAO.list_posts(conn, status="published", limit=50)
+        posts, _ = PostDAO.list_posts(conn, status="published", page_size=50)
 
     xml_content = generator.generate_rss(posts=posts)
     return Response(xml_content, mimetype="application/rss+xml")
@@ -75,7 +75,7 @@ def atom_xml() -> Response:
     )
 
     with get_db_connection(current_app.config["DB_PATH"]) as conn:
-        posts = PostDAO.list_posts(conn, status="published", limit=50)
+        posts, _ = PostDAO.list_posts(conn, status="published", page_size=50)
 
     xml_content = generator.generate_atom(posts=posts)
     return Response(xml_content, mimetype="application/atom+xml")
