@@ -6,11 +6,12 @@ import re
 from typing import Any, Dict, List, Optional
 
 import markdown
-from app.services.slug_service import generate_slug
 from markdown.extensions.codehilite import CodeHiliteExtension
 from markdown.extensions.fenced_code import FencedCodeExtension
 from markdown.extensions.tables import TableExtension
 from markdown.extensions.toc import TocExtension
+
+from app.services.slug_service import generate_slug
 
 
 class MarkdownEngine:
