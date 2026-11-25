@@ -3,6 +3,7 @@
 import sqlite3
 
 import pytest
+
 from app.db.connection import init_db
 
 
