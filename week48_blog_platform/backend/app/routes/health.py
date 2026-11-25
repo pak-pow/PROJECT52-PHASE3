@@ -1,7 +1,8 @@
 """Health check endpoint for PulsePress service."""
 
-from app.db.connection import get_db_connection
 from flask import Blueprint, jsonify
+
+from app.db.connection import get_db_connection
 
 health_bp = Blueprint("health", __name__)
 
