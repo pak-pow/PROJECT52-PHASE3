@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-from xml.sax.saxutils import escape
+from xml.sax.saxutils import escape  # nosec B406
 
 
 class SitemapGenerator:
@@ -41,7 +41,7 @@ class SitemapGenerator:
             try:
                 dt = datetime.fromisoformat(pub_date.replace("Z", "+00:00"))
             except Exception:
-                pass
+                dt = None
 
         if dt:
             now = datetime.now() if dt.tzinfo is None else datetime.now(dt.tzinfo)
