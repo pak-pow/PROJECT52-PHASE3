@@ -7,7 +7,6 @@ import sqlite3
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 from app.models.comment import CommentDAO
-from app.models.post import PostDAO
 
 EMAIL_REGEX = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
@@ -101,6 +100,8 @@ class CommentService:
                 f"Comment body exceeds maximum length of "
                 f"{CommentService.MAX_BODY_LENGTH} characters."
             )
+
+        from app.models.post import PostDAO
 
         post = PostDAO.get_by_id(conn, post_id)
         if not post:
