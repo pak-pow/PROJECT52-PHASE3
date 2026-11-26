@@ -3,9 +3,7 @@
 import sqlite3
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from app.models.post import PostDAO
-from app.models.tag import TagDAO
-from app.services.slug_service import generate_unique_slug_for_db
+from app.services.slug_service import ensure_unique_slug, generate_slug
 
 
 class TagService:
@@ -19,6 +17,8 @@ class TagService:
         slug: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Create a tag with a collision-safe unique slug."""
+        from app.models.tag import TagDAO
+
         clean_name = name.strip()
         if not clean_name:
             raise ValueError("Tag name cannot be empty.")
@@ -32,7 +32,17 @@ class TagService:
         if cursor.fetchone():
             raise ValueError(f"Tag '{clean_name}' already exists.")
 
-        unique_slug = slug or generate_unique_slug_for_db(conn, "tags", clean_name)
+        if slug:
+            unique_slug = slug
+        else:
+            base_slug = generate_slug(clean_name)
+            cursor.execute(
+                "SELECT slug FROM tags WHERE slug = ? OR slug LIKE ?;",
+                (base_slug, f"{base_slug}-%"),
+            )
+            existing_slugs = [row["slug"] for row in cursor.fetchall()]
+            unique_slug = ensure_unique_slug(base_slug, existing_slugs)
+
         return TagDAO.create(
             conn, name=clean_name, slug=unique_slug, description=description.strip()
         )
@@ -42,6 +52,8 @@ class TagService:
         conn: sqlite3.Connection, tag_names: List[str]
     ) -> List[Dict[str, Any]]:
         """Resolve tag names to tag records, creating missing ones automatically."""
+        from app.models.tag import TagDAO
+
         resolved: List[Dict[str, Any]] = []
         seen_ids: Set[int] = set()
         cursor = conn.cursor()
@@ -72,6 +84,8 @@ class TagService:
         conn: sqlite3.Connection, order_by: str = "count"
     ) -> List[Dict[str, Any]]:
         """List all tags ordered by post count or alphabetically."""
+        from app.models.tag import TagDAO
+
         return TagDAO.list_all(conn, order_by=order_by)
 
     @staticmethod
@@ -82,6 +96,9 @@ class TagService:
         page_size: int = 10,
     ) -> Optional[Tuple[Dict[str, Any], List[Dict[str, Any]], int]]:
         """Fetch a tag by slug alongside its paginated published posts."""
+        from app.models.post import PostDAO
+        from app.models.tag import TagDAO
+
         tag = TagDAO.get_by_slug(conn, slug)
         if not tag:
             return None
@@ -103,6 +120,8 @@ class TagService:
         include_empty: bool = False,
     ) -> List[Dict[str, Any]]:
         """Build a tag cloud with normalized weights and font-size scaling."""
+        from app.models.tag import TagDAO
+
         all_tags = TagDAO.list_all(conn, order_by="name")
         if not include_empty:
             tags = [t for t in all_tags if t.get("post_count", 0) > 0]
@@ -149,6 +168,9 @@ class TagService:
         conn: sqlite3.Connection, post_id: int, limit: int = 4
     ) -> List[Dict[str, Any]]:
         """Find related published posts ranked by Jaccard tag similarity."""
+        from app.models.post import PostDAO
+        from app.models.tag import TagDAO
+
         target_tags = TagDAO.get_tags_for_post(conn, post_id)
         target_tag_ids = {t["id"] for t in target_tags}
         if not target_tag_ids:
