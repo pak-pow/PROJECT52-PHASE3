@@ -3,6 +3,7 @@
 import hashlib
 import json
 import math
+from contextlib import closing
 from typing import Any, Dict, List, Tuple
 
 from flask import Blueprint, Response, current_app, g, jsonify, request
@@ -42,6 +43,17 @@ def _visitor_fingerprint() -> str:
     return hashlib.sha256(f"{ip}:{ua}".encode("utf-8")).hexdigest()
 
 
+def _index_post_record(conn: Any, post: Dict[str, Any]) -> None:
+    tag_names = [t["name"] for t in post.get("tags", [])]
+    SearchEngine().index_post(
+        conn,
+        post["id"],
+        post["title"],
+        post["body_markdown"],
+        tag_names,
+    )
+
+
 def _format_post_response(post: Dict[str, Any]) -> Dict[str, Any]:
     formatted = dict(post)
     raw_toc = formatted.get("toc_json") or "[]"
@@ -60,7 +72,7 @@ def list_posts() -> tuple[Response, int]:
     order_by = request.args.get("order_by", "published_at_desc")
     requested_status = request.args.get("status", "published")
 
-    with get_db_connection(current_app.config["DB_PATH"]) as conn:
+    with closing(get_db_connection(current_app.config["DB_PATH"])) as conn:
         user = AuthService.resolve_optional_user(conn)
         if requested_status != "published":
             if not user or user.get("role") not in ("admin", "author"):
@@ -106,7 +118,7 @@ def list_posts() -> tuple[Response, int]:
 @post_bp.route("/<slug>", methods=["GET"])
 def get_post(slug: str) -> tuple[Response, int]:
     """Retrieve a single post with rendered HTML, TOC, view count, and related posts."""
-    with get_db_connection(current_app.config["DB_PATH"]) as conn:
+    with closing(get_db_connection(current_app.config["DB_PATH"])) as conn:
         post = PostDAO.get_by_slug(conn, slug)
         if not post:
             return jsonify({"status": "error", "message": "Post not found."}), 404
@@ -153,12 +165,11 @@ def create_post() -> tuple[Response, int]:
     if status not in ("draft", "published", "archived"):
         return jsonify({"status": "error", "message": "Invalid post status."}), 400
 
-    engine = MarkdownEngine(
-        words_per_minute=current_app.config.get("WORDS_PER_MINUTE", 200)
-    )
-    processed = engine.process(body_markdown, custom_excerpt=excerpt or None)
+    engine = MarkdownEngine(wpm=current_app.config.get("WORDS_PER_MINUTE", 200))
+    processed = engine.process(body_markdown)
+    final_excerpt = excerpt or processed["excerpt"]
 
-    with get_db_connection(current_app.config["DB_PATH"]) as conn:
+    with closing(get_db_connection(current_app.config["DB_PATH"])) as conn:
         tag_ids: List[int] = []
         if isinstance(raw_tags, list) and raw_tags:
             if all(isinstance(t, int) for t in raw_tags):
@@ -175,7 +186,7 @@ def create_post() -> tuple[Response, int]:
             title=title,
             body_markdown=body_markdown,
             body_html=processed["body_html"],
-            excerpt=processed["excerpt"],
+            excerpt=final_excerpt,
             featured_image=featured_image,
             status=status,
             reading_time_minutes=processed["reading_time_minutes"],
@@ -184,7 +195,7 @@ def create_post() -> tuple[Response, int]:
         )
 
         if created["status"] == "published":
-            SearchEngine().index_post(conn, created)
+            _index_post_record(conn, created)
 
     return (
         jsonify(
@@ -200,7 +211,7 @@ def update_post(slug: str) -> tuple[Response, int]:
     """Update an existing post's content, status, or taxonomy tags."""
     payload = request.get_json(silent=True) or {}
 
-    with get_db_connection(current_app.config["DB_PATH"]) as conn:
+    with closing(get_db_connection(current_app.config["DB_PATH"])) as conn:
         existing = PostDAO.get_by_slug(conn, slug)
         if not existing:
             return jsonify({"status": "error", "message": "Post not found."}), 404
@@ -229,14 +240,11 @@ def update_post(slug: str) -> tuple[Response, int]:
 
         if "body_markdown" in payload:
             body_md = payload["body_markdown"]
-            engine = MarkdownEngine(
-                words_per_minute=current_app.config.get("WORDS_PER_MINUTE", 200)
-            )
-            custom_ex = payload.get("excerpt")
-            processed = engine.process(body_md, custom_excerpt=custom_ex)
+            engine = MarkdownEngine(wpm=current_app.config.get("WORDS_PER_MINUTE", 200))
+            processed = engine.process(body_md)
             updates["body_markdown"] = body_md
             updates["body_html"] = processed["body_html"]
-            updates["excerpt"] = processed["excerpt"]
+            updates["excerpt"] = payload.get("excerpt") or processed["excerpt"]
             updates["reading_time_minutes"] = processed["reading_time_minutes"]
             updates["toc_json"] = processed["toc_json"]
         elif "excerpt" in payload:
@@ -253,11 +261,10 @@ def update_post(slug: str) -> tuple[Response, int]:
                 updates["tag_ids"] = [t["id"] for t in resolved]
 
         updated = PostDAO.update(conn, existing["id"], **updates)
-        search_engine = SearchEngine()
         if updated and updated["status"] == "published":
-            search_engine.index_post(conn, updated)
+            _index_post_record(conn, updated)
         else:
-            search_engine.remove_post_from_index(conn, existing["id"])
+            SearchEngine().remove_post_from_index(conn, existing["id"])
 
     return (
         jsonify(
@@ -271,7 +278,7 @@ def update_post(slug: str) -> tuple[Response, int]:
 @require_auth(roles=["admin", "author"])
 def delete_post(slug: str) -> tuple[Response, int]:
     """Delete a post and purge its search index entries."""
-    with get_db_connection(current_app.config["DB_PATH"]) as conn:
+    with closing(get_db_connection(current_app.config["DB_PATH"])) as conn:
         existing = PostDAO.get_by_slug(conn, slug)
         if not existing:
             return jsonify({"status": "error", "message": "Post not found."}), 404
@@ -295,7 +302,7 @@ def delete_post(slug: str) -> tuple[Response, int]:
 @require_auth(roles=["admin", "author"])
 def publish_post(slug: str) -> tuple[Response, int]:
     """Transition a draft post to published and index it for search."""
-    with get_db_connection(current_app.config["DB_PATH"]) as conn:
+    with closing(get_db_connection(current_app.config["DB_PATH"])) as conn:
         existing = PostDAO.get_by_slug(conn, slug)
         if not existing:
             return jsonify({"status": "error", "message": "Post not found."}), 404
@@ -312,7 +319,7 @@ def publish_post(slug: str) -> tuple[Response, int]:
         published = PostDAO.publish(conn, existing["id"])
         TagDAO.recalculate_post_counts(conn)
         if published:
-            SearchEngine().index_post(conn, published)
+            _index_post_record(conn, published)
 
     return (
         jsonify(
