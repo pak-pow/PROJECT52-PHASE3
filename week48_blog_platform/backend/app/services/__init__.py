@@ -1,5 +1,6 @@
 """Domain services package for PulsePress."""
 
+from app.services.auth_service import AuthenticationError, AuthService, require_auth
 from app.services.comment_service import CommentService, RateLimitExceededError
 from app.services.search_engine import SearchEngine
 from app.services.slug_service import (
@@ -21,4 +22,7 @@ __all__ = [
     "TagService",
     "CommentService",
     "RateLimitExceededError",
+    "AuthService",
+    "AuthenticationError",
+    "require_auth",
 ]
