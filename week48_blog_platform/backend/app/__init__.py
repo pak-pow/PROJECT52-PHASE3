@@ -7,9 +7,15 @@ from flask import Flask, Response
 
 from app.config.settings import Config, get_config
 from app.db.connection import init_db
+from app.routes.analytics_routes import analytics_bp
+from app.routes.auth_routes import auth_bp
+from app.routes.comment_routes import comment_bp
 from app.routes.health import health_bp
+from app.routes.post_routes import post_bp
+from app.routes.search_routes import search_bp
 from app.routes.seo_routes import seo_bp
 from app.routes.static_routes import static_bp
+from app.routes.tag_routes import tag_bp
 
 
 def create_app(config: Optional[Any] = None) -> Flask:
@@ -32,10 +38,16 @@ def create_app(config: Optional[Any] = None) -> Flask:
     if str(db_path) != ":memory:" and not Path(db_path).exists():
         init_db(db_path=db_path, seed_defaults=True)
 
-    # Register baseline blueprints
+    # Register baseline and API blueprints
     app.register_blueprint(health_bp)
     app.register_blueprint(static_bp)
     app.register_blueprint(seo_bp)
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(post_bp)
+    app.register_blueprint(search_bp)
+    app.register_blueprint(tag_bp)
+    app.register_blueprint(comment_bp)
+    app.register_blueprint(analytics_bp)
 
     # Standard security and CORS headers
     @app.after_request
