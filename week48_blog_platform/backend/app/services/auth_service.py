@@ -6,6 +6,7 @@ import hmac
 import json
 import sqlite3
 import time
+from contextlib import closing
 from functools import wraps
 from typing import Any, Callable, Dict, Optional, Sequence, Tuple
 
@@ -206,7 +207,7 @@ def require_auth(roles: Optional[Sequence[str]] = None) -> Callable[..., Any]:
             except AuthenticationError as exc:
                 return jsonify({"status": "error", "message": str(exc)}), 401
 
-            with get_db_connection(current_app.config["DB_PATH"]) as conn:
+            with closing(get_db_connection(current_app.config["DB_PATH"])) as conn:
                 user = UserDAO.get_by_id(conn, int(payload["sub"]))
 
             if not user:
