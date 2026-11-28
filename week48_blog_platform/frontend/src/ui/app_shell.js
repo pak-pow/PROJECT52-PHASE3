@@ -1,14 +1,68 @@
 /**
  * PulsePress Application Shell Controller
- * Manages theme toggling, article catalog rendering, and search inputs.
+ * Coordinates client-side routing, theme toggling, and modular UI components:
+ * PostList, TagCloud, BlogReader, SearchView, CommentWidget, and AuthorDashboard.
  */
+
+import { AuthorDashboard } from "/src/ui/author_dashboard.js";
+import { BlogReader } from "/src/ui/blog_reader.js";
+import { CommentWidget } from "/src/ui/comment_widget.js";
+import { PostList } from "/src/ui/post_list.js";
+import { SearchView } from "/src/ui/search_view.js";
+import { TagCloud } from "/src/ui/tag_cloud.js";
 
 class AppShell {
   constructor() {
     this.currentTheme = localStorage.getItem("pulsepress_theme") || "dark";
     this.initTheme();
-    this.bindEvents();
-    this.loadDemoArticles();
+
+    this.views = {
+      home: document.getElementById("homeView"),
+      reader: document.getElementById("readerView"),
+      search: document.getElementById("searchView"),
+      dashboard: document.getElementById("dashboardView"),
+    };
+
+    this.tagCloud = new TagCloud({
+      container: document.getElementById("tagCloudContainer"),
+      onSelectTag: (slug, name) => this.navigateTag(slug, name),
+    });
+
+    this.postList = new PostList({
+      container: document.getElementById("postsListContainer"),
+      filterBanner: document.getElementById("activeTagFilter"),
+      onSelectPost: (slug) => this.navigatePost(slug),
+      onSelectTag: (slug, name) => this.navigateTag(slug, name),
+    });
+
+    this.blogReader = new BlogReader({
+      container: this.views.reader,
+      onNavigatePost: (slug) => this.navigatePost(slug),
+      onSelectTag: (slug) => this.navigateTag(slug, slug),
+      onBackHome: () => this.navigateHome(),
+      onMountComments: (slug, mountEl) => {
+        const widget = new CommentWidget({ container: mountEl, slug });
+        widget.load();
+      },
+    });
+
+    this.searchView = new SearchView({
+      inputEl: document.getElementById("globalSearchInput"),
+      dropdownEl: document.getElementById("autocompleteDropdown"),
+      resultsContainer: this.views.search,
+      onSelectPost: (slug) => this.navigatePost(slug),
+      onSearchNavigate: (query) => this.navigateSearch(query),
+      onBackHome: () => this.navigateHome(),
+    });
+
+    this.dashboard = new AuthorDashboard({
+      container: this.views.dashboard,
+      onViewPost: (slug) => this.navigatePost(slug),
+      onBackHome: () => this.navigateHome(),
+    });
+
+    this.bindGlobalEvents();
+    this.handleRoute();
   }
 
   initTheme() {
@@ -21,125 +75,121 @@ class AppShell {
     this.initTheme();
   }
 
-  bindEvents() {
+  bindGlobalEvents() {
     const themeBtn = document.getElementById("themeToggleBtn");
     if (themeBtn) {
       themeBtn.addEventListener("click", () => this.toggleTheme());
     }
 
-    const searchInput = document.getElementById("globalSearchInput");
-    if (searchInput) {
-      searchInput.addEventListener("input", (e) => {
-        this.handleSearch(e.target.value.trim());
+    document.querySelector(".brand-logo")?.addEventListener("click", (e) => {
+      e.preventDefault();
+      this.navigateHome();
+    });
+
+    document.querySelectorAll(".nav-link").forEach((link) => {
+      link.addEventListener("click", (e) => {
+        const href = link.getAttribute("href") || "";
+        if (href === "/" || href === "#home") {
+          e.preventDefault();
+          this.navigateHome();
+        } else if (href === "#tags") {
+          e.preventDefault();
+          this.navigateHome();
+          document
+            .getElementById("tagCloudContainer")
+            ?.scrollIntoView({ behavior: "smooth" });
+        } else if (href === "#dashboard") {
+          e.preventDefault();
+          this.navigateDashboard();
+        }
       });
+    });
+
+    window.addEventListener("hashchange", () => this.handleRoute());
+  }
+
+  /**
+   * Show only the active view section and update nav active state.
+   * @param {"home"|"reader"|"search"|"dashboard"} activeKey
+   */
+  showView(activeKey) {
+    if (activeKey !== "reader") {
+      this.blogReader.destroy();
+    }
+    Object.entries(this.views).forEach(([key, el]) => {
+      if (!el) return;
+      el.classList.toggle("hidden", key !== activeKey);
+    });
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }
+
+  navigateHome() {
+    if (window.location.hash) {
+      window.location.hash = "#home";
+    } else {
+      this.handleRoute();
     }
   }
 
-  handleSearch(query) {
-    const dropdown = document.getElementById("autocompleteDropdown");
-    if (!dropdown) return;
-
-    if (!query) {
-      dropdown.classList.add("hidden");
-      dropdown.innerHTML = "";
-      return;
-    }
-
-    // Baseline autocomplete demonstration
-    const suggestions = [
-      "python",
-      "bm25",
-      "search",
-      "architecture",
-      "seo",
-      "flask",
-    ].filter((term) => term.toLowerCase().includes(query.toLowerCase()));
-
-    if (suggestions.length === 0) {
-      dropdown.classList.add("hidden");
-      return;
-    }
-
-    dropdown.innerHTML = suggestions
-      .map((term) => `<div class="autocomplete-item">${term}</div>`)
-      .join("");
-    dropdown.classList.remove("hidden");
+  navigatePost(slug) {
+    window.location.hash = `#post/${encodeURIComponent(slug)}`;
   }
 
-  loadDemoArticles() {
-    const container = document.getElementById("postsListContainer");
-    if (!container) return;
-
-    const demoPosts = [
-      {
-        title: "Building a Production-Grade Blog Engine with Advanced SEO",
-        slug: "building-production-blog-engine-with-advanced-seo",
-        excerpt:
-          "Explore how to design an enterprise blog platform from the ground up, incorporating Open Graph, JSON-LD schemas, and dynamic XML sitemaps.",
-        readingTime: 3,
-        date: "2026-11-20",
-        author: "Sarah Chen",
-        tags: ["Python", "Web Development", "SEO"],
-      },
-      {
-        title: "Demystifying BM25 Search Ranking with Python",
-        slug: "demystifying-bm25-search-ranking-with-python",
-        excerpt:
-          "A deep dive into the mathematical mechanics of BM25 probabilistic relevance ranking and how to build an inverted index inside SQLite.",
-        readingTime: 4,
-        date: "2026-11-21",
-        author: "Sarah Chen",
-        tags: ["Python", "Machine Learning", "Architecture"],
-      },
-      {
-        title: "Clean Architecture in Flask: From Monolith to Microservices",
-        slug: "clean-architecture-in-flask-monolith-to-microservices",
-        excerpt:
-          "Learn how decoupling domain entities, repository DAOs, and service layers allows monolithic web applications to scale gracefully.",
-        readingTime: 3,
-        date: "2026-11-22",
-        author: "System Administrator",
-        tags: ["Python", "Architecture", "DevOps"],
-      },
-    ];
-
-    container.innerHTML = demoPosts
-      .map(
-        (post) => `
-      <article class="post-card">
-        <h3 class="post-card-title">
-          <a href="/posts/${post.slug}">${post.title}</a>
-        </h3>
-        <p class="post-card-excerpt">${post.excerpt}</p>
-        <div class="post-card-meta">
-          <span>By ${post.author}</span>
-          <span>${post.date}</span>
-          <span>${post.readingTime} min read</span>
-          <div class="post-tags-list">
-            ${post.tags
-              .map((t) => `<span class="tag-badge">${t}</span>`)
-              .join("")}
-          </div>
-        </div>
-      </article>
-    `
-      )
-      .join("");
-
-    const tagContainer = document.getElementById("tagCloudContainer");
-    if (tagContainer) {
-      const allTags = [
-        "Python (3)",
-        "Web Development (2)",
-        "SEO (1)",
-        "Machine Learning (1)",
-        "Architecture (2)",
-        "DevOps (1)",
-      ];
-      tagContainer.innerHTML = allTags
-        .map((t) => `<a href="#tag" class="tag-badge">${t}</a>`)
-        .join("");
+  navigateTag(slug, name) {
+    if (!slug) {
+      this.navigateHome();
+      return;
     }
+    this._pendingTagName = name || slug;
+    window.location.hash = `#tag/${encodeURIComponent(slug)}`;
+  }
+
+  navigateSearch(query) {
+    window.location.hash = `#search/${encodeURIComponent(query)}`;
+  }
+
+  navigateDashboard() {
+    window.location.hash = "#dashboard";
+  }
+
+  /**
+   * Resolve URL hash to the appropriate view controller.
+   */
+  handleRoute() {
+    const hash = window.location.hash || "#home";
+
+    if (hash.startsWith("#post/")) {
+      const slug = decodeURIComponent(hash.slice(6));
+      this.showView("reader");
+      this.blogReader.loadPost(slug);
+      return;
+    }
+
+    if (hash.startsWith("#search/")) {
+      const query = decodeURIComponent(hash.slice(8));
+      this.showView("search");
+      this.searchView.executeSearch(query, 1);
+      return;
+    }
+
+    if (hash === "#dashboard") {
+      this.showView("dashboard");
+      this.dashboard.open();
+      return;
+    }
+
+    if (hash.startsWith("#tag/")) {
+      const slug = decodeURIComponent(hash.slice(5));
+      const tagName = this._pendingTagName || slug;
+      this.showView("home");
+      this.tagCloud.load(slug);
+      this.postList.loadPosts({ page: 1, tag: slug, tagName, append: false });
+      return;
+    }
+
+    this.showView("home");
+    this.tagCloud.load(null);
+    this.postList.loadPosts({ page: 1, tag: null, tagName: null, append: false });
   }
 }
 
