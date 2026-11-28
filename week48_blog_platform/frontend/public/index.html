@@ -36,52 +36,58 @@
 
     <!-- Main Content Area -->
     <main id="mainContent" class="main-content">
-      <!-- Hero Banner -->
-      <section class="hero-banner">
-        <div class="hero-badge">WEEK 48 ARCHITECTURE</div>
-        <h1 class="hero-title">PulsePress Engineering Publication</h1>
-        <p class="hero-subtitle">Production-grade blogging platform with full-text BM25 search, schema.org JSON-LD, Open Graph metadata, and responsive typography.</p>
-        <div class="hero-meta">
-          <span class="meta-tag">SQLite WAL Engine</span>
-          <span class="meta-tag">Inverted Index Search</span>
-          <span class="meta-tag">Automated Sitemaps</span>
-          <span class="meta-tag">Zero-Emoji Certified</span>
-        </div>
-      </section>
-
-      <!-- Post List and Sidebar Grid -->
-      <div class="content-layout">
-        <section class="articles-column">
-          <div class="section-header">
-            <h2 class="section-title">Latest Publications</h2>
-            <div id="activeTagFilter" class="active-tag-filter hidden"></div>
-          </div>
-          <div id="postsListContainer" class="posts-list-container">
-            <div class="loading-spinner">Loading articles from SQLite...</div>
+      <div id="homeView">
+        <!-- Hero Banner -->
+        <section class="hero-banner">
+          <div class="hero-badge">WEEK 48 ARCHITECTURE</div>
+          <h1 class="hero-title">PulsePress Engineering Publication</h1>
+          <p class="hero-subtitle">Production-grade blogging platform with full-text BM25 search, schema.org JSON-LD, Open Graph metadata, and responsive typography.</p>
+          <div class="hero-meta">
+            <span class="meta-tag">SQLite WAL Engine</span>
+            <span class="meta-tag">Inverted Index Search</span>
+            <span class="meta-tag">Automated Sitemaps</span>
+            <span class="meta-tag">Zero-Emoji Certified</span>
           </div>
         </section>
 
-        <!-- Sidebar Widgets -->
-        <aside class="sidebar-column">
-          <div class="sidebar-widget">
-            <h3 class="widget-title">Explore by Taxonomy</h3>
-            <div id="tagCloudContainer" class="tag-cloud-container">
-              <!-- Rendered via JS -->
+        <!-- Post List and Sidebar Grid -->
+        <div class="content-layout">
+          <section class="articles-column">
+            <div class="section-header">
+              <h2 class="section-title">Latest Publications</h2>
+              <div id="activeTagFilter" class="active-tag-filter hidden"></div>
             </div>
-          </div>
+            <div id="postsListContainer" class="posts-list-container">
+              <div class="loading-spinner">Loading articles from SQLite...</div>
+            </div>
+          </section>
 
-          <div class="sidebar-widget">
-            <h3 class="widget-title">Platform Quality Gates</h3>
-            <ul class="quality-gates-list">
-              <li><span class="gate-status pass">PASS</span> Flake8 (88-char limit)</li>
-              <li><span class="gate-status pass">PASS</span> Black (100% formatted)</li>
-              <li><span class="gate-status pass">PASS</span> isort (Black profile)</li>
-              <li><span class="gate-status pass">PASS</span> Bandit (0 security issues)</li>
-              <li><span class="gate-status pass">PASS</span> Pytest (>=90% coverage)</li>
-            </ul>
-          </div>
-        </aside>
+          <!-- Sidebar Widgets -->
+          <aside class="sidebar-column">
+            <div class="sidebar-widget">
+              <h3 class="widget-title">Explore by Taxonomy</h3>
+              <div id="tagCloudContainer" class="tag-cloud-container">
+                <!-- Rendered via JS -->
+              </div>
+            </div>
+
+            <div class="sidebar-widget">
+              <h3 class="widget-title">Platform Quality Gates</h3>
+              <ul class="quality-gates-list">
+                <li><span class="gate-status pass">PASS</span> Flake8 (88-char limit)</li>
+                <li><span class="gate-status pass">PASS</span> Black (100% formatted)</li>
+                <li><span class="gate-status pass">PASS</span> isort (Black profile)</li>
+                <li><span class="gate-status pass">PASS</span> Bandit (0 security issues)</li>
+                <li><span class="gate-status pass">PASS</span> Pytest (&gt;=90% coverage)</li>
+              </ul>
+            </div>
+          </aside>
+        </div>
       </div>
+
+      <section id="readerView" class="hidden"></section>
+      <section id="searchView" class="hidden"></section>
+      <section id="dashboardView" class="hidden"></section>
     </main>
 
     <!-- Footer -->
